@@ -1,0 +1,79 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<Workflow Id='Dummy'>
+  <ConfName>dev</ConfName>
+  <Branch Name='ValidGrad'>
+    <RunOptions>
+      <Data Name='RunMode'>local</Data>
+    </RunOptions>
+    <DataSection>
+      <Data Name='modulename'>FD_check</Data>
+      <Data Name='pymodule'>worms_CFDScripts.FDEvaluator</Data>
+    </DataSection>
+    <Branch Name='FD_check'>
+      <RunOptions>
+        <Data Name='RunMode'>local</Data>
+      </RunOptions>
+      <DataSection>
+        <Data Name='Evaluator'>worms_AeroElastAdj.LiftingLine</Data>
+        <Data Name='FD step'>0.0001</Data>
+        <Data Name='Numerical scheme'>Fourth order centered</Data>
+        <Data Name='Max running process'>20</Data>
+        <Data Name='Gradient validation'>True</Data>
+        <Data Name='Gradient acceptance tolerance'>1e-05</Data>
+        <Data Name='design_variables'>twist_thickness_alpha.dat</Data>
+      </DataSection>
+      <Branch Name='LiftingLine'>
+        <RunOptions>
+          <Data Name='RunMode'>local</Data>
+        </RunOptions>
+        <DataSection>
+          <Data Name='Evaluation conditions.Mach'>0.4</Data>
+          <Data Name='Evaluation conditions.AoA'>3.0</Data>
+          <Data Name='Airfoils.Airfoil aerodynamic model'>Linear</Data>
+          <Data Name='Airfoils.AoA0'>-2.0</Data>
+          <Data Name='Airfoils.Cd0'>0.01</Data>
+          <Data Name='Airfoils.Cm'>-0.1</Data>
+          <Data Name='Numerical parameters.Relaxation factor'>0.98</Data>
+          <Data Name='Numerical parameters.Residual stop criteria'>1e-14</Data>
+          <Data Name='Wing geometry.Planform'>Broken</Data>
+          <Data Name='Wing geometry.Wingspan'>34.1</Data>
+          <Data Name='Wing geometry.Break %'>33.0</Data>
+          <Data Name='Wing geometry.Root chord'>6.1</Data>
+          <Data Name='Wing geometry.Break chord'>4.6</Data>
+          <Data Name='Wing geometry.Tip chord'>1.5</Data>
+          <Data Name='Wing geometry.Root thickness'>1.28</Data>
+          <Data Name='Wing geometry.Break thickness'>0.97</Data>
+          <Data Name='Wing geometry.Tip thickness'>0.33</Data>
+          <Data Name='Wing geometry.Number of sections'>40</Data>
+          <Data Name='design_variables'>None</Data>
+        </DataSection>
+      </Branch>
+      <Branch Name='LiftingLine_gradient'>
+        <RunOptions>
+          <Data Name='RunMode'>local</Data>
+        </RunOptions>
+        <DataSection>
+          <Data Name='Evaluation conditions.Mach'>0.4</Data>
+          <Data Name='Evaluation conditions.AoA'>3.0</Data>
+          <Data Name='Airfoils.Airfoil aerodynamic model'>Linear</Data>
+          <Data Name='Airfoils.AoA0'>-2.0</Data>
+          <Data Name='Airfoils.Cd0'>0.01</Data>
+          <Data Name='Airfoils.Cm'>-0.1</Data>
+          <Data Name='Numerical parameters.Relaxation factor'>0.98</Data>
+          <Data Name='Numerical parameters.Residual stop criteria'>1e-14</Data>
+          <Data Name='Wing geometry.Planform'>Broken</Data>
+          <Data Name='Wing geometry.Wingspan'>34.1</Data>
+          <Data Name='Wing geometry.Break %'>33.0</Data>
+          <Data Name='Wing geometry.Root chord'>6.1</Data>
+          <Data Name='Wing geometry.Break chord'>4.6</Data>
+          <Data Name='Wing geometry.Tip chord'>1.5</Data>
+          <Data Name='Wing geometry.Root thickness'>1.28</Data>
+          <Data Name='Wing geometry.Break thickness'>0.97</Data>
+          <Data Name='Wing geometry.Tip thickness'>0.33</Data>
+          <Data Name='Wing geometry.Number of sections'>40</Data>
+          <Data Name='design_variables'>None</Data>
+        </DataSection>
+      </Branch>
+    </Branch>
+  </Branch>
+</Workflow>

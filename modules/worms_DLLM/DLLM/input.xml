@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Grammar Name="liftingLine">
+  <Configuration>OptimAeroStruct</Configuration>
+  <Include>['worms_AeroElastAdj.LiftingLine.wing_geometry', 'worms_OpenDACE.Dace.grad_hess', 'worms_OpenDACE.Dace.x']</Include>
+  <GramNode Definition="user" Existence="True" Horizontal="False" Name="Evaluation conditions" Optional="False" Type="Structure" Visibility="Private">
+    <DepList>[]</DepList>
+    <InfList>[]</InfList>
+    <Comment><![CDATA[]]></Comment>
+    <GramNode Definition="user" Existence="True" Name="Mach" Optional="False" Type="Float" Unit="none">
+      <DepList>[]</DepList>
+      <InfList>[]</InfList>
+      <Comment><![CDATA[Mach number]]></Comment>
+      <Possible Type="value">[]</Possible>
+      <Default Type="value">0.3</Default>
+    </GramNode>
+    <GramNode Definition="user" Existence="True" Name="AoA" Optional="False" Type="Float" Unit="none">
+      <DepList>[]</DepList>
+      <InfList>[]</InfList>
+      <Comment><![CDATA[Angle of Attack]]></Comment>
+      <Possible Type="value">[]</Possible>
+      <Default Type="value">2.0</Default>
+    </GramNode>
+  </GramNode>
+  <GramNode Definition="user" Existence="True" Horizontal="False" Name="Airfoils" Optional="False" Type="Structure" Visibility="Private">
+    <DepList>[]</DepList>
+    <InfList>[]</InfList>
+    <Comment><![CDATA[]]></Comment>
+    <GramNode Definition="user" Existence="True" Name="Airfoil aerodynamic model" Optional="False" Type="String">
+      <DepList>[]</DepList>
+      <InfList>['Airfoils.AoA0', 'Airfoils.XML polar database', 'Airfoils.Cd0', 'Airfoils.Cm']</InfList>
+      <Comment><![CDATA[]]></Comment>
+      <Possible Type="value">['Linear', 'Polar']</Possible>
+      <Default Type="value">Linear</Default>
+    </GramNode>
+    <GramNode Definition="user" Existence="True" Name="AoA0" Optional="False" Type="Float" Unit="none">
+      <DepList>['Airfoils.Airfoil aerodynamic model']</DepList>
+      <InfList>[]</InfList>
+      <Comment><![CDATA[Angle of attack of null lift in degrees.]]></Comment>
+      <BehavCode><![CDATA[airfoilModel=self.get_GramNode('Airfoils.Airfoil aerodynamic model')._value
+self._existence= airfoilModel=='Linear']]></BehavCode>
+      <Possible Type="value">[]</Possible>
+      <Default Type="value">-2.0</Default>
+    </GramNode>
+    <GramNode Definition="user" Existence="True" Name="Cd0" Optional="False" Type="Float" Unit="none">
+      <DepList>['Airfoils.Airfoil aerodynamic model']</DepList>
+      <InfList>[]</InfList>
+      <Comment><![CDATA[Drag coeficient]]></Comment>
+      <BehavCode><![CDATA[airfoilModel=self.get_GramNode('Airfoils.Airfoil aerodynamic model')._value
+self._existence= airfoilModel=='Linear']]></BehavCode>
+      <Possible Type="value">[]</Possible>
+      <Default Type="value">0.01</Default>
+    </GramNode>
+    <GramNode Definition="user" Existence="True" Name="Cm" Optional="False" Type="Float" Unit="none">
+      <DepList>['Airfoils.Airfoil aerodynamic model']</DepList>
+      <InfList>[]</InfList>
+      <Comment><![CDATA[Moment coeficient]]></Comment>
+      <BehavCode><![CDATA[airfoilModel=self.get_GramNode('Airfoils.Airfoil aerodynamic model')._value
+self._existence= airfoilModel=='Linear']]></BehavCode>
+      <Possible Type="value">[]</Possible>
+      <Default Type="value">-0.1</Default>
+    </GramNode>
+    <GramNode Definition="user" Existence="False" Name="XML polar database" Optional="False" Type="File">
+      <DepList>['Airfoils.Airfoil aerodynamic model']</DepList>
+      <InfList>[]</InfList>
+      <Comment><![CDATA[]]></Comment>
+      <BehavCode><![CDATA[airfoilModel=self.get_GramNode('Airfoils.Airfoil aerodynamic model')._value
+self._existence= airfoilModel=="Polar"]]></BehavCode>
+      <Possible Type="value">[]</Possible>
+      <Default Type="none"/>
+    </GramNode>
+  </GramNode>
+  <GramNode Definition="user" Existence="True" Horizontal="False" Name="Numerical parameters" Optional="False" Type="Structure" Visibility="Private">
+    <DepList>[]</DepList>
+    <InfList>[]</InfList>
+    <Comment><![CDATA[]]></Comment>
+    <GramNode Definition="user" Existence="True" Name="Relaxation factor" Optional="False" Type="Float" Unit="none">
+      <DepList>[]</DepList>
+      <InfList>[]</InfList>
+      <Comment><![CDATA[Relaxation factor for the Newton method which solves the induced angles.]]></Comment>
+      <Possible Type="range">[0.0, 1.0]</Possible>
+      <Default Type="value">0.99</Default>
+    </GramNode>
+    <GramNode Definition="user" Existence="True" Name="Stop criteria" Optional="False" Type="String">
+      <DepList>[]</DepList>
+      <InfList>['Numerical parameters.Decrease ratio', 'Numerical parameters.Iterations number']</InfList>
+      <Comment><![CDATA[]]></Comment>
+      <BehavCode><![CDATA[dr=self.get_GramNode('Numerical parameters.Decrease ratio')
+inum=self.get_GramNode('Numerical parameters.Iterations number')
+
+dr._existence = self._value == 'Residual decrease'
+inum._existence = self._value == 'Iterations number']]></BehavCode>
+      <Possible Type="value">['Iterations number', 'Residual decrease']</Possible>
+      <Default Type="value">Residual decrease</Default>
+    </GramNode>
+    <GramNode Definition="user" Existence="True" Name="Decrease ratio" Optional="False" Type="Float" Unit="none">
+      <DepList>['Numerical parameters.Stop criteria']</DepList>
+      <InfList>[]</InfList>
+      <Comment><![CDATA[Stop criteria for the Newton method : relative residual decrease ratio.]]></Comment>
+      <Possible Type="value">[]</Possible>
+      <Default Type="value">1e-12</Default>
+    </GramNode>
+    <GramNode Definition="user" Existence="False" Name="Iterations number" Optional="False" Type="Integer">
+      <DepList>['Numerical parameters.Stop criteria']</DepList>
+      <InfList>[]</InfList>
+      <Comment><![CDATA[]]></Comment>
+      <Possible Type="value">[]</Possible>
+      <Default Type="value">10</Default>
+    </GramNode>
+  </GramNode>
+  <GramNode Definition="user" Existence="True" Name="Modes" Optional="True" Type="File" Visibility="Private">
+    <DepList>[]</DepList>
+    <InfList>[]</InfList>
+    <Comment><![CDATA[Modes file for the twist reduced parametrization]]></Comment>
+    <Possible Type="value">[]</Possible>
+    <Default Type="none"/>
+  </GramNode>
+</Grammar>

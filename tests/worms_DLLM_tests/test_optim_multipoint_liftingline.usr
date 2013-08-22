@@ -1,0 +1,192 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<Workflow Id='Dummy'>
+  <ConfName>AeroElastAdj</ConfName>
+  <Branch Name='Runner'>
+    <RunOptions>
+      <Data Name='RunMode'>local</Data>
+    </RunOptions>
+    <DataSection>
+      <Data Name='modulename'>Optim</Data>
+      <Data Name='pymodule'>worms_OpenDACE.Optimization</Data>
+    </DataSection>
+    <Branch Name='Optim'>
+      <RunOptions>
+        <Data Name='RunMode'>local</Data>
+      </RunOptions>
+      <DataSection>
+        <Data Name='import_database'>False</Data>
+        <Data Name='Optimization Definition.Multiobjective Optimization'>False</Data>
+        <Data Name='Optimization Definition.Constrained Optimization'>True</Data>
+        <Data Name='Optimization Definition.Hessian-based'>False</Data>
+        <Data Name='Optimization Definition.Gradient-based'>True</Data>
+        <Data Name='Evaluator'>worms_CFDScripts.CFDMultipoint</Data>
+        <Data Name='Optimizer.Algorithm'>scipy_slsqp</Data>
+        <Data Name='Convergence.Override'>False</Data>
+        <Data Name='Objective.Expression'>-Cl/Cd</Data>
+        <Data Name='Eq Constraints'>[]</Data>
+        <Data Name='Ineq Constraints'>['C0', 'C1', 'C2', 'C3', 'C4']</Data>
+        <Data Name='design_variables'>twist.dat</Data>
+        <Data Name='C0.Expression'>0.5-Cl_Condition_0</Data>
+        <Data Name='C1.Expression'>0.5-Cl_Condition_1</Data>
+        <Data Name='C2.Expression'>0.5-Cl_Condition_2</Data>
+        <Data Name='C3.Expression'>0.5-Cl_Condition_3</Data>
+        <Data Name='C4.Expression'>0.5-Cl_Condition_4</Data>
+      </DataSection>
+      <Branch Name='CFDMultipoint'>
+        <RunOptions>
+          <Data Name='RunMode'>local</Data>
+        </RunOptions>
+        <DataSection>
+          <Data Name='Evaluator'>worms_AeroElastAdj.LiftingLine</Data>
+          <Data Name='Max process count'>10</Data>
+          <Data Name='Use combinations'>True</Data>
+          <Data Name='Combinations of conditions'>['C0']</Data>
+          <Data Name='Generate combinations'>True</Data>
+          <Data Name='Conditions'>['Condition_0', 'Condition_1', 'Condition_2', 'Condition_3', 'Condition_4']</Data>
+          <Data Name='Generate branches'>True</Data>
+          <Data Name='design_variables'>None</Data>
+          <Data Name='C0.Combination'>['M']</Data>
+          <Data Name='Condition_0.Weight'>1.0</Data>
+          <Data Name='Condition_1.Weight'>1.0</Data>
+          <Data Name='Condition_2.Weight'>1.0</Data>
+          <Data Name='Condition_3.Weight'>1.0</Data>
+          <Data Name='Condition_4.Weight'>1.0</Data>
+          <Data Name='C0.M.Parameter'>Mach</Data>
+          <Data Name='C0.M.Value'>[0.2, 0.3, 0.4, 0.5, 0.6]</Data>
+          <Data Name='Condition_0.AoA'>None</Data>
+          <Data Name='Condition_1.AoA'>None</Data>
+          <Data Name='Condition_2.AoA'>None</Data>
+          <Data Name='Condition_3.AoA'>None</Data>
+          <Data Name='Condition_4.AoA'>None</Data>
+          <Data Name='Condition_0.Mach'>0.2</Data>
+          <Data Name='Condition_1.Mach'>0.3</Data>
+          <Data Name='Condition_2.Mach'>0.4</Data>
+          <Data Name='Condition_3.Mach'>0.5</Data>
+          <Data Name='Condition_4.Mach'>0.6</Data>
+        </DataSection>
+        <Branch Name='LiftingLine'>
+          <RunOptions>
+            <Data Name='RunMode'>local</Data>
+          </RunOptions>
+          <DataSection>
+            <Data Name='Evaluation conditions.Mach'>0.2</Data>
+            <Data Name='Evaluation conditions.AoA'>5.0</Data>
+            <Data Name='Airfoils.Airfoil aerodynamic model'>Linear</Data>
+            <Data Name='Airfoils.AoA0'>-2.0</Data>
+            <Data Name='Airfoils.Cd0'>0.01</Data>
+            <Data Name='Airfoils.Cm'>-0.1</Data>
+            <Data Name='Numerical parameters.Relaxation factor'>0.95</Data>
+            <Data Name='Numerical parameters.Residual stop criteria'>1e-06</Data>
+            <Data Name='Wing geometry.Planform'>Elliptic</Data>
+            <Data Name='Wing geometry.Wingspan'>34.1</Data>
+            <Data Name='Wing geometry.Root chord'>7.1</Data>
+            <Data Name='Wing geometry.Root thickness'>1.28</Data>
+            <Data Name='Wing geometry.Tip thickness'>0.33</Data>
+            <Data Name='Wing geometry.Number of sections'>40</Data>
+            <Data Name='design_variables'>None</Data>
+          </DataSection>
+        </Branch>
+        <Branch Name='Condition_0'>
+          <RunOptions/>
+          <DataSection>
+            <Data Name='Evaluation conditions.Mach'>0.2</Data>
+            <Data Name='Evaluation conditions.AoA'>5.0</Data>
+            <Data Name='Airfoils.Airfoil aerodynamic model'>Linear</Data>
+            <Data Name='Airfoils.AoA0'>-2.0</Data>
+            <Data Name='Airfoils.Cd0'>0.01</Data>
+            <Data Name='Airfoils.Cm'>-0.1</Data>
+            <Data Name='Numerical parameters.Relaxation factor'>0.95</Data>
+            <Data Name='Numerical parameters.Residual stop criteria'>1e-06</Data>
+            <Data Name='Wing geometry.Planform'>Elliptic</Data>
+            <Data Name='Wing geometry.Wingspan'>34.1</Data>
+            <Data Name='Wing geometry.Root chord'>7.1</Data>
+            <Data Name='Wing geometry.Root thickness'>1.28</Data>
+            <Data Name='Wing geometry.Tip thickness'>0.33</Data>
+            <Data Name='Wing geometry.Number of sections'>40</Data>
+            <Data Name='design_variables'>None</Data>
+          </DataSection>
+        </Branch>
+        <Branch Name='Condition_1'>
+          <RunOptions/>
+          <DataSection>
+            <Data Name='Evaluation conditions.Mach'>0.3</Data>
+            <Data Name='Evaluation conditions.AoA'>5.0</Data>
+            <Data Name='Airfoils.Airfoil aerodynamic model'>Linear</Data>
+            <Data Name='Airfoils.AoA0'>-2.0</Data>
+            <Data Name='Airfoils.Cd0'>0.01</Data>
+            <Data Name='Airfoils.Cm'>-0.1</Data>
+            <Data Name='Numerical parameters.Relaxation factor'>0.95</Data>
+            <Data Name='Numerical parameters.Residual stop criteria'>1e-06</Data>
+            <Data Name='Wing geometry.Planform'>Elliptic</Data>
+            <Data Name='Wing geometry.Wingspan'>34.1</Data>
+            <Data Name='Wing geometry.Root chord'>7.1</Data>
+            <Data Name='Wing geometry.Root thickness'>1.28</Data>
+            <Data Name='Wing geometry.Tip thickness'>0.33</Data>
+            <Data Name='Wing geometry.Number of sections'>40</Data>
+            <Data Name='design_variables'>None</Data>
+          </DataSection>
+        </Branch>
+        <Branch Name='Condition_2'>
+          <RunOptions/>
+          <DataSection>
+            <Data Name='Evaluation conditions.Mach'>0.4</Data>
+            <Data Name='Evaluation conditions.AoA'>5.0</Data>
+            <Data Name='Airfoils.Airfoil aerodynamic model'>Linear</Data>
+            <Data Name='Airfoils.AoA0'>-2.0</Data>
+            <Data Name='Airfoils.Cd0'>0.01</Data>
+            <Data Name='Airfoils.Cm'>-0.1</Data>
+            <Data Name='Numerical parameters.Relaxation factor'>0.95</Data>
+            <Data Name='Numerical parameters.Residual stop criteria'>1e-06</Data>
+            <Data Name='Wing geometry.Planform'>Elliptic</Data>
+            <Data Name='Wing geometry.Wingspan'>34.1</Data>
+            <Data Name='Wing geometry.Root chord'>7.1</Data>
+            <Data Name='Wing geometry.Root thickness'>1.28</Data>
+            <Data Name='Wing geometry.Tip thickness'>0.33</Data>
+            <Data Name='Wing geometry.Number of sections'>40</Data>
+            <Data Name='design_variables'>None</Data>
+          </DataSection>
+        </Branch>
+        <Branch Name='Condition_3'>
+          <RunOptions/>
+          <DataSection>
+            <Data Name='Evaluation conditions.Mach'>0.5</Data>
+            <Data Name='Evaluation conditions.AoA'>5.0</Data>
+            <Data Name='Airfoils.Airfoil aerodynamic model'>Linear</Data>
+            <Data Name='Airfoils.AoA0'>-2.0</Data>
+            <Data Name='Airfoils.Cd0'>0.01</Data>
+            <Data Name='Airfoils.Cm'>-0.1</Data>
+            <Data Name='Numerical parameters.Relaxation factor'>0.95</Data>
+            <Data Name='Numerical parameters.Residual stop criteria'>1e-06</Data>
+            <Data Name='Wing geometry.Planform'>Elliptic</Data>
+            <Data Name='Wing geometry.Wingspan'>34.1</Data>
+            <Data Name='Wing geometry.Root chord'>7.1</Data>
+            <Data Name='Wing geometry.Root thickness'>1.28</Data>
+            <Data Name='Wing geometry.Tip thickness'>0.33</Data>
+            <Data Name='Wing geometry.Number of sections'>40</Data>
+            <Data Name='design_variables'>None</Data>
+          </DataSection>
+        </Branch>
+        <Branch Name='Condition_4'>
+          <RunOptions/>
+          <DataSection>
+            <Data Name='Evaluation conditions.Mach'>0.6</Data>
+            <Data Name='Evaluation conditions.AoA'>5.0</Data>
+            <Data Name='Airfoils.Airfoil aerodynamic model'>Linear</Data>
+            <Data Name='Airfoils.AoA0'>-2.0</Data>
+            <Data Name='Airfoils.Cd0'>0.01</Data>
+            <Data Name='Airfoils.Cm'>-0.1</Data>
+            <Data Name='Numerical parameters.Relaxation factor'>0.95</Data>
+            <Data Name='Numerical parameters.Residual stop criteria'>1e-06</Data>
+            <Data Name='Wing geometry.Planform'>Elliptic</Data>
+            <Data Name='Wing geometry.Wingspan'>34.1</Data>
+            <Data Name='Wing geometry.Root chord'>7.1</Data>
+            <Data Name='Wing geometry.Root thickness'>1.28</Data>
+            <Data Name='Wing geometry.Tip thickness'>0.33</Data>
+            <Data Name='Wing geometry.Number of sections'>40</Data>
+            <Data Name='design_variables'>None</Data>
+          </DataSection>
+        </Branch>
+      </Branch>
+    </Branch>
+  </Branch>
+</Workflow>
