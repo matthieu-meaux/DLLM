@@ -31,6 +31,9 @@ class Lifting_line_evaluator():
         self.__Dtwist_Dmode=None
         self.__nb_modes=0
         
+    def get_wing(self):
+        return self.__llw
+        
     def is_thickness_active(self):
         return self.__thickness_active
     
