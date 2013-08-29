@@ -3,8 +3,8 @@
 # @author: François Gallard
 
 from worms.Workflow.worms_process_base import WormsProcessBase
-from AeroElastAdj.liftingLine.lifting_line_evaluator import Lifting_line_evaluator
-from AeroElastAdj.evalcontrol.dv_handler import DVHandler
+from DLLM.DLLMKernel.lifting_line_evaluator import Lifting_line_evaluator
+from OpenDACE.evalcontrol.dv_handler import DVHandler
 from math import pi
 
 class WormsProcess(WormsProcessBase):

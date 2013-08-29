@@ -2,13 +2,13 @@
 # Copyright: Airbus
 # @author: François Gallard
 
-from AeroElastAdj.wing.wing_manufacture import Wing_manufacture
-from AeroElastAdj.wing.wing_geom_handler import Wing_geom_handler
+from MDOTools.Components.Wing.wing_manufacture import Wing_manufacture
+from MDOTools.Components.Wing.wing_geom_handler import Wing_geom_handler
 
-from AeroElastAdj.database.Database import Database
+from OpenDACE.database.Database import Database
 
-from AeroElastAdj.polarManager.analyticAirfoil import AnalyticAirfoil
-from AeroElastAdj.polarManager.airfoilPolar import AirfoilPolar
+from DLLM.polarManager.analyticAirfoil import AnalyticAirfoil
+from DLLM.polarManager.airfoilPolar import AirfoilPolar
 
 import math
 from numpy import concatenate,zeros,ones,random,array,linalg

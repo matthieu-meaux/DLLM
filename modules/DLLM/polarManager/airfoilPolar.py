@@ -5,7 +5,7 @@
 
 # - Local imports -
 from airfoil import Airfoil
-from AeroElastAdj.database.Database import Database
+from OpenDACE.database.Database import Database
 
 from numpy import array
 from spline_interpolator import Spline2D_interpolator

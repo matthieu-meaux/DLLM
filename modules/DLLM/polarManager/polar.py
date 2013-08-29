@@ -4,7 +4,7 @@
 # @author: François Gallard
 
 # - Local imports -
-from AeroElastAdj.database.Database import Database
+from OpenDACE.database.Database import Database
 from differentiatedAeroShape import DifferentiatedAeroShape
 from AeroElastAdj.kriging.kriging import Kriging
 from numpy import matrix

@@ -4,7 +4,7 @@
 # @author: François Gallard
  
 # - Local imports -
-from AeroElastAdj.polarManager.differentiatedAeroShape import DifferentiatedAeroShape
+from DLLM.polarManager.differentiatedAeroShape import DifferentiatedAeroShape
 from numpy import array, transpose,outer, ones, zeros, copy, divide, diag, dot
 from numpy.linalg import norm, solve
 import numpy
