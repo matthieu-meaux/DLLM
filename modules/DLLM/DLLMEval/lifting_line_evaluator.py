@@ -2,8 +2,8 @@
 # Copyright: Airbus
 # @author: François Gallard
 
-from MDOTools.Components.Wing.wing_manufacture import Wing_manufacture
-from MDOTools.Components.Wing.wing_geom_handler import Wing_geom_handler
+from DLLM.DLLMGeom.wing_manufacture import Wing_manufacture
+from DLLM.DLLMGeom.wing_geom_handler import Wing_geom_handler
 
 from OpenDACE.database.Database import Database
 

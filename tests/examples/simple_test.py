@@ -1,4 +1,4 @@
-from DLLM.DLLMKernel.lifting_line_evaluator import Lifting_line_evaluator
+from DLLM.DLLMEval.lifting_line_evaluator import Lifting_line_evaluator
 from OpenDACE.evalcontrol.dv_handler import DVHandler
 import numpy
 
