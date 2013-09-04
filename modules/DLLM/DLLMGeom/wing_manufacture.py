@@ -4,7 +4,6 @@
 # @author: François Gallard
 
 # - Local imports -
-from DLLM.DLLMKernel.liftingLineWing import LiftingLineWing
 from DLLM.DLLMGeom.discrete_wing import Discrete_wing
 from numpy import zeros, array
 from math import pi, sqrt
@@ -62,25 +61,6 @@ class Wing_manufacture():
         
     def set_break_height(self, break_height):
         self.__break_height = break_height
-        
-    def build_Lifting_line_wing(self,reference_airfoil):
-        """
-        Build solver from discrete_wing
-        """
-        airfoils=[]
-        n=self.__discrete_wing.get_n_elements()/2
-        thick=self.__discrete_wing.get_relative_thickness()
-        Lref=0.
-        for i in range(2*n):
-            Lloc=self.__discrete_wing.get_chords()[i]
-            Sloc=self.__compute_local_Sref(Lloc,n,self.__discrete_wing.get_wingspan())
-            airfoils.append(reference_airfoil.get_scaled_copy(Sloc,Lloc,thick[i]))
-            Lref+=Lloc
-            
-        Lref/=2*n
-        llw=LiftingLineWing(self.__discrete_wing,Lref,airfoils)
-        
-        return llw
         
     def build_Discrete_wing(self,N,twist_law=None):
         '''
@@ -177,9 +157,6 @@ class Wing_manufacture():
             
             return self.__linear(r,h_root,h_tip)
         
-    def __compute_local_Sref(self,Lloc,n,wingspan):
-        return Lloc*wingspan/(2.*float(n))
-    
     def __cast_twist(self,n,twist_law):
         if twist_law is None:
             twist=zeros([2*n])

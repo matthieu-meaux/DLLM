@@ -10,10 +10,10 @@ from math import sqrt
 class Airfoil(DifferentiatedAeroShape):
     '''
     Airfoil class for lifting line computations. 
-    Supports the computation of the circulation and the sensibility of moments to aOa.
+    Supports the computation of the circulation and the sensibility of moments to AoA.
     '''
     
-    def __init__(self,Sref,Lref,relative_thickness=0.0):
+    def __init__(self, Sref, Lref, relative_thickness=0.0):
         '''
         Constructor
         @param Sref : reference surface
@@ -71,23 +71,6 @@ class Airfoil(DifferentiatedAeroShape):
         Instances a copy of this airfoil with different Lref and Sref
         """
         return Airfoil(Sref,Lref,relative_thickness=relative_thickness)
-    
-    def Prandtl_correction(self,Mach):
-        """
-        Computes the Prandls correction to manage compressibility effects for 0.3<Mach<0.7.
-        @param Mach  : Mach number
-        @param type Mach : Float
-        @return : the Prandtl Glauert correction
-        @return type : Float
-        """
-        if Mach<0.:
-            raise Exception, "Mach number should be positive."
-        elif Mach<0.3:
-            return 1.
-        elif Mach<0.7:
-            return 1./sqrt(abs(1.-Mach**2))
-        else:
-            raise Exception, "Mach numbers higher than 0.7 are not handled by this correction due to shocks."
     
     def dGammaDThickness(self,alpha,Mach=0.0):
         """

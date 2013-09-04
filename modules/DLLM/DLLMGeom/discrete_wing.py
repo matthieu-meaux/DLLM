@@ -44,7 +44,7 @@ class Discrete_wing():
         Setter for the height of the sections
         """
 
-#        self._relative_thickness=heights/self._chords
+        self._relative_thickness=heights/self._chords
         self._heights=heights
         
     def get_relative_thickness(self):

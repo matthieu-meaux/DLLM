@@ -2,139 +2,101 @@
 # Copyright: Airbus
 # @version: 1.0
 # @author: François Gallard
+# @author: Matthieu MEAUX (for refactoring)
  
 # - Local imports -
 from DLLM.polarManager.differentiatedAeroShape import DifferentiatedAeroShape
-from numpy import array, transpose,outer, ones, zeros, copy, divide, diag, dot
-from numpy.linalg import norm, solve
-import numpy
-import math
-from math import sqrt
+from DLLM.DLLMKernel.DLLMGeom import DLLMGeom
+from DLLM.DLLMKernel.DLLMDirect import DLLMDirect
 
 class LiftingLineWing(DifferentiatedAeroShape):
-    STOP_CRITERIA_RESDUAL='Residual decrease'
-    STOP_CRITERIA_N_ITER='Niterations'
-    
-    def __init__(self,discrete_wing,Lref,airfoils,relaxFactor=0.99):
+    def __init__(self, wing_geom, airfoils, OC):
         '''
         Constructor for wings based on lifting line theory
-        @param discrete_wing : the wing geometry
+        @param wing_geom : the wing geometry
         @param Lref : Reference length for the moments computation
         @param relaxFactor : relaxation factor for induced angles computation
         @param stopCriteria : the stop criteria for the iterative method for computing the wing circulation.
         '''
-        #Setting geometry
-        Sref=0.0
-        for airfoil in airfoils:
-            Sref+=airfoil.getSref()
+        DifferentiatedAeroShape.__init__(self,1.,1.) # Sref and Lref are computed by __set_Lref_Sref
         
-        DifferentiatedAeroShape.__init__(self,Sref,Lref)
-        self._discrete_wing=discrete_wing
+        self.__wing_geom  = wing_geom
+        self.__airfoils   = airfoils
+        self.__OC         = OC
         
-        self._airfoils=airfoils
-        self._N=len(airfoils)
-        self.__setGeom()
+        self.__DLLMGeom   = DLLMGeom(self)
+        self.__DLLMDirect = DLLMDirect(self)
+    
+    #-- Accessors
+    def get_wing_geom(self):
+        return self.__wing_geom
+    
+    def get_airfoils(self):
+        return self.__airfoils
+    
+    def get_OC(self):
+        return self.__OC
+    
+    def get_K(self):
+        return self.__DLLMGeom.get_K()
+    
+    #-- Setters
+    def set_relax_factor(self, relax_factor):
+        self.__DLLMDirect.set_relax_factor(relax_factor)
         
-        #Numerical parameters
-        self.__stopCriteria=1e-6
-        self.__stop_criteria_type=self.STOP_CRITERIA_RESDUAL
-        self.set_stop_criteria()
-        self.__relaxFactor=relaxFactor
+    def set_stop_criteria(self, residual=None, n_it=None):
+        self.__DLLMDirect.set_stop_criteria(residual=residual, n_it=n_it)
         
-        #Initializing local variables for lifting line computations
-        self.__lastAlpha=None
-        self.__residuals_hist=[]
-        n=self._N
-        self.__localAoA=zeros([n])
-        self.__DlocalAoA_DIaOa=-diag(ones([n]))
-        self.__DlocalAoA_DTwist=-diag(ones([n]))
+    #-- Run methods
+    def run_direct(self):
+        self.__DLLMDirect.run()
         
-        self.__DlocalAoA_DAoA=ones(n)
-        self.__gamma=zeros(n)
-        self.__Dgamma_DlocalAoA=zeros([n,n])
-        self.__Dgamma_Dthickness=zeros([n,n])
-        self.__dGamma=zeros([n+1])
-        self.__DdGammaDy_DGamma=zeros([n+1,n])
-        self.__iAoA=zeros([n])
-        self.__iAoANew=zeros([n])
-        self.__DiAoA_DdGamma=zeros([n,n+1])
-        self.__DR_DiAoA=zeros([n])
-        self.__R=zeros([n])
- 
-    def set_stop_criteria(self,residual=None,n_it=None):
-        if n_it is not None:
-            if type(n_it) != type(1):
-                    raise Exception, "n_it stop criteria must be an integer"
-            self.__stop_criteria_type=self.STOP_CRITERIA_N_ITER
-            self.__stopCriteria=n_it
-        else :
-            self.__stop_criteria_type=self.STOP_CRITERIA_RESDUAL
-            if residual is not None:
-                if type(residual) != type(1.1):
-                    raise Exception, "residual stop criteria must be a float"
-                self.__stopCriteria=residual
-            else:
-                self.__stopCriteria=1e-6
+    #-- direct solver methods
+    def __init_iterations(self):
+        self.__iAoA=zeros([self.__N])
+        R,DR_DiAoA=self.R(self.__iAoA,alpha,Mach)
+        self.__R0       = norm(R)
+        self.__residual = 1.0
+        self.__residuals_hist = []
         
-    def __setGeom(self):
+    def __sub_iteration(self):
+        R,DR_DiAoA=self.R(self.__iAoA,alpha,Mach)
+        #Newton zero search method
+        self.__iAoA-=self.__relaxFactor*solve(DR_DiAoA,R)
+        
+        #Compute stop criteria
+        self.__residual=norm(R)/R0
+        self.__residuals_hist.append(self.__residual)
+        print "||R||/||R0||= "+str(self.__residual)
+        
+    def __Iterate(self,alpha,Mach):
         '''
-        Sets the geometry of the wing, builds the stiffness geometry matrix
+        For a given angle of attack, iterates to compute the circulation and the downwash angles.
+        @param alpha : angle of attack
         '''
-        eta=self.get_discrete_wing().get_eta()[:,1]
-        y=self.get_discrete_wing().get_XYZ()[:,1]
+        self.__init_iterations()
         
-        YminEta=transpose(outer(ones([self._N+1]),y))-outer(ones([self._N]),eta)
-        self.__K=divide(ones([self._N,self._N+1]),YminEta)
-        self.__K/=4.*math.pi
-        
-    def __setGeomWeissinger(self):
-        '''
-        Sets the geometry of the wing, builds the stiffness geometry matrix
-        '''
-        eta=self.get_discrete_wing().get_eta()[:,1]
-        self.__K=zeros([self._N,self._N+1])
-        
-        x=self.get_discrete_wing().get_XYZ()[:,0]
-        y=self.get_discrete_wing().get_XYZ()[:,1]
-        
-        for i in range(self._N):
-            for j in range(self._N+1):
-                #Weissinger
-                self.__K[i,j]=(1.+sqrt(1.+((y[i]-eta[j])/x[i])**2))/(y[i]-eta[j])
- 
-        self.__K/=4.*math.pi        
-        
-    def __setGeomWeissinger2(self):
-        '''
-        Sets the geometry of the wing, builds the stiffness geometry matrix
-        '''
-        eta=self.get_discrete_wing().get_eta()[:,1]
-        
-        x=self.get_discrete_wing().get_XYZ()[:,0]
-        y=self.get_discrete_wing().get_XYZ()[:,1]
-        
-        self.__K=zeros([self._N,self._N+1])
-        for i in range(self._N):
-            for j in range(self._N+1):
-                #Weissinger
-                self.__K[i,j]=(1./(y[i]-eta[j,0])**2)*(1.+(x[i]-eta[j,1])/sqrt((x[i]-eta[j,1])**2+(y[i]-eta[j,0])**2))
- 
-        self.__K/=4.*math.pi        
-        
+        if self.__stop_criteria_type == self.STOP_CRITERIA_RESIDUAL:
+            while(self.__residual>self.__stopCriteria):
+                self.__sub_iteration()
+        else:
+            for i in xrange(self.__stopCriteria):
+                self.__sub_iteration() 
+         
     def get_convergence_history(self):
         """
         Accessor to the last computation convergence history as a list of residuals normalized by the first iteration residual.
         """
         return self.__residuals_hist
         
-    def compute_localAOa(self,iaOa,alpha):
+    def compute_localAoA(self,iaOa,alpha):
         '''
         Computes the local angle of attack = geometric AoA - induced downwash angle - twist
         @param alpha : the wing angle of attack
         '''
-        self.__localAoA=alpha-iaOa-self.get_discrete_wing().get_twist()
+        self.__localAoA=alpha-iaOa-self.get_wing_geom().get_twist()
         
-        for i in range(self._N):
+        for i in range(self.__N):
             if self.__localAoA[i] > math.pi/2. or self.__localAoA[i] < -math.pi/2.:
                 raise Exception, "Local angle of attack out of bounds [-pi/2, pi/2]"
 
@@ -156,10 +118,10 @@ class LiftingLineWing(DifferentiatedAeroShape):
         '''
         Updates the circulation
         '''
-        for i in range(self._N):
-            self.__gamma[i]=self._airfoils[i].gamma(localAOa[i],Mach=Mach)
-            self.__Dgamma_DlocalAoA[i,i]=self._airfoils[i].dGammaDAoA(localAOa[i],Mach=Mach)
-            self.__Dgamma_Dthickness[i,i]=self._airfoils[i].dGammaDThickness(localAOa[i],Mach=Mach)
+        for i in range(self.__N):
+            self.__gamma[i]=self.__airfoils[i].gamma(localAOa[i],Mach=Mach)
+            self.__Dgamma_DlocalAoA[i,i]=self.__airfoils[i].dGammaDAoA(localAOa[i],Mach=Mach)
+            self.__Dgamma_Dthickness[i,i]=self.__airfoils[i].dGammaDThickness(localAOa[i],Mach=Mach)
             
         return self.__gamma, self.__Dgamma_DlocalAoA,self.__Dgamma_Dthickness
     
@@ -167,14 +129,14 @@ class LiftingLineWing(DifferentiatedAeroShape):
         '''
         Computes the circulation y derivation
         '''
-        self.__dGamma[0:self._N]=gamma
-        self.__dGamma[self._N]=0.0
-        self.__dGamma[1:self._N+1]-=gamma
+        self.__dGamma[0:self.__N]=gamma
+        self.__dGamma[self.__N]=0.0
+        self.__dGamma[1:self.__N+1]-=gamma
         
         #Differenciation
-        self.__DdGammaDy_DGamma[0:self._N,:]=diag(ones([self._N]))
-        self.__DdGammaDy_DGamma[self._N,:]=0.0
-        self.__DdGammaDy_DGamma[1:self._N+1,:]-=diag(ones([self._N]))
+        self.__DdGammaDy_DGamma[0:self.__N,:]=diag(ones([self.__N]))
+        self.__DdGammaDy_DGamma[self.__N,:]=0.0
+        self.__DdGammaDy_DGamma[1:self.__N+1,:]-=diag(ones([self.__N]))
         
         return self.__dGamma, self.__DdGammaDy_DGamma
     
@@ -183,7 +145,7 @@ class LiftingLineWing(DifferentiatedAeroShape):
         Computes the induced angle on an airfoil for a given circulation on the wing.
         '''
         self.__iAoANew=numpy.dot(self.__K,dGamma)
-        self.__DiAoA_DdGamma=numpy.dot(self.__K,diag(ones(self._N+1)))
+        self.__DiAoA_DdGamma=numpy.dot(self.__K,diag(ones(self.__N+1)))
         
         return self.__iAoANew, self.__DiAoA_DdGamma
 
@@ -208,7 +170,7 @@ class LiftingLineWing(DifferentiatedAeroShape):
         DiAoA_DiAoA=dot(DiAoA_DdGamma,DdGammaDy_DiAoA)
         
         self.__R=iAoAold-iAoANew
-        self.__DR_DiAoA=numpy.diag(ones([self._N]))-DiAoA_DiAoA
+        self.__DR_DiAoA=numpy.diag(ones([self.__N]))-DiAoA_DiAoA
         
         return self.__R,self.__DR_DiAoA
     
@@ -350,42 +312,6 @@ class LiftingLineWing(DifferentiatedAeroShape):
         dR=self.dRDThickness(self.__iAoA,alpha,Mach)
         
         return dJ_dThickness+dot(adjoint.T,dR)
-        
-    def __Iterate(self,alpha,Mach):
-        '''
-        For a given angle of attack, iterates to compute the circulation and the downwash angles.
-        @param alpha : angle of attack
-        '''
-        
-        if self.__lastAlpha != alpha:#If computation is not already done for this alpha
-            #Iterate on induced angles
-            self.__iAoA=zeros([self._N])
-            R,DR_DiAoA=self.R(self.__iAoA,alpha,Mach)
-            R0=norm(R)
-            residual=1.0
-            self.__residuals_hist=[]
-            if self.__stop_criteria_type == self.STOP_CRITERIA_RESDUAL:
-                while(residual>self.__stopCriteria):
-                    R,DR_DiAoA=self.R(self.__iAoA,alpha,Mach)
-                    #Newton zero search method
-                    self.__iAoA-=self.__relaxFactor*solve(DR_DiAoA,R)
-                    
-                    #Compute stop criteria
-                    residual=norm(R)/R0
-                    self.__residuals_hist.append(residual)
-                    print "||R||/||R0||= "+str(residual)
-            else:
-                for i in xrange(self.__stopCriteria):
-                    R,DR_DiAoA=self.R(self.__iAoA,alpha,Mach)
-                    #Newton zero search method
-                    self.__iAoA-=self.__relaxFactor*solve(DR_DiAoA,R)
-                    
-                    #Compute stop criteria
-                    residual=norm(R)/R0
-                    self.__residuals_hist.append(residual)
-                    print "||R||/||R0||= "+str(residual)
-                    
-            self.__lastAlpha = alpha
             
     def set_twist(self,twistLaw):
         '''
@@ -399,7 +325,7 @@ class LiftingLineWing(DifferentiatedAeroShape):
         else:
             raise Exception, "Incorrect type for twistLaw : "+str(type(twistLaw))
         
-        self.get_discrete_wing().set_twist(twist)
+        self.get_wing_geom().set_twist(twist)
 
     def set_relative_thickness(self,thickness):
         """
@@ -410,12 +336,12 @@ class LiftingLineWing(DifferentiatedAeroShape):
         elif type(thickness)==type(array([0.])):
             thick=thickness
         else:
-            raise Exception, "Incorrect type for twistLaw : "+str(type(thickness))
+            raise Exception, "Incorrect type for thickness : "+str(type(thickness))
         
-        self.get_discrete_wing().set_relative_thickness(thick)
+        self.get_wing_geom().set_relative_thickness(thick)
         
         print "LLW set_relative_thickness thick = "+str(thick)
-        for airfoil, thickness in zip(self._airfoils,thick):
+        for airfoil, thickness in zip(self.__airfoils,thick):
             airfoil.set_relative_thickness(thickness)
             
     def Cl(self,alpha,beta=0.0,Mach=0.0):
@@ -431,8 +357,8 @@ class LiftingLineWing(DifferentiatedAeroShape):
         self.__Iterate(alpha,Mach)
         
         Cl=0.0
-        for i in range(self._N):
-            af=self._airfoils[i]
+        for i in range(self.__N):
+            af=self.__airfoils[i]
             Cl+=af.Cl(self.__localAoA[i],Mach)*af.getSref()
         Cl/=self.getSref()
         
@@ -451,8 +377,8 @@ class LiftingLineWing(DifferentiatedAeroShape):
         self.__Iterate(alpha,Mach)
  
         Cm=0.0
-        for i in range(self._N):
-            af=self._airfoils[i]
+        for i in range(self.__N):
+            af=self.__airfoils[i]
             Cm+=af.Cm(self.__localAoA[i],Mach)*af.getSref()
         Cm/=self.getSref()
         
@@ -469,10 +395,10 @@ class LiftingLineWing(DifferentiatedAeroShape):
         @param type beta : Float
         '''
         self.__Iterate(alpha,Mach)
-        #print "lifting line thickness = "+str(self._discrete_wing.get_relative_thickness())
+        #print "lifting line thickness = "+str(self._wing_geom.get_relative_thickness())
         Cd=0.0
-        for i in range(self._N):
-            af=self._airfoils[i]
+        for i in range(self.__N):
+            af=self.__airfoils[i]
             aOa=self.__localAoA[i]
             Cdloc=af.Cl(aOa,Mach)*self.__iAoA[i]+af.Cd(aOa,Mach)
             Cd+=Cdloc*af.getSref()
@@ -674,8 +600,8 @@ class LiftingLineWing(DifferentiatedAeroShape):
         self.__Iterate(alpha,Mach)
  
         dCm=0.0
-        for i in range(self._N):
-            af=self._airfoils[i]
+        for i in range(self.__N):
+            af=self.__airfoils[i]
             dCm+=af.CmAlpha(self.__localAoA[i],Mach)*af.getSref()*self.__DlocalAoA_DIaOa[i]
         dCm/=self.getSref()
         
@@ -694,8 +620,8 @@ class LiftingLineWing(DifferentiatedAeroShape):
         self.__Iterate(alpha,Mach)
         
         dCl=0.0
-        for i in range(self._N):
-            af=self._airfoils[i]
+        for i in range(self.__N):
+            af=self.__airfoils[i]
             dCl+=af.ClAlpha(self.__localAoA[i],Mach=Mach)*af.getSref()*self.__DlocalAoA_DIaOa[i]
         dCl/=self.getSref()
         
@@ -713,17 +639,17 @@ class LiftingLineWing(DifferentiatedAeroShape):
         '''
         self.__Iterate(alpha,Mach)
  
-        dCd_dAoA=zeros(self._N)
+        dCd_dAoA=zeros(self.__N)
 
-        for i in range(self._N):#Dependance by induced angles
-            af=self._airfoils[i]
+        for i in range(self.__N):#Dependance by induced angles
+            af=self.__airfoils[i]
             aOa=self.__localAoA[i]
             dCd_dAoA[i]=(af.ClAlpha(aOa,Mach)*self.__iAoA[i]+af.CdAlpha(aOa,Mach))*af.getSref()
  
         dCd=dot(dCd_dAoA,self.__DlocalAoA_DIaOa)
         
-        for i in range(self._N):#Dependance by projection of Cl : the induced drag.
-            af=self._airfoils[i]
+        for i in range(self.__N):#Dependance by projection of Cl : the induced drag.
+            af=self.__airfoils[i]
             dCd[i]+=af.Cl(self.__localAoA[i],Mach)*af.getSref()
         
         dCd/=self.getSref()
@@ -744,8 +670,8 @@ class LiftingLineWing(DifferentiatedAeroShape):
         dlAoADT=self.dLocalAOa_DTwist()
         
         dCl=0.0
-        for i in range(self._N):
-            af=self._airfoils[i]
+        for i in range(self.__N):
+            af=self.__airfoils[i]
             dCl+=af.ClAlpha(self.__localAoA[i],Mach)*af.getSref()*dlAoADT[i]
         dCl/=self.getSref()
         
@@ -765,8 +691,8 @@ class LiftingLineWing(DifferentiatedAeroShape):
         dlAoAdAoA=self.dLocalAOa_DAoA()
         
         dCl=0.0
-        for i in range(self._N):
-            af=self._airfoils[i]
+        for i in range(self.__N):
+            af=self.__airfoils[i]
             dCl+=af.ClAlpha(self.__localAoA[i],Mach)*af.getSref()*dlAoAdAoA[i]
         dCl/=self.getSref()
         
@@ -783,9 +709,9 @@ class LiftingLineWing(DifferentiatedAeroShape):
         @param type beta : Float
         '''
         self.__Iterate(alpha,Mach)
-        dCl=zeros(self._N)
-        for i in range(self._N):
-            af=self._airfoils[i]
+        dCl=zeros(self.__N)
+        for i in range(self.__N):
+            af=self.__airfoils[i]
             dCl[i]=af.dCl_dthickness(self.__localAoA[i],Mach)*af.getSref()
         dCl/=self.getSref()
         
@@ -805,8 +731,8 @@ class LiftingLineWing(DifferentiatedAeroShape):
         dlAoADT=self.dLocalAOa_DTwist()
         
         dCm=0.0
-        for i in range(self._N):
-            af=self._airfoils[i]
+        for i in range(self.__N):
+            af=self.__airfoils[i]
             dCm+=af.CmAlpha(self.__localAoA[i],Mach)*af.getSref()*dlAoADT[i]
         dCm/=self.getSref()
         
@@ -826,8 +752,8 @@ class LiftingLineWing(DifferentiatedAeroShape):
         dlAoAdAoA=self.dLocalAOa_DAoA()
         
         dCm=0.0
-        for i in range(self._N):
-            af=self._airfoils[i]
+        for i in range(self.__N):
+            af=self.__airfoils[i]
             dCm+=af.CmAlpha(self.__localAoA[i],Mach)*af.getSref()*dlAoAdAoA[i]
         dCm/=self.getSref()
         
@@ -843,9 +769,9 @@ class LiftingLineWing(DifferentiatedAeroShape):
         @param type beta : Float
         '''
         self.__Iterate(alpha,Mach)
-        dCm=zeros(self._N)
-        for i in range(self._N):
-            af=self._airfoils[i]
+        dCm=zeros(self.__N)
+        for i in range(self.__N):
+            af=self.__airfoils[i]
             dCm[i]=af.dCm_dthickness(self.__localAoA[i],Mach)*af.getSref()
         dCm/=self.getSref()
         
@@ -865,8 +791,8 @@ class LiftingLineWing(DifferentiatedAeroShape):
         dlAoADT=self.dLocalAOa_DTwist()
  
         dCd=0.0
-        for i in range(self._N):
-            af=self._airfoils[i]
+        for i in range(self.__N):
+            af=self.__airfoils[i]
             aOa=self.__localAoA[i]
             Cdloc=(af.ClAlpha(aOa,Mach)*self.__iAoA[i]+af.CdAlpha(aOa,Mach))*dlAoADT[i]
             dCd+=Cdloc*af.getSref()
@@ -889,8 +815,8 @@ class LiftingLineWing(DifferentiatedAeroShape):
         dlAoAdAoA=self.dLocalAOa_DAoA()
  
         dCd=0.0
-        for i in range(self._N):
-            af=self._airfoils[i]
+        for i in range(self.__N):
+            af=self.__airfoils[i]
             aOa=self.__localAoA[i]
             Cdloc=(af.ClAlpha(aOa,Mach)*self.__iAoA[i]+af.CdAlpha(aOa,Mach))*dlAoAdAoA[i]
             dCd+=Cdloc*af.getSref()
@@ -910,9 +836,9 @@ class LiftingLineWing(DifferentiatedAeroShape):
         @param type beta : Float
         '''
         self.__Iterate(alpha,Mach)
-        dCd=zeros(self._N)
-        for i in range(self._N):
-            af=self._airfoils[i]
+        dCd=zeros(self.__N)
+        for i in range(self.__N):
+            af=self.__airfoils[i]
             aOa=self.__localAoA[i]
             dCd[i]=af.dCl_dthickness(aOa,Mach)*self.__iAoA[i]+af.dCd_dthickness(aOa,Mach)
             dCd[i]*=af.getSref()
@@ -946,28 +872,6 @@ class LiftingLineWing(DifferentiatedAeroShape):
         @param type alpha : Float
         '''
         return self.DCm_DAoA(alpha, beta, Mach)
-                    
-    def getInducedAoA(self):
-        '''
-        Accesor for induced angles
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        '''
-        return self.__iAoA
-    
-    def get_discrete_wing(self):
-        """
-        Accessor for the geometry class
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        """
-        return self._discrete_wing
-
-    def getAspectRatio(self):
-        '''
-        Computes the aspect ratio wingspan²/S
-        '''
-        return self._wingspan**2/self.get_Sref()
     
     def write_gamma_to_file(self,file_name,alpha,beta=0.0,Mach=0.0):
         '''
@@ -990,3 +894,4 @@ class LiftingLineWing(DifferentiatedAeroShape):
             line=str(i)+"\t%24.16e"%self.__gamma[i]+"\n"
             fid.write(line)
         fid.close()
+        

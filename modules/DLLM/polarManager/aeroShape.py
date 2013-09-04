@@ -15,6 +15,37 @@ class AeroShape:
         self.__Sref=Sref
         self.__Lref=Lref
     
+    #-- Accessors
+    def get_Sref(self):
+        '''
+        Accessor for reference surface
+        @return :Sref : the reference surface
+        '''
+        return self.__Sref
+    
+    def get_Lref(self):
+        '''
+        Accessor for reference length
+        @return Lref: the reference length
+        '''
+        return self.__Lref
+    
+    #-- Setters
+    def set_Sref(self,Sref):
+        '''
+        Setter for reference surface
+        @param Sref : the reference surface
+        '''
+        self.__Sref=Sref
+        
+    def set_Lref(self,Lref):
+        '''
+        Setter for reference length
+        @param Lref : the reference length
+        '''
+        self.__Lref=Lref
+    
+    #-- Methods
     def Cl(self,alpha,beta=0.0,Mach=0.0):
         '''
         Lift coefficient function
@@ -97,30 +128,3 @@ class AeroShape:
         Mach=V/c
         return 0.5*rho*self.__Lref*self.__Sref*V*V*self.Cm(alpha,beta,Mach)
     
-    def getSref(self):
-        '''
-        Accessor for reference surface
-        @return :Sref : the reference surface
-        '''
-        return self.__Sref
-    
-    def getLref(self):
-        '''
-        Accessor for reference length
-        @return Lref: the reference length
-        '''
-        return self.__Lref
-    
-    def setSref(self,Sref):
-        '''
-        Setter for reference surface
-        @param Sref : the reference surface
-        '''
-        self.__Sref=Sref
-        
-    def setLref(self,Lref):
-        '''
-        Setter for reference length
-        @param Lref : the reference length
-        '''
-        self.__Lref=Lref

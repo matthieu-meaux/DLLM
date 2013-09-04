@@ -15,9 +15,9 @@ class AirfoilPolar(Airfoil):
     DATABASE_DF_TAG='Df'
     DATABASE_ABSCISSA_TAG='AoA_Thickness'
     
-    def __init__(self,Sref,Lref,database=None,relative_thickness=0.15,aero_coefs_interpolator=None):
+    def __init__(self, database=None, relative_thickness=0.15, interpolator='2DSpline',Sref=1., Lref=1.):
         '''
-        Constructor for a polar of a simple wing.
+        Constructor for a polar of a simple airfoil.
         @param Sref : reference surface
         @param Lref : reference length        
         @param database : the dataBase in which the discrete values are stored, or None
@@ -27,7 +27,7 @@ class AirfoilPolar(Airfoil):
         self.__database=database
         self.__fd_database=Database()
         
-        if aero_coefs_interpolator is None:
+        if interpolator == '2DSpline':
                 print "building new spline 2D Interpolator"
                 x,y=self.__database.get_all_in_outs(self.DATABASE_ABSCISSA_TAG,self.DATABASE_AERO_COEFS_TAG)
                 y=array(y).T
