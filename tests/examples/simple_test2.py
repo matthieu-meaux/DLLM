@@ -24,7 +24,7 @@ wing_geometry=wmf.build_Discrete_wing(n_sect,twist_law=None)
 DS=DesignSpace()
 for i in xrange(n_sect):
     tag='twist'+str(i)
-    DS.add_DV(tag,0.,(-10.,10.))
+    DS.add_DV(tag,0.0,(-10.,10.))
 print DS
 
 # Update geometry with design parameters

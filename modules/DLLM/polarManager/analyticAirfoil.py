@@ -79,7 +79,7 @@ class AnalyticAirfoil(Airfoil):
         '''
         return self.__Cm0
     
-    def ClAlpha(self,alpha,Mach=0.0):
+    def ClAlpha(self,alpha,Mach):
         '''
         Sensibility of Cl to alpha.
         Done by finites differences by default.
@@ -94,7 +94,7 @@ class AnalyticAirfoil(Airfoil):
         
         return self.__ClAlpha_base*thick_corr*prandlt_corr
     
-    def CdAlpha(self,alpha,Mach=0.0):
+    def CdAlpha(self,alpha,Mach):
         '''
         Sensibility of Cd to alpha.
         Done by finites differences by default.
@@ -105,7 +105,7 @@ class AnalyticAirfoil(Airfoil):
         '''
         return 0.0
     
-    def CmAlpha(self,alpha,Mach=0.0):
+    def CmAlpha(self,alpha,Mach):
         '''
         Sensibility of Cm to alpha.
         Done by finites differences by default.
@@ -129,9 +129,9 @@ class AnalyticAirfoil(Airfoil):
         elif Mach<0.3:
             return 1.
         elif Mach<0.7:
-            return 1./sqrt(abs(1.-Mach**2))
+            return 1./numpy.sqrt(abs(1.-Mach**2))
         elif Mach<1.:
-            return 1./sqrt(abs(1.-Mach**2))
+            return 1./numpy.sqrt(abs(1.-Mach**2))
             print "WARNING: Mach numbers higher than 0.7 are not handled by this correction due to compressibility effects."
         else:
             raise Exception, 'ERROR: Analytic airfoil with Prandtl correction cannot be used for Mach > 1.'

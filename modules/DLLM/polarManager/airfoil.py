@@ -39,7 +39,7 @@ class Airfoil(DifferentiatedAeroShape):
         Computes the circulation due to lift at aOa alpha
         @param alpha: angle of Attack 
         '''
-        return 0.5*self.getLref()*self.Cl(alpha,Mach=Mach)
+        return 0.5*self.get_Lref()*self.Cl(alpha,Mach=Mach)
     
     def dCl_dthickness(self,alpha,Mach=0.0):
         """
@@ -59,12 +59,18 @@ class Airfoil(DifferentiatedAeroShape):
         """
         return 0.0  
      
-    def dGammaDAoA(self,alpha,Mach=0.0):
+    def DGammaDAoA(self,alpha,Mach):
         '''
         Computes the sensibility of the circulation to the angle of attack
         @param alpha: angle of Attack 
         '''
-        return 0.5*self.getLref()*self.ClAlpha(alpha,Mach=Mach)
+        return 0.5*self.get_Lref()*self.ClAlpha(alpha,Mach)
+
+    def DGammaDThickness(self,alpha,Mach):
+        """
+        Sensibility of Gamma to the relative thickness of the airfoil.
+        """
+        return 0.5*self.get_Lref()*self.dCl_dthickness(alpha,Mach)
     
     def get_scaled_copy(self,Sref,Lref,relative_thickness=0.0):
         """
@@ -72,8 +78,4 @@ class Airfoil(DifferentiatedAeroShape):
         """
         return Airfoil(Sref,Lref,relative_thickness=relative_thickness)
     
-    def dGammaDThickness(self,alpha,Mach=0.0):
-        """
-        Sensibility of Gamma to the relative thickness of the airfoil.
-        """
-        return 0.5*self.getLref()*self.dCl_dthickness(alpha,Mach)
+

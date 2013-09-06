@@ -6,7 +6,7 @@
  
 # - Local imports -
 from DLLM.polarManager.differentiatedAeroShape import DifferentiatedAeroShape
-from DLLM.DLLMKernel.DLLMGeom import DLLMGeom
+from DLLM.DLLMKernel.DLLMMesh import DLLMMesh
 from DLLM.DLLMKernel.DLLMDirect import DLLMDirect
 
 class LiftingLineWing(DifferentiatedAeroShape):
@@ -24,7 +24,7 @@ class LiftingLineWing(DifferentiatedAeroShape):
         self.__airfoils   = airfoils
         self.__OC         = OC
         
-        self.__DLLMGeom   = DLLMGeom(self)
+        self.__DLLMMesh   = DLLMMesh(self)
         self.__DLLMDirect = DLLMDirect(self)
     
     #-- Accessors
@@ -38,7 +38,10 @@ class LiftingLineWing(DifferentiatedAeroShape):
         return self.__OC
     
     def get_K(self):
-        return self.__DLLMGeom.get_K()
+        return self.__DLLMMesh.get_K()
+    
+    def get_convergence_history(self):
+        return self.__DLLMDirect.get_convergence_history()
     
     #-- Setters
     def set_relax_factor(self, relax_factor):
@@ -50,72 +53,6 @@ class LiftingLineWing(DifferentiatedAeroShape):
     #-- Run methods
     def run_direct(self):
         self.__DLLMDirect.run()
-        
-    def get_convergence_history(self):
-        """
-        Accessor to the last computation convergence history as a list of residuals normalized by the first iteration residual.
-        """
-        return self.__residuals_hist
-        
-    def compute_localAoA(self,iaOa,alpha):
-        '''
-        Computes the local angle of attack = geometric AoA - induced downwash angle - twist
-        @param alpha : the wing angle of attack
-        '''
-        self.__localAoA=alpha-iaOa-self.get_wing_geom().get_twist()
-        
-        for i in range(self.__N):
-            if self.__localAoA[i] > math.pi/2. or self.__localAoA[i] < -math.pi/2.:
-                raise Exception, "Local angle of attack out of bounds [-pi/2, pi/2]"
-
-        return self.__localAoA,self.__DlocalAoA_DIaOa#last term is constant
-        
-    def dLocalAOa_DTwist(self):
-        '''
-        Computes the local angle of attack sensibility to twist
-        '''
-        return self.__DlocalAoA_DTwist #constant due to the expression of localAoA
-
-    def dLocalAOa_DAoA(self):
-        '''
-        Computes the local angle of attack sensibility to twist
-        '''
-        return self.__DlocalAoA_DAoA #constant due to the expression of localAoA
-            
-    def compute_gamma(self,localAOa,Mach):
-        '''
-        Updates the circulation
-        '''
-        for i in range(self.__N):
-            self.__gamma[i]=self.__airfoils[i].gamma(localAOa[i],Mach=Mach)
-            self.__Dgamma_DlocalAoA[i,i]=self.__airfoils[i].dGammaDAoA(localAOa[i],Mach=Mach)
-            self.__Dgamma_Dthickness[i,i]=self.__airfoils[i].dGammaDThickness(localAOa[i],Mach=Mach)
-            
-        return self.__gamma, self.__Dgamma_DlocalAoA,self.__Dgamma_Dthickness
-    
-    def compute_dGamma(self,gamma):
-        '''
-        Computes the circulation y derivation
-        '''
-        self.__dGamma[0:self.__N]=gamma
-        self.__dGamma[self.__N]=0.0
-        self.__dGamma[1:self.__N+1]-=gamma
-        
-        #Differenciation
-        self.__DdGammaDy_DGamma[0:self.__N,:]=diag(ones([self.__N]))
-        self.__DdGammaDy_DGamma[self.__N,:]=0.0
-        self.__DdGammaDy_DGamma[1:self.__N+1,:]-=diag(ones([self.__N]))
-        
-        return self.__dGamma, self.__DdGammaDy_DGamma
-    
-    def compute_iAoA(self,dGamma):
-        '''
-        Computes the induced angle on an airfoil for a given circulation on the wing.
-        '''
-        self.__iAoANew=numpy.dot(self.__K,dGamma)
-        self.__DiAoA_DdGamma=numpy.dot(self.__K,diag(ones(self.__N+1)))
-        
-        return self.__iAoANew, self.__DiAoA_DdGamma
 
     def dRDTwist(self,iAoA,alpha,Mach):
         '''
@@ -217,7 +154,6 @@ class LiftingLineWing(DifferentiatedAeroShape):
         Computes the adjoint of the problem
         @param dJ_diAoA : sensibility of the objective function to the state vector : induced aoa
         '''
-
         return solve(self.__DR_DiAoA.T,-dJ_diAoA.T)
     
     def DJ_DTwist(self,dJ_dTwist,adjoint,alpha,Mach):

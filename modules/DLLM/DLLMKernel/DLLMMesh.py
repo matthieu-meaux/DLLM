@@ -7,7 +7,7 @@ import numpy
 from numpy import array, transpose,outer, ones, zeros, copy, divide, diag, dot
 from numpy.linalg import norm, solve
 
-class DLLMGeom:
+class DLLMMesh:
     """
     Class that deals with geometry for the lifting mine wing solver
     """
