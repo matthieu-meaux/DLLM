@@ -48,6 +48,6 @@ DLLMEval.set_relax_factor(0.99)
 DLLMEval.set_stop_criteria(residual=1.e-6)
 # 
 # # Run DLLM evaluator
-# DLLMEval.run()
+DLLMEval.run_direct()
 
 # Get outputs (Lift, Drag, loads,...)

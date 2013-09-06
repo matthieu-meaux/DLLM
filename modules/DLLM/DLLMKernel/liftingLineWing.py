@@ -51,38 +51,6 @@ class LiftingLineWing(DifferentiatedAeroShape):
     def run_direct(self):
         self.__DLLMDirect.run()
         
-    #-- direct solver methods
-    def __init_iterations(self):
-        self.__iAoA=zeros([self.__N])
-        R,DR_DiAoA=self.R(self.__iAoA,alpha,Mach)
-        self.__R0       = norm(R)
-        self.__residual = 1.0
-        self.__residuals_hist = []
-        
-    def __sub_iteration(self):
-        R,DR_DiAoA=self.R(self.__iAoA,alpha,Mach)
-        #Newton zero search method
-        self.__iAoA-=self.__relaxFactor*solve(DR_DiAoA,R)
-        
-        #Compute stop criteria
-        self.__residual=norm(R)/R0
-        self.__residuals_hist.append(self.__residual)
-        print "||R||/||R0||= "+str(self.__residual)
-        
-    def __Iterate(self,alpha,Mach):
-        '''
-        For a given angle of attack, iterates to compute the circulation and the downwash angles.
-        @param alpha : angle of attack
-        '''
-        self.__init_iterations()
-        
-        if self.__stop_criteria_type == self.STOP_CRITERIA_RESIDUAL:
-            while(self.__residual>self.__stopCriteria):
-                self.__sub_iteration()
-        else:
-            for i in xrange(self.__stopCriteria):
-                self.__sub_iteration() 
-         
     def get_convergence_history(self):
         """
         Accessor to the last computation convergence history as a list of residuals normalized by the first iteration residual.
@@ -149,31 +117,6 @@ class LiftingLineWing(DifferentiatedAeroShape):
         
         return self.__iAoANew, self.__DiAoA_DdGamma
 
-    def R(self,iAoA,alpha,Mach):
-        '''
-        Computes the residual and its derivatives
-        @param alpha : the wing angle of attack
-        @param iAoA : the induced angles vector
-        @return: Residual, Gradient of residual
-        '''
-        iAoAold=copy(iAoA)
-        localAoA,DlocalAoA_DIaOa=self.compute_localAOa(iAoA,alpha)
-        
-        gamma, Dgamma_DlocalAoA,Dgamma_Dthickness=self.compute_gamma(localAoA,Mach)
-        Dgamma_DiAoA=dot(Dgamma_DlocalAoA,DlocalAoA_DIaOa)
-        
-        dGamma, DdGammaDy_DGamma=self.compute_dGamma(gamma)
-        DdGammaDy_DiAoA=dot(DdGammaDy_DGamma,Dgamma_DiAoA)
-        
-        iAoANew, DiAoA_DdGamma=self.compute_iAoA(dGamma)
-        
-        DiAoA_DiAoA=dot(DiAoA_DdGamma,DdGammaDy_DiAoA)
-        
-        self.__R=iAoAold-iAoANew
-        self.__DR_DiAoA=numpy.diag(ones([self.__N]))-DiAoA_DiAoA
-        
-        return self.__R,self.__DR_DiAoA
-    
     def dRDTwist(self,iAoA,alpha,Mach):
         '''
         Sensibility of residuals to twist.
