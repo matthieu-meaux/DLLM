@@ -19,6 +19,7 @@ class DLLMDirect:
         self.__LLW = LLW
         self.__K   = self.__LLW.get_K()
         self.__N   = self.get_wing_geom().get_n_elements()
+        self.__computed = False
         
         # initialize numerical parameters
         self.__init_numerical_parameters()
@@ -33,11 +34,26 @@ class DLLMDirect:
     def get_airfoils(self):
         return self.__LLW.get_airfoils()
     
+    def get_OC(self):
+        return self.__LLW.get_OC()
+    
     def get_iAoA(self):
         return self.__iAoA
     
-    def get_OC(self):
-        return self.__LLW.get_OC()
+    def get_localAoA(self):
+        return self.__localAoA
+    
+    def get_R(self):
+        return self.__R
+    
+    def get_DR_DiAoA(self):
+        return self.__DR_DiAoA
+    
+    def get_DlocalAoA_DiAoA(self):
+        return self.__DlocalAoA_DiAoA
+    
+    def get_func_list(self):
+        return self.__DLLMPost.get_func_list()
     
     def get_convergence_history(self):
         """
@@ -50,6 +66,13 @@ class DLLMDirect:
  
     def get_DLocalAOa_DAoA(self):
         return self.__DlocalAoA_DAoA
+    
+    def is_computed(self):
+        return self.__computed
+    
+    #-- Setters
+    def set_computed(self, bool=True):
+        self.__computed = bool
     
     #-- Numerical parameters related methods
     def __init_numerical_parameters(self):
@@ -78,7 +101,7 @@ class DLLMDirect:
     
     #-- Computation related methods
     def run(self):
-        print 'Start direct solver newton iteration...'
+        print 'Direct solver newton iterations...'
         self.__init_iterations()
         
         if self.__stop_criteria_type == self.STOP_CRITERIA_RESIDUAL:
@@ -87,6 +110,8 @@ class DLLMDirect:
         else:
             for i in xrange(self.__stopCriteria):
                 self.__iteration()
+                
+        self.set_computed(True)
         print 'Done.'
                 
     def __init_local_variables(self):
@@ -97,7 +122,6 @@ class DLLMDirect:
         self.__DR_DiAoA = zeros([self.__N])
         self.__residual = None
         self.__residuals_hist=[]
-        
         
         # Angle of attack variables
         self.__localAoA = zeros([self.__N])
@@ -163,7 +187,7 @@ class DLLMDirect:
         #self.__localAoA=alpha-iaOa-self.get_wing_geom().get_twist()
         self.__localAoA = AoA + self.get_wing_geom().get_twist() - self.__iAoA 
         
-        for i in range(self.__N):
+        for i in xrange(self.__N):
             if self.__localAoA[i] > numpy.pi/2. or self.__localAoA[i] < -numpy.pi/2.:
                 raise Exception, "Local angle of attack out of bounds [-pi/2, pi/2]"
             
@@ -174,7 +198,7 @@ class DLLMDirect:
         Update the circulation
         '''
         Mach = self.get_OC().get_Mach()
-        for i in range(self.__N):
+        for i in xrange(self.__N):
             self.__gamma[i] = self.get_airfoils()[i].gamma(self.__localAoA[i],Mach)
             self.__Dgamma_DlocalAoA[i,i]  = self.get_airfoils()[i].DGammaDAoA(self.__localAoA[i],Mach)
             self.__Dgamma_Dthickness[i,i] = self.get_airfoils()[i].DGammaDThickness(self.__localAoA[i],Mach)
@@ -203,4 +227,66 @@ class DLLMDirect:
         self.__iAoANew       = dot(self.__K,self.__dGamma)
         self.__DiAoA_DdGamma = dot(self.__K,diag(ones(self.__N+1)))
         self.__DiAoA_DiAoA   = dot(self.__DiAoA_DdGamma,self.__DdGammaDy_DiAoA)
+        
+#     def dRDTwist(self,iAoA,alpha,Mach):
+#         '''
+#         Sensibility of residuals to twist.
+#         @param iAoA : the induced angles vector
+#         @param alpha : the wing angle of attack
+#         '''
+# 
+#         localAoA,DlocalAoA_DIaOa=self.compute_localAOa(iAoA,alpha)
+#         
+#         gamma, Dgamma_DlocalAoA,Dgamma_Dthickness=self.compute_gamma(localAoA,Mach)
+#         Dgamma_DTwist=dot(Dgamma_DlocalAoA,self.dLocalAOa_DTwist())
+#         
+#         dGamma, DdGammaDy_DGamma=self.compute_dGamma(gamma)
+#         DdGammaDy_DTwist=dot(DdGammaDy_DGamma,Dgamma_DTwist)
+#         
+#         iAoANew, DiAoA_DdGamma=self.compute_iAoA(dGamma)
+#         
+#         dRdTwist=-dot(DiAoA_DdGamma,DdGammaDy_DTwist)
+#         
+#         return dRdTwist
+# 
+#     def dRDAoA(self,iAoA,alpha,Mach):
+#         '''
+#         Sensibility of residuals to angle of attack
+#         @param iAoA : the induced angles vector
+#         @param alpha : the wing angle of attack
+#         '''
+# 
+#         localAoA,DlocalAoA_DIaOa=self.compute_localAOa(iAoA,alpha)
+#         
+#         gamma, Dgamma_DlocalAoA,Dgamma_Dthickness=self.compute_gamma(localAoA,Mach)
+#         Dgamma_DAoA=dot(Dgamma_DlocalAoA,self.dLocalAOa_DAoA())
+#         
+#         dGamma, DdGammaDy_DGamma=self.compute_dGamma(gamma)
+#         DdGammaDy_DAoA=dot(DdGammaDy_DGamma,Dgamma_DAoA)
+#         
+#         iAoANew, DiAoA_DdGamma=self.compute_iAoA(dGamma)
+#         
+#         dRAoA=-dot(DiAoA_DdGamma,DdGammaDy_DAoA)# (-) Because R=Gamma_input-Gamma_computed_from_input
+#         
+#         return dRAoA
+#     
+#     def dRDThickness(self,iAoA,alpha,Mach):
+#         '''
+#         Sensibility of residuals to relative thickness of airfoils.
+#         @param iAoA : the induced angles vector
+#         @param alpha : the wing angle of attack
+#         '''
+# 
+#         localAoA,DlocalAoA_DIaOa=self.compute_localAOa(iAoA,alpha)
+#         
+#         gamma, Dgamma_DlocalAoA,Dgamma_Dthickness=self.compute_gamma(localAoA,Mach)
+#         
+#         dGamma, DdGammaDy_DGamma=self.compute_dGamma(gamma)
+#         DdGammaDy_DThickness=dot(DdGammaDy_DGamma,Dgamma_Dthickness)
+#         
+#         iAoANew, DiAoA_DdGamma=self.compute_iAoA(dGamma)
+#         
+#         dRdThickness=-dot(DiAoA_DdGamma,DdGammaDy_DThickness)
+#         
+#         return dRdThickness
             

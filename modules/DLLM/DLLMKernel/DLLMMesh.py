@@ -13,14 +13,7 @@ class DLLMMesh:
     """
     def __init__(self, LLW):
         self.__LLW = LLW
-        self.__N   = self.get_wing_geom().get_n_elements()
-        
-        # compute Lref and Sref from LLW attributes
-        self.__set_Lref_Sref()
-        
-        # Set computational geometry
-        self.__K   = None 
-        self.__setGeom()
+        self.recompute()
     
     #-- Accessors
     def get_airfoils(self):
@@ -40,6 +33,16 @@ class DLLMMesh:
         self.__LLW.set_Lref(Lref)
     
     #-- Methods
+    def recompute(self):
+        self.__N   = self.get_wing_geom().get_n_elements()
+        
+        # compute Lref and Sref from LLW attributes
+        self.__set_Lref_Sref()
+        
+        # Set computational geometry
+        self.__K   = None 
+        self.__setGeom()
+        
     def getAspectRatio(self):
         '''
         Computes the aspect ratio wingspan²/S

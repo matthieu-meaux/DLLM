@@ -1,290 +1,210 @@
 # -*-mode: python; py-indent-offset: 4; tab-width: 8; coding: iso-8859-1 -*-
 # Copyright: Airbus
 # @version: 1.0
-# @author: François Gallard
+# @author: Francois Gallard
 # @author: Matthieu MEAUX (for refactoring)
- 
-# - Local imports -
-from DLLM.polarManager.differentiatedAeroShape import DifferentiatedAeroShape
-from DLLM.DLLMKernel.DLLMMesh import DLLMMesh
-from DLLM.DLLMKernel.DLLMDirect import DLLMDirect
 
-class LiftingLineWing(DifferentiatedAeroShape):
-    def __init__(self, wing_geom, airfoils, OC):
-        '''
-        Constructor for wings based on lifting line theory
-        @param wing_geom : the wing geometry
-        @param Lref : Reference length for the moments computation
-        @param relaxFactor : relaxation factor for induced angles computation
-        @param stopCriteria : the stop criteria for the iterative method for computing the wing circulation.
-        '''
-        DifferentiatedAeroShape.__init__(self,1.,1.) # Sref and Lref are computed by __set_Lref_Sref
+from numpy import zeros, dot
+
+class DLLMPost:
+    def __init__(self, LLW):
+        """
+        Post-Processing module compatible with adjoint for DLLM
+        """
+        self.__LLW = LLW
+        self.__func_list   = None
+        self.__func_dim    = 0
+        self.__func_values = None
+        self.__dfunc_diAoA = None
+        self.__N           = self.get_wing_geom().get_n_elements()
+        self.__computed    = False
         
-        self.__wing_geom  = wing_geom
-        self.__airfoils   = airfoils
-        self.__OC         = OC
-        
-        self.__DLLMMesh   = DLLMMesh(self)
-        self.__DLLMDirect = DLLMDirect(self)
+    #-- computed related methods
+    def is_computed(self):
+        return self.__computed
     
+    def set_computed(self, bool=True):
+        self.__computed = bool
+        
     #-- Accessors
+    def get_func_list(self):
+        return self.__func_list
+    
+    def get_dfunc_diAoA(self):
+        return self.__dfunc_diAoA
+    
     def get_wing_geom(self):
-        return self.__wing_geom
+        return self.__LLW.get_wing_geom()
     
     def get_airfoils(self):
-        return self.__airfoils
+        return self.__LLW.get_airfoils()
     
     def get_OC(self):
-        return self.__OC
+        return self.__LLW.get_OC()
     
-    def get_K(self):
-        return self.__DLLMMesh.get_K()
+    def get_localAoA(self):
+        return self.__LLW.get_localAoA()
     
-    def get_convergence_history(self):
-        return self.__DLLMDirect.get_convergence_history()
+    def get_DlocalAoA_DiAoA(self):
+        return self.__LLW.get_DlocalAoA_DiAoA()
     
-    #-- Setters
-    def set_relax_factor(self, relax_factor):
-        self.__DLLMDirect.set_relax_factor(relax_factor)
-        
-    def set_stop_criteria(self, residual=None, n_it=None):
-        self.__DLLMDirect.set_stop_criteria(residual=residual, n_it=n_it)
-        
-    #-- Run methods
-    def run_direct(self):
-        self.__DLLMDirect.run()
-
-    def dRDTwist(self,iAoA,alpha,Mach):
-        '''
-        Sensibility of residuals to twist.
-        @param iAoA : the induced angles vector
-        @param alpha : the wing angle of attack
-        '''
-
-        localAoA,DlocalAoA_DIaOa=self.compute_localAOa(iAoA,alpha)
-        
-        gamma, Dgamma_DlocalAoA,Dgamma_Dthickness=self.compute_gamma(localAoA,Mach)
-        Dgamma_DTwist=dot(Dgamma_DlocalAoA,self.dLocalAOa_DTwist())
-        
-        dGamma, DdGammaDy_DGamma=self.compute_dGamma(gamma)
-        DdGammaDy_DTwist=dot(DdGammaDy_DGamma,Dgamma_DTwist)
-        
-        iAoANew, DiAoA_DdGamma=self.compute_iAoA(dGamma)
-        
-        dRdTwist=-dot(DiAoA_DdGamma,DdGammaDy_DTwist)
-        
-        return dRdTwist
-
-    def dRDAoA(self,iAoA,alpha,Mach):
-        '''
-        Sensibility of residuals to angle of attack
-        @param iAoA : the induced angles vector
-        @param alpha : the wing angle of attack
-        '''
-
-        localAoA,DlocalAoA_DIaOa=self.compute_localAOa(iAoA,alpha)
-        
-        gamma, Dgamma_DlocalAoA,Dgamma_Dthickness=self.compute_gamma(localAoA,Mach)
-        Dgamma_DAoA=dot(Dgamma_DlocalAoA,self.dLocalAOa_DAoA())
-        
-        dGamma, DdGammaDy_DGamma=self.compute_dGamma(gamma)
-        DdGammaDy_DAoA=dot(DdGammaDy_DGamma,Dgamma_DAoA)
-        
-        iAoANew, DiAoA_DdGamma=self.compute_iAoA(dGamma)
-        
-        dRAoA=-dot(DiAoA_DdGamma,DdGammaDy_DAoA)# (-) Because R=Gamma_input-Gamma_computed_from_input
-        
-        return dRAoA
+    def get_iAoA(self):
+        return self.__LLW.get_iAoA()
     
-    def dRDThickness(self,iAoA,alpha,Mach):
-        '''
-        Sensibility of residuals to relative thickness of airfoils.
-        @param iAoA : the induced angles vector
-        @param alpha : the wing angle of attack
-        '''
-
-        localAoA,DlocalAoA_DIaOa=self.compute_localAOa(iAoA,alpha)
-        
-        gamma, Dgamma_DlocalAoA,Dgamma_Dthickness=self.compute_gamma(localAoA,Mach)
-        
-        dGamma, DdGammaDy_DGamma=self.compute_dGamma(gamma)
-        DdGammaDy_DThickness=dot(DdGammaDy_DGamma,Dgamma_Dthickness)
-        
-        iAoANew, DiAoA_DdGamma=self.compute_iAoA(dGamma)
-        
-        dRdThickness=-dot(DiAoA_DdGamma,DdGammaDy_DThickness)
-        
-        return dRdThickness
+    def get_Sref(self):
+        return self.__LLW.get_Sref()
     
-    def adjoint_correction(self,df_diAoA):
-        '''
-        Computes the adjoint correction
-        @param df_diAoA : sensibility of the objective function to the state vector : induced aoa
-        '''
-        adj=self.adjoint(df_diAoA)
+    #-- Setters 
+    def set_func_list(self, func_list):
+        if func_list is None:
+            #func_list = ['Lift', 'Drag', 'Moment', 'Cl', 'Cd', 'Cm']
+            func_list = ['Lift', 'Drag', 'Cl', 'Cd']
+        self.__func_list   = func_list
+        self.__func_dim    = len(func_list)
+        self.__func_values = [None]*self.__func_dim
+        self.__dfunc_diAoA = [None]*self.__func_dim
         
-        return dot(adj.T,self.__R)
-    
-    def adj_correction_Cl(self,alpha, beta=0., Mach=0.):
-        '''
-        Computes the adjoint correction to Cl
-        '''
-        df_diAoA=self.dCl_dIaOa(alpha, beta, Mach)
+    #-- Run method
+    def run(self, func_list=None):
+        self.set_func_list(func_list)
+        for i,func in enumerate(self.__func_list):
+            if   func == 'Cl':
+                val     = self.__Cl()
+                dfdiAoA = self.__dCl_diAoA()
+            elif func == 'Cd':
+                val = self.__Cd()
+                dfdiAoA = self.__dCd_diAoA()
+            elif func == 'Cm':
+                val = self.__Cm()
+            elif func == 'Lift':
+                val = self.__Lift()
+                dfdiAoA = self.__dLift_diAoA()
+            elif func == 'Drag':
+                val= self.__Drag()
+                dfdiAoA = self.__dDrag_diAoA()
+            else:
+                val = None
+            self.__func_values[i]=val
+            self.__dfunc_diAoA[i]=dfdiAoA
         
-        return self.adjoint_correction(df_diAoA)
-
-    def adj_correction_Cd(self,alpha, beta=0., Mach=0.):
-        '''
-        Computes the adjoint correction to Cd
-        '''
-        df_diAoA=self.dCd_dIaOa(alpha, beta, Mach)
-        
-        return self.adjoint_correction(df_diAoA)
-    
-    def adj_correction_Cm(self,alpha, beta=0., Mach=0.):
-        '''
-        Computes the adjoint correction to Cm
-        '''
-        df_diAoA=self.dCm_dIaOa(alpha, beta, Mach)
-        
-        return self.adjoint_correction(df_diAoA)        
-    
-    def adjoint(self,dJ_diAoA):
-        '''
-        Computes the adjoint of the problem
-        @param dJ_diAoA : sensibility of the objective function to the state vector : induced aoa
-        '''
-        return solve(self.__DR_DiAoA.T,-dJ_diAoA.T)
-    
-    def DJ_DTwist(self,dJ_dTwist,adjoint,alpha,Mach):
-        '''
-        Builds the gradient of J with the adjoint field
-        @param dJ_dTwist : partial derivative of the objective function to the twist
-        @param adjoint : the adjoint field
-        @param alpha : the wing angle of attack
-        '''
-        self.__Iterate(alpha,Mach)
-        dR=self.dRDTwist(self.__iAoA,alpha,Mach)
-        
-        return dJ_dTwist+dot(adjoint.T,dR)
-    
-    def DJ_DAoA(self,dJ_dAoA,adjoint,alpha,Mach):
-        '''
-        Builds the gradient of J with the adjoint field
-        @param dJ_dTwist : partial derivative of the objective function to the twist
-        @param adjoint : the adjoint field
-        @param alpha : the wing angle of attack
-        '''
-        self.__Iterate(alpha,Mach)
-        dR=self.dRDAoA(self.__iAoA,alpha,Mach)
-        
-        return dJ_dAoA+dot(adjoint.T,dR)
-
-    def DJ_DThick(self,dJ_dThickness,adjoint,alpha,Mach):
-        '''
-        Builds the gradient of J with the adjoint field
-        @param dJ_dThickness : partial derivative of the objective function to the twist
-        @param adjoint : the adjoint field
-        @param alpha : the wing angle of attack
-        '''
-        self.__Iterate(alpha,Mach)
-        dR=self.dRDThickness(self.__iAoA,alpha,Mach)
-        
-        return dJ_dThickness+dot(adjoint.T,dR)
-            
-    def set_twist(self,twistLaw):
-        '''
-        Sets the twist law of the wing
-        @param twistLaw : the twist law
-        '''
-        if type(twistLaw)==type([]):
-            twist=array(twistLaw)
-        elif type(twistLaw)==type(array([0.])):
-            twist=twistLaw
-        else:
-            raise Exception, "Incorrect type for twistLaw : "+str(type(twistLaw))
-        
-        self.get_wing_geom().set_twist(twist)
-
-    def set_relative_thickness(self,thickness):
-        """
-        Setter for the height of the airfoils
-        """
-        if type(thickness)==type([]):
-            thick=array(thickness)
-        elif type(thickness)==type(array([0.])):
-            thick=thickness
-        else:
-            raise Exception, "Incorrect type for thickness : "+str(type(thickness))
-        
-        self.get_wing_geom().set_relative_thickness(thick)
-        
-        print "LLW set_relative_thickness thick = "+str(thick)
-        for airfoil, thickness in zip(self.__airfoils,thick):
-            airfoil.set_relative_thickness(thickness)
-            
-    def Cl(self,alpha,beta=0.0,Mach=0.0):
-        '''
-        Lift coefficient function
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        @param Mach : Mach number
-        @param type Mach : Float
-        @param beta : sideslip angle
-        @param type beta : Float
-        '''
-        self.__Iterate(alpha,Mach)
-        
+        self.__display_info()
+        self.set_computed(True)
+                
+    #-- Computation methods
+    def __Cl(self):
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        airfoils = self.get_airfoils()
         Cl=0.0
-        for i in range(self.__N):
-            af=self.__airfoils[i]
-            Cl+=af.Cl(self.__localAoA[i],Mach)*af.getSref()
-        Cl/=self.getSref()
-        
+        for i in xrange(self.__N):
+            af = airfoils[i]
+            Cl+=af.Cl(localAoA[i],Mach)*af.get_Sref()
+        Cl/=self.get_Sref()
         return Cl
     
-    def Cm(self,alpha,beta=0.0,Mach=0.0):
-        '''
-        Lift coefficient function
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        @param Mach : Mach number
-        @param type Mach : Float
-        @param beta : sideslip angle
-        @param type beta : Float        
-        '''
-        self.__Iterate(alpha,Mach)
- 
-        Cm=0.0
+    def __dCl_diAoA(self):
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        DlocalAoA_DiAoA = self.get_DlocalAoA_DiAoA()
+        airfoils = self.get_airfoils()
+        dCl_diAoA=zeros(self.__N)
         for i in range(self.__N):
-            af=self.__airfoils[i]
-            Cm+=af.Cm(self.__localAoA[i],Mach)*af.getSref()
-        Cm/=self.getSref()
+            af = airfoils[i]
+            dCl_diAoA+=af.ClAlpha(localAoA[i],Mach=Mach)*af.get_Sref()*DlocalAoA_DiAoA[i]
+        dCl_diAoA/=self.get_Sref()
         
-        return Cm
+        return dCl_diAoA
+    
+    def __Cd(self):
+        Mach     = self.get_OC().get_Mach()
+        airfoils = self.get_airfoils()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        Cd=0.0 
+        for i in xrange(self.__N):
+            af      = airfoils[i]
+            AoA     = localAoA[i]
+            iAoAloc = iAoA[i]
+            Cdloc=af.Cl(AoA,Mach)*iAoAloc+af.Cd(AoA,Mach)
+            Cd+=Cdloc*af.get_Sref()
  
-    def Cd(self,alpha,beta=0.0,Mach=0.0):
-        '''
-        Drag function
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        @param Mach : Mach number
-        @param type Mach : Float
-        @param beta : sideslip angle
-        @param type beta : Float
-        '''
-        self.__Iterate(alpha,Mach)
-        #print "lifting line thickness = "+str(self._wing_geom.get_relative_thickness())
-        Cd=0.0
-        for i in range(self.__N):
-            af=self.__airfoils[i]
-            aOa=self.__localAoA[i]
-            Cdloc=af.Cl(aOa,Mach)*self.__iAoA[i]+af.Cd(aOa,Mach)
-            Cd+=Cdloc*af.getSref()
- 
-        Cd/=self.getSref()
- 
+        Cd/=self.get_Sref()
         return Cd
+    
+    def __dCd_diAoA(self):
+        Mach     = self.get_OC().get_Mach()
+        airfoils = self.get_airfoils()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        DlocalAoA_DiAoA = self.get_DlocalAoA_DiAoA()
+        
+        dCd_dAoA=zeros(self.__N)
+        for i in range(self.__N):#Dependance by induced angles
+            af=airfoils[i]
+            AoA=localAoA[i]
+            dCd_dAoA[i]=(af.ClAlpha(AoA,Mach)*iAoA[i]+af.CdAlpha(AoA,Mach))*af.get_Sref()
+ 
+        dCd_diAoA=dot(dCd_dAoA,DlocalAoA_DiAoA)
+        
+        for i in range(self.__N):#Dependance by projection of Cl : the induced drag.
+            af=airfoils[i]
+            dCd_diAoA[i]+=af.Cl(localAoA[i],Mach)*af.get_Sref()
+        
+        dCd_diAoA/=self.get_Sref()
+        
+        return dCd_diAoA
+    
+    def __Cm(self):
+        # Issue in moments calculation, no distances or sweep taken into account...
+        print 'WARNING: Cm calculation to be checked...'
+        Mach     = self.get_OC().get_Mach()
+        airfoils = self.get_airfoils()
+        localAoA = self.get_localAoA()
+        Cm=0.0
+        for i in xrange(self.__N):
+            af=airfoils[i]
+            Cm+=af.Cm(localAoA[i],Mach)*af.get_Sref()
+        Cm/=self.get_Sref()
+        return Cm
+    
+    def __Lift(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        Cl = self.__Cl()
+        Lift = Pdyn*Sref*Cl
+        return Lift
+    
+    def __dLift_diAoA(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        dCl_diAoA=self.__dCl_diAoA()
+        dLift_diAoA = Pdyn*Sref*dCl_diAoA
+        return dLift_diAoA
+        
+    def __Drag(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        Cd = self.__Cd()
+        Drag = Pdyn*Sref*Cd
+        return Drag
+    
+    def __dDrag_diAoA(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        dCd_diAoA = self.__dCd_diAoA()
+        dDrag_diAoA = Pdyn*Sref*dCd_diAoA
+        return dDrag_diAoA
+    
+    #-- Display methods
+    def __display_info(self):
+        print self.get_OC()
+        print '\n*** aerodynamic functions and coefficients ***'
+        for i, func in enumerate(self.__func_list):
+            if func in ['Lift', 'Drag']:
+                unit = '(N)'
+            else:
+                unit = ''
+            print self.__func_list[i]+'\t=\t'+str(self.__func_values[i])+' '+unit
     
     def DCl_DTwist(self,alpha,beta=0.0,Mach=0.0):
         '''
@@ -486,54 +406,9 @@ class LiftingLineWing(DifferentiatedAeroShape):
         
         return dCm
      
-    def dCl_dIaOa(self,alpha,beta=0.0,Mach=0.0):
-        '''
-        Lift coefficient function partial derivation with respect to iduced angles
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        @param Mach : Mach number
-        @param type Mach : Float
-        @param beta : sideslip angle
-        @param type beta : Float
-        '''
-        self.__Iterate(alpha,Mach)
-        
-        dCl=0.0
-        for i in range(self.__N):
-            af=self.__airfoils[i]
-            dCl+=af.ClAlpha(self.__localAoA[i],Mach=Mach)*af.getSref()*self.__DlocalAoA_DIaOa[i]
-        dCl/=self.getSref()
-        
-        return dCl
-    
-    def dCd_dIaOa(self,alpha,beta=0.0,Mach=0.0):
-        '''
-        Drag function partial derivation with respect to iduced angles
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        @param Mach : Mach number
-        @param type Mach : Float
-        @param beta : sideslip angle
-        @param type beta : Float
-        '''
-        self.__Iterate(alpha,Mach)
- 
-        dCd_dAoA=zeros(self.__N)
 
-        for i in range(self.__N):#Dependance by induced angles
-            af=self.__airfoils[i]
-            aOa=self.__localAoA[i]
-            dCd_dAoA[i]=(af.ClAlpha(aOa,Mach)*self.__iAoA[i]+af.CdAlpha(aOa,Mach))*af.getSref()
- 
-        dCd=dot(dCd_dAoA,self.__DlocalAoA_DIaOa)
-        
-        for i in range(self.__N):#Dependance by projection of Cl : the induced drag.
-            af=self.__airfoils[i]
-            dCd[i]+=af.Cl(self.__localAoA[i],Mach)*af.getSref()
-        
-        dCd/=self.getSref()
-        
-        return dCd
+    
+
     
     def __d_part_Cl_d_part_Twist(self,alpha,beta=0.0,Mach=0.0):
         '''
@@ -725,52 +600,29 @@ class LiftingLineWing(DifferentiatedAeroShape):
         
         return dCd  
        
-    def ClAlpha(self,alpha, beta=0., Mach=0.):
-        '''
-        Sensibility of Cl to alpha.
-        Done by adjoint method.
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        '''
-        return self.DCl_DAoA(alpha, beta, Mach)
-    
-    def CdAlpha(self,alpha, beta=0., Mach=0.):
-        '''
-        Sensibility of Cd to alpha.
-        Done by adjoint method.
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        '''
-        return self.DCd_DAoA(alpha, beta, Mach)
-    
-    def CmAlpha(self,alpha, beta=0., Mach=0.):
-        '''
-        Sensibility of Cm to alpha.
-        Done by adjoint method.
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        '''
-        return self.DCm_DAoA(alpha, beta, Mach)
-    
-    def write_gamma_to_file(self,file_name,alpha,beta=0.0,Mach=0.0):
-        '''
-        Writes the circulation repartition in a file
-        @param file_name : the file to write data
-        @param type file_name : String
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        @param Mach : Mach number
-        @param type Mach : Float
-        @param beta : sideslip angle
-        @param type beta : Float
-        '''
-        self.__Iterate(alpha,Mach)
-        fid=open(file_name,'w')
-        line="#Slice\t%24s"%"Circulation"+"\n"
-        fid.write(line)
-        i=0
-        for i in range(len(self.__gamma)):
-            line=str(i)+"\t%24.16e"%self.__gamma[i]+"\n"
-            fid.write(line)
-        fid.close()
-        
+#     def ClAlpha(self,alpha, beta=0., Mach=0.):
+#         '''
+#         Sensibility of Cl to alpha.
+#         Done by adjoint method.
+#         @param alpha: angle of Attack 
+#         @param type alpha : Float
+#         '''
+#         return self.DCl_DAoA(alpha, beta, Mach)
+#     
+#     def CdAlpha(self,alpha, beta=0., Mach=0.):
+#         '''
+#         Sensibility of Cd to alpha.
+#         Done by adjoint method.
+#         @param alpha: angle of Attack 
+#         @param type alpha : Float
+#         '''
+#         return self.DCd_DAoA(alpha, beta, Mach)
+#     
+#     def CmAlpha(self,alpha, beta=0., Mach=0.):
+#         '''
+#         Sensibility of Cm to alpha.
+#         Done by adjoint method.
+#         @param alpha: angle of Attack 
+#         @param type alpha : Float
+#         '''
+#         return self.DCm_DAoA(alpha, beta, Mach)

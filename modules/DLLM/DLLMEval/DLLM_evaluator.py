@@ -2,7 +2,7 @@ import sys
 import numpy
 from DLLM.polarManager.analyticAirfoil import AnalyticAirfoil
 from DLLM.polarManager.airfoilPolar import AirfoilPolar
-from DLLM.DLLMKernel.liftingLineWing import LiftingLineWing
+from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
 
 class DLLMEvaluator:
     ERROR_MSG='ERROR in DLLMEvaluator.'
@@ -66,6 +66,20 @@ class DLLMEvaluator:
         print '\n--- Run DLLM model - Direct mode ---'
         self.__DLLM.run_direct()
         
+    def run_post(self, func_list=None):
+        """
+        Run the post processing for the lifting line model
+        """
+        print '\n--- Run DLLM model - Post mode ---'
+        self.__DLLM.run_post(func_list=func_list)
+        
+    def run_adjoint(self):
+        """
+        Run the adjoint methods for the lifting line model
+        """
+        print '\n--- Run DLLM model - Adjoint mode ---'
+        self.__DLLM.run_adjoint()
+        
     def build_linear_airfoil(self, AoA0=0., Cd0=0., Cm0=0., relative_thickness=0., Sref=1., Lref=1., set_as_ref=True):
         degToRad = numpy.pi/180.
         airfoil  = AnalyticAirfoil(AoA0=degToRad*AoA0, Cd0=Cd0, Cm0=Cm0, relative_thickness= relative_thickness, Sref=Sref, Lref=Lref)
@@ -126,6 +140,6 @@ class DLLMEvaluator:
         return Lloc*wingspan/float(n)
     
     def __build_DLLM_model(self):
-        self.__DLLM=LiftingLineWing(self.__wing_geom,self.__linked_airfoils, self.__OC)
+        self.__DLLM=DLLMSolver(self.__wing_geom,self.__linked_airfoils, self.__OC)
     
         

@@ -34,7 +34,13 @@ print DS
 # Process should be (geometry+update)->(solver set up + run)->results
 
 # Build operating condition object
-OC=OperatingCondition('cond1',Mach=0.5,AoA=3.0)
+OC=OperatingCondition('cond1',atmospheric_model='simple')
+OC.set_Mach(0.5)
+OC.set_AoA(3.0)
+OC.set_altitude(10000.)
+OC.set_T0_deg(20.)
+OC.set_P0(101325.)
+OC.compute_athmosphere()
 print OC
 
 # Set up DLLM evaluator
@@ -49,5 +55,7 @@ DLLMEval.set_stop_criteria(residual=1.e-6)
 # 
 # # Run DLLM evaluator
 DLLMEval.run_direct()
+DLLMEval.run_post()
+DLLMEval.run_adjoint()
 
 # Get outputs (Lift, Drag, loads,...)
