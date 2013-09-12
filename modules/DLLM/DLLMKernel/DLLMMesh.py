@@ -77,6 +77,40 @@ class DLLMMesh:
         self.__K=divide(ones([self.__N,self.__N+1]),YminEta)
         self.__K/=4.*numpy.pi
         
+        
+#     Why this method is not in the geometry handling ? If more geometrical parameters, what happens?
+#     def set_relative_thickness(self,thickness):
+#         """
+#         Setter for the height of the airfoils
+#         """
+#         if type(thickness)==type([]):
+#             thick=array(thickness)
+#         elif type(thickness)==type(array([0.])):
+#             thick=thickness
+#         else:
+#             raise Exception, "Incorrect type for thickness : "+str(type(thickness))
+#         
+#         self.get_wing_geom().set_relative_thickness(thick)
+#         
+#         print "LLW set_relative_thickness thick = "+str(thick)
+#         for airfoil, thickness in zip(self.__airfoils,thick):
+#             airfoil.set_relative_thickness(thickness)
+
+#     def set_twist(self,twistLaw):
+#         '''
+#         Sets the twist law of the wing
+#         @param twistLaw : the twist law
+#         '''
+#         if type(twistLaw)==type([]):
+#             twist=array(twistLaw)
+#         elif type(twistLaw)==type(array([0.])):
+#             twist=twistLaw
+#         else:
+#             raise Exception, "Incorrect type for twistLaw : "+str(type(twistLaw))
+#         
+#         self.get_wing_geom().set_twist(twist)
+
+        
 #     What is the use of these methods ??? estimation of the structual stiffness matrix ? Why there ?
 #     def __setGeomWeissinger(self):
 #         '''

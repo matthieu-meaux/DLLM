@@ -40,10 +40,6 @@ class DLLMAdjoint:
     def get_dfunc_diAoA(self):
         return self.__LLW.get_dfunc_diAoA()
     
-    # Residual related methods
-    def get_DRDiAoA(self):
-        return self.__LLW.getDRDiAoA()
-    
     # Adjoint methods
     def adjoint(self,dJ_diAoA):
         '''
@@ -69,6 +65,40 @@ class DLLMAdjoint:
             self.__adj_list[i]=self.adjoint(self.get_dfunc_diAoA()[i])
             corr=self.__adjoint_correction(self.__adj_list[i])
             print '  - Convergence adjoint correction for '+str(func)+' = '+str(corr)
-
+            
+    def DJ_DTwist(self,dJ_dTwist,adjoint,alpha,Mach):
+        '''
+        Builds the gradient of J with the adjoint field
+        @param dJ_dTwist : partial derivative of the objective function to the twist
+        @param adjoint : the adjoint field
+        @param alpha : the wing angle of attack
+        '''
+        self.__Iterate(alpha,Mach)
+        dR=self.dRDTwist(self.__iAoA,alpha,Mach)
         
+        return dJ_dTwist+dot(adjoint.T,dR)
+    
+    def DJ_DAoA(self,dJ_dAoA,adjoint,alpha,Mach):
+        '''
+        Builds the gradient of J with the adjoint field
+        @param dJ_dTwist : partial derivative of the objective function to the twist
+        @param adjoint : the adjoint field
+        @param alpha : the wing angle of attack
+        '''
+        self.__Iterate(alpha,Mach)
+        dR=self.dRDAoA(self.__iAoA,alpha,Mach)
+        
+        return dJ_dAoA+dot(adjoint.T,dR)
+
+    def DJ_DThick(self,dJ_dThickness,adjoint,alpha,Mach):
+        '''
+        Builds the gradient of J with the adjoint field
+        @param dJ_dThickness : partial derivative of the objective function to the twist
+        @param adjoint : the adjoint field
+        @param alpha : the wing angle of attack
+        '''
+        self.__Iterate(alpha,Mach)
+        dR=self.dRDThickness(self.__iAoA,alpha,Mach)
+        
+        return dJ_dThickness+dot(adjoint.T,dR)
     

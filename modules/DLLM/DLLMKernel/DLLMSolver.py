@@ -116,6 +116,9 @@ class DLLMSolver:
     def set_stop_criteria(self, residual=None, n_it=None):
         self.__DLLMDirect.set_stop_criteria(residual=residual, n_it=n_it)
         
+    def set_gamma_file_name(self, gamma_f_name):
+        self.__DLLMDirect.set_gamma_file_name(gamma_f_name)
+        
     #-- Run methods
     def run_direct(self):
         self.__DLLMDirect.run()
@@ -134,91 +137,3 @@ class DLLMSolver:
         else:
             print ERROR_MSG+'Cannot run adjoint if post-processing is not computed'       
     
-    def DJ_DTwist(self,dJ_dTwist,adjoint,alpha,Mach):
-        '''
-        Builds the gradient of J with the adjoint field
-        @param dJ_dTwist : partial derivative of the objective function to the twist
-        @param adjoint : the adjoint field
-        @param alpha : the wing angle of attack
-        '''
-        self.__Iterate(alpha,Mach)
-        dR=self.dRDTwist(self.__iAoA,alpha,Mach)
-        
-        return dJ_dTwist+dot(adjoint.T,dR)
-    
-    def DJ_DAoA(self,dJ_dAoA,adjoint,alpha,Mach):
-        '''
-        Builds the gradient of J with the adjoint field
-        @param dJ_dTwist : partial derivative of the objective function to the twist
-        @param adjoint : the adjoint field
-        @param alpha : the wing angle of attack
-        '''
-        self.__Iterate(alpha,Mach)
-        dR=self.dRDAoA(self.__iAoA,alpha,Mach)
-        
-        return dJ_dAoA+dot(adjoint.T,dR)
-
-    def DJ_DThick(self,dJ_dThickness,adjoint,alpha,Mach):
-        '''
-        Builds the gradient of J with the adjoint field
-        @param dJ_dThickness : partial derivative of the objective function to the twist
-        @param adjoint : the adjoint field
-        @param alpha : the wing angle of attack
-        '''
-        self.__Iterate(alpha,Mach)
-        dR=self.dRDThickness(self.__iAoA,alpha,Mach)
-        
-        return dJ_dThickness+dot(adjoint.T,dR)
-            
-    def set_twist(self,twistLaw):
-        '''
-        Sets the twist law of the wing
-        @param twistLaw : the twist law
-        '''
-        if type(twistLaw)==type([]):
-            twist=array(twistLaw)
-        elif type(twistLaw)==type(array([0.])):
-            twist=twistLaw
-        else:
-            raise Exception, "Incorrect type for twistLaw : "+str(type(twistLaw))
-        
-        self.get_wing_geom().set_twist(twist)
-
-    def set_relative_thickness(self,thickness):
-        """
-        Setter for the height of the airfoils
-        """
-        if type(thickness)==type([]):
-            thick=array(thickness)
-        elif type(thickness)==type(array([0.])):
-            thick=thickness
-        else:
-            raise Exception, "Incorrect type for thickness : "+str(type(thickness))
-        
-        self.get_wing_geom().set_relative_thickness(thick)
-        
-        print "LLW set_relative_thickness thick = "+str(thick)
-        for airfoil, thickness in zip(self.__airfoils,thick):
-            airfoil.set_relative_thickness(thickness)
-    
-    def write_gamma_to_file(self,file_name,alpha,beta=0.0,Mach=0.0):
-        '''
-        Writes the circulation repartition in a file
-        @param file_name : the file to write data
-        @param type file_name : String
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        @param Mach : Mach number
-        @param type Mach : Float
-        @param beta : sideslip angle
-        @param type beta : Float
-        '''
-        self.__Iterate(alpha,Mach)
-        fid=open(file_name,'w')
-        line="#Slice\t%24s"%"Circulation"+"\n"
-        fid.write(line)
-        i=0
-        for i in range(len(self.__gamma)):
-            line=str(i)+"\t%24.16e"%self.__gamma[i]+"\n"
-            fid.write(line)
-        fid.close()

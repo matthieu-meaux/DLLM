@@ -37,11 +37,11 @@ print DS
 OC=OperatingCondition('cond1',atmospheric_model='simple')
 OC.set_Mach(0.5)
 OC.set_AoA(3.0)
-OC.set_altitude(10000.)
+OC.set_altitude(5000.)
 OC.set_T0_deg(20.)
 OC.set_P0(101325.)
-OC.compute_athmosphere()
-print OC
+OC.set_humidity(100.)
+OC.compute_atmosphere()
 
 # Set up DLLM evaluator
 DLLMEval = DLLMEvaluator(wing_geometry,OC)
