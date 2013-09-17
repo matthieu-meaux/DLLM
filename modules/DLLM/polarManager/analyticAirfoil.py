@@ -2,7 +2,6 @@
 # Copyright: Airbus
 # @version: 1.0.2
 # @author: François Gallard
-# @author: Matthieu MEAUX
 
 # - Local imports -
 import numpy

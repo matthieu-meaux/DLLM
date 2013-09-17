@@ -51,8 +51,13 @@ class DLLMSolver:
     def get_Sref(self):
         return self.__Sref
     
+    #-- DLLMMesh accessors
     def get_K(self):
         return self.__DLLMMesh.get_K()
+    
+    #-- DLLMDirect accessors
+    def is_direct_computed(self):
+        return self.__DLLMDirect.is_computed()
     
     def get_convergence_history(self):
         return self.__DLLMDirect.get_convergence_history()
@@ -69,8 +74,27 @@ class DLLMSolver:
     def get_DR_DiAoA(self):
         return self.__DLLMDirect.get_DR_DiAoA()
     
+    def get_DR_DTwist(self):
+        return self.__DLLMDirect.get_DR_DTwist()
+    
+    def get_DR_DAoA(self):
+        return self.__DLLMDirect.get_DR_DAoA()
+    
+    def get_DR_DThickness(self):
+        return self.__DLLMDirect.get_DR_DThickness()
+    
     def get_DlocalAoA_DiAoA(self):
         return self.__DLLMDirect.get_DlocalAoA_DiAoA()
+    
+    def get_DlocalAoA_DTwist(self):
+        return self.__DLLMDirect.get_DlocalAoA_DTwist()
+    
+    def get_DlocalAoA_DAoA(self):
+        return self.__DLLMDirect.get_DlocalAoA_DAoA()
+    
+    #-- DLLMPost accessors
+    def is_post_computed(self):
+        return self.__DLLMPost.is_computed()
     
     def get_func_list(self):
         return self.__DLLMPost.get_func_list()
@@ -78,12 +102,15 @@ class DLLMSolver:
     def get_dfunc_diAoA(self):
         return self.__DLLMPost.get_dfunc_diAoA()
     
-    def is_direct_computed(self):
-        return self.__DLLMDirect.is_computed()
+    def get_dpJ_dpTwist(self):
+        return self.__DLLMPost.get_dpJ_dpTwist()
     
-    def is_post_computed(self):
-        return self.__DLLMPost.is_computed()
-        
+    def get_dpJ_dpAoA(self):
+        return self.__DLLMPost.get_dpJ_dpAoA()
+    
+    def get_dpJ_dpThickness(self):
+        return self.__DLLMPost.get_dpJ_dpThickness()
+     
     #-- Setters
     def __reinit_modules(self):
         self.__DLLMDirect.set_computed(False)
@@ -110,6 +137,7 @@ class DLLMSolver:
     def set_Sref(self, Sref):
         self.__Sref = Sref
     
+    #-- DLLMDirect setters
     def set_relax_factor(self, relax_factor):
         self.__DLLMDirect.set_relax_factor(relax_factor)
         

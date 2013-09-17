@@ -50,8 +50,23 @@ class DLLMDirect:
     def get_DR_DiAoA(self):
         return self.__DR_DiAoA
     
+    def get_DR_DTwist(self):
+        return self.__DR_DTwist
+    
+    def get_DR_DAoA(self):
+        return self.__DR_DAoA
+    
+    def get_DR_DThickness(self):
+        return self.__DR_DThickness
+    
     def get_DlocalAoA_DiAoA(self):
         return self.__DlocalAoA_DiAoA
+    
+    def get_DlocalAoA_DTwist(self):
+        return self.__DlocalAoA_DTwist
+ 
+    def get_DlocalAoA_DAoA(self):
+        return self.__DlocalAoA_DAoA
     
     def get_func_list(self):
         return self.__DLLMPost.get_func_list()
@@ -61,12 +76,6 @@ class DLLMDirect:
         Accessor to the last computation convergence history as a list of residuals normalized by the first iteration residual.
         """
         return self.__residuals_hist
-    
-    def get_DLocalAOa_DTwist(self):
-        return self.__DlocalAoA_DTwist
- 
-    def get_DLocalAOa_DAoA(self):
-        return self.__DlocalAoA_DAoA
     
     def is_computed(self):
         return self.__computed
@@ -171,7 +180,7 @@ class DLLMDirect:
         #Compute stop criteria
         self.__residual=norm(self.__R)/self.__R0
         self.__residuals_hist.append(self.__residual)
-        print "||R||/||R0||= "+str(self.__residual)
+        print "  ||R||/||R0||= "+str(self.__residual)
                 
     #-- Residual related methods
     def __Residual(self):
