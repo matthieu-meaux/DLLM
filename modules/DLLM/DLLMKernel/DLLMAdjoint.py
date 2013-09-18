@@ -100,7 +100,6 @@ class DLLMAdjoint:
             self.__dJ_dTwist[i] = self.__DJ_DTwist(dpJ_dpTwist[i], self.__adj_list[i])
             self.__dJ_dAoA[i]   = self.__DJ_DAoA(dpJ_dpAoA[i], self.__adj_list[i])
             self.__dJ_dThick[i] = self.__DJ_DThick(dpJ_dpThick[i], self.__adj_list[i])
-            print self.__dJ_dThick[i]
             
     def __DJ_DTwist(self,dpJ_dpTwist,adjoint):
         dR_dTwist=self.get_DR_DTwist()
