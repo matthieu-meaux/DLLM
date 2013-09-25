@@ -95,22 +95,7 @@ class DLLMMesh:
 #         print "LLW set_relative_thickness thick = "+str(thick)
 #         for airfoil, thickness in zip(self.__airfoils,thick):
 #             airfoil.set_relative_thickness(thickness)
-
-#     def set_twist(self,twistLaw):
-#         '''
-#         Sets the twist law of the wing
-#         @param twistLaw : the twist law
-#         '''
-#         if type(twistLaw)==type([]):
-#             twist=array(twistLaw)
-#         elif type(twistLaw)==type(array([0.])):
-#             twist=twistLaw
-#         else:
-#             raise Exception, "Incorrect type for twistLaw : "+str(type(twistLaw))
-#         
-#         self.get_wing_geom().set_twist(twist)
-
-        
+  
 #     What is the use of these methods ??? estimation of the structual stiffness matrix ? Why there ?
 #     def __setGeomWeissinger(self):
 #         '''
