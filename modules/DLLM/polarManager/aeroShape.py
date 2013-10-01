@@ -9,41 +9,37 @@ class AeroShape:
     def __init__(self,Sref,Lref):
         '''
         Constructor
-        @param Sref : reference surface
-        @param Lref : reference length
         '''
-        self.__Sref=Sref
-        self.__Lref=Lref
+        self.__Sref = Sref
+        self.__Lref = Lref
+        self.__Sref_grad = None
+        self.__Lred_grad = None
     
     #-- Accessors
     def get_Sref(self):
-        '''
-        Accessor for reference surface
-        @return :Sref : the reference surface
-        '''
         return self.__Sref
     
     def get_Lref(self):
-        '''
-        Accessor for reference length
-        @return Lref: the reference length
-        '''
         return self.__Lref
+    
+    def get_Sref_grad(self):
+        return self.__Sref_grad
+    
+    def get_Lref_grad(self):
+        return self.__Lref_grad
     
     #-- Setters
     def set_Sref(self,Sref):
-        '''
-        Setter for reference surface
-        @param Sref : the reference surface
-        '''
         self.__Sref=Sref
         
     def set_Lref(self,Lref):
-        '''
-        Setter for reference length
-        @param Lref : the reference length
-        '''
         self.__Lref=Lref
+        
+    def set_Sref_grad(self, Sref_grad):
+        self.__Sref_grad = Sref_grad
+    
+    def set_Lref_grad(self, Lref_grad):
+        self.__Lref_grad = Lref_grad
     
     #-- Methods
     def Cl(self,alpha,beta=0.0,Mach=0.0):

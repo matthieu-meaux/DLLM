@@ -13,7 +13,7 @@ class AnalyticAirfoil(Airfoil):
     """
     THICKNESS_CORRECTION=0.7698
     
-    def __init__(self, AoA0=0., Cd0=0., Cm0=0.0, relative_thickness=0.0, Sref=1., Lref=1.):
+    def __init__(self, AoA0=0., Cd0=0., Cm0=0.0, rel_thick=0.0, Sref=1., Lref=1.):
         '''
         Constructor for airfoils
         @param AoA0:angle of attack of null lift
@@ -23,10 +23,10 @@ class AnalyticAirfoil(Airfoil):
         @param Sref : reference surface
         @param Lref : reference length
         '''
-        if relative_thickness<0. or relative_thickness>0.25:
+        if rel_thick<0. or rel_thick>0.25:
             raise Exception, "Relative thickness must be >0. and <0.25"
         
-        Airfoil.__init__(self,Sref,Lref,relative_thickness)
+        Airfoil.__init__(self,Sref,Lref,rel_thick)
         self.__AoA0=AoA0
         self.__Cd0=Cd0
         self.__Cm0=Cm0
@@ -34,85 +34,36 @@ class AnalyticAirfoil(Airfoil):
         self.__ClAlpha_base=2.*numpy.pi
         
     def Cl(self,alpha,Mach=0.0):
-        '''
-        Lift coefficient function
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        @param Mach : Mach number
-        @param type Mach : Float
-        '''
         return self.ClAlpha(alpha,Mach)*(alpha-self.__AoA0)
     
-    def dCl_dthickness(self,alpha,Mach=0.0):
+    def dCl_dchi(self,alpha,Mach=0.0):
         """
         Derivative of Cl with respect to relative thickness
         """
-        return self.__d_ClAlpha_d_thickness(alpha,Mach)*(alpha-self.__AoA0)
+        return self.__d_ClAlpha_d_chi(alpha,Mach)*(alpha-self.__AoA0)
     
-    def __d_ClAlpha_d_thickness(self,alpha,Mach=0.0):
-        """
-        Derivative of ClAlpha with respect to relative thickness
-        """        
+    def __d_ClAlpha_d_chi(self, alpha,Mach=0.0):
         prandlt_corr=self.Prandtl_correction(Mach)
-        dthick_corr=self.THICKNESS_CORRECTION
-        
-        return self.__ClAlpha_base*dthick_corr*prandlt_corr
-
+        dthick_corr=self.THICKNESS_CORRECTION*self.get_rel_thick_grad()
+        dClalpha_dchi=self.__ClAlpha_base*dthick_corr*prandlt_corr
+        return dClalpha_dchi
+    
     def Cd(self,alpha,Mach=0.0):
-        '''
-        Drag coefficient function
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        @param Mach : Mach number
-        @param type Mach : Float
-        '''
         return self.__Cd0
     
     def Cm(self,alpha,Mach=0.0):
-        '''
-        Pitch moment coefficient
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        @param Mach : Mach number
-        @param type Mach : Float
-        '''
         return self.__Cm0
     
     def ClAlpha(self,alpha,Mach):
-        '''
-        Sensibility of Cl to alpha.
-        Done by finites differences by default.
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        @param Mach : Mach number
-        @param type Mach : Float
-        '''
-        
-        thick_corr=1.+self.THICKNESS_CORRECTION*self.get_relative_thickness()
+        thick_corr=1.+self.THICKNESS_CORRECTION*self.get_rel_thick()
         prandlt_corr=self.Prandtl_correction(Mach)
         
         return self.__ClAlpha_base*thick_corr*prandlt_corr
     
     def CdAlpha(self,alpha,Mach):
-        '''
-        Sensibility of Cd to alpha.
-        Done by finites differences by default.
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        @param Mach : Mach number
-        @param type Mach : Float
-        '''
         return 0.0
     
     def CmAlpha(self,alpha,Mach):
-        '''
-        Sensibility of Cm to alpha.
-        Done by finites differences by default.
-        @param alpha: angle of Attack 
-        @param type alpha : Float
-        @param Mach : Mach number
-        @param type Mach : Float
-        '''
         return 0.0
     
     def Prandtl_correction(self,Mach):
@@ -135,16 +86,16 @@ class AnalyticAirfoil(Airfoil):
         else:
             raise Exception, 'ERROR: Analytic airfoil with Prandtl correction cannot be used for Mach > 1.'
     
-    def get_scaled_copy(self,relative_thickness=None, Sref=None,Lref=None):
+    def get_scaled_copy(self, Sref=None,Lref=None, rel_thick=None):
         """
         Instances a copy of this airfoil with different Lref and Sref
         @param Sref : reference surface
         @param Lref : reference length
         """
-        if relative_thickness is None:
-            relative_thickness = self.get_relative_thickness()
+        if rel_thick is None:
+            rel_thick = self.get_rel_thick()
         if Sref is None:
             Sref=self.get_Sref()
         if Lref is None:
             Lref=self.get_Lref()
-        return AnalyticAirfoil(self.__AoA0,self.__Cd0, self.__Cm0,relative_thickness=relative_thickness, Sref=Sref, Lref=Lref)
+        return AnalyticAirfoil(self.__AoA0,self.__Cd0, self.__Cm0,rel_thick=rel_thick, Sref=Sref, Lref=Lref)

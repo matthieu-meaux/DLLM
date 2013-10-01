@@ -12,7 +12,7 @@ from DLLM.DLLMKernel.DLLMAdjoint import DLLMAdjoint
 
 class DLLMSolver:
     ERROR_MSG='ERROR in DLLMSolver.'
-    def __init__(self, wing_geom, airfoils, OC):
+    def __init__(self, wing_param, OC):
         '''
         Constructor for wings based on lifting line theory
         @param wing_geom : the wing geometry
@@ -20,13 +20,13 @@ class DLLMSolver:
         @param relaxFactor : relaxation factor for induced angles computation
         @param stopCriteria : the stop criteria for the iterative method for computing the wing circulation.
         '''
-        
-        self.__wing_geom  = wing_geom
-        self.__airfoils   = airfoils
+        self.__wing_param = wing_param
         self.__OC         = OC
         
         self.__Lref       = 0.
         self.__Sref       = 0.
+        self.__Lref_grad  = None
+        self.__Sref_grad  = None
         
         self.__DLLMMesh   = DLLMMesh(self)
         self.__DLLMDirect = DLLMDirect(self)
@@ -36,11 +36,11 @@ class DLLMSolver:
         self.set_OC(OC)
     
     #-- Accessors
-    def get_wing_geom(self):
-        return self.__wing_geom
+    def get_wing_param(self):
+        return self.__wing_param
     
     def get_airfoils(self):
-        return self.__airfoils
+        return self.get_wing_param().get_linked_airfoils()
     
     def get_OC(self):
         return self.__OC
@@ -48,8 +48,14 @@ class DLLMSolver:
     def get_Lref(self):
         return self.__Lref
     
+    def get_Lref_grad(self):
+        return self.__Lref_grad
+    
     def get_Sref(self):
         return self.__Sref
+    
+    def get_Sref_grad(self):
+        return self.__Sref_grad
     
     #-- DLLMMesh accessors
     def get_K(self):
@@ -74,23 +80,14 @@ class DLLMSolver:
     def get_DR_DiAoA(self):
         return self.__DLLMDirect.get_DR_DiAoA()
     
-    def get_DR_DTwist(self):
-        return self.__DLLMDirect.get_DR_DTwist()
-    
-    def get_DR_DAoA(self):
-        return self.__DLLMDirect.get_DR_DAoA()
-    
-    def get_DR_DThickness(self):
-        return self.__DLLMDirect.get_DR_DThickness()
+    def get_DR_Dchi(self):
+        return self.__DLLMDirect.get_DR_Dchi()
     
     def get_DlocalAoA_DiAoA(self):
         return self.__DLLMDirect.get_DlocalAoA_DiAoA()
     
-    def get_DlocalAoA_DTwist(self):
-        return self.__DLLMDirect.get_DlocalAoA_DTwist()
-    
-    def get_DlocalAoA_DAoA(self):
-        return self.__DLLMDirect.get_DlocalAoA_DAoA()
+    def get_DlocalAoA_Dchi(self):
+        return self.__DLLMDirect.get_DlocalAoA_Dchi()
     
     #-- DLLMPost accessors
     def is_post_computed(self):
@@ -102,15 +99,16 @@ class DLLMSolver:
     def get_dfunc_diAoA(self):
         return self.__DLLMPost.get_dfunc_diAoA()
     
-    def get_dpJ_dpTwist(self):
-        return self.__DLLMPost.get_dpJ_dpTwist()
+    def get_dpJ_dpchi(self):
+        return self.__DLLMPost.get_dpJ_dpchi()
     
-    def get_dpJ_dpAoA(self):
-        return self.__DLLMPost.get_dpJ_dpAoA()
+    #-- DLLMAdjoint accessors
+    def get_adjoint(self):
+        return self.__DLLMAdjoint.get_adjoint()
     
-    def get_dpJ_dpThickness(self):
-        return self.__DLLMPost.get_dpJ_dpThickness()
-     
+    def get_dJ_dchi(self):
+        return self.__DLLMAdjoint.get_dJ_dchi()
+    
     #-- Setters
     def __reinit_modules(self):
         self.__DLLMDirect.set_computed(False)
@@ -121,8 +119,8 @@ class DLLMSolver:
         self.__OC = OC
         self.__reinit_modules()
         
-    def set_wing_geom(self, wing_geom):
-        self.__wing_geom  = wing_geom
+    def set_wing_param(self, wing_param):
+        self.__wing_param  = wing_param
         self.__DLLMMesh.recompute()
         self.__reinit_modules()
         
@@ -134,8 +132,14 @@ class DLLMSolver:
     def set_Lref(self, Lref):
         self.__Lref = Lref
         
+    def set_Lref_grad(self, Lref_grad):
+        self.__Lref_grad = Lref_grad
+        
     def set_Sref(self, Sref):
         self.__Sref = Sref
+        
+    def set_Sref_grad(self, Sref_grad):
+        self.__Sref_grad = Sref_grad
     
     #-- DLLMDirect setters
     def set_relax_factor(self, relax_factor):

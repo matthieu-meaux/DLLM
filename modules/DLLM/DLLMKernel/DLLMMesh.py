@@ -13,14 +13,15 @@ class DLLMMesh:
     """
     def __init__(self, LLW):
         self.__LLW = LLW
+        self.__ndv = self.get_wing_param().get_ndv()
         self.recompute()
     
     #-- Accessors
     def get_airfoils(self):
         return self.__LLW.get_airfoils()
     
-    def get_wing_geom(self):
-        return self.__LLW.get_wing_geom()
+    def get_wing_param(self):
+        return self.__LLW.get_wing_param()
     
     def get_K(self):
         return self.__K
@@ -31,10 +32,16 @@ class DLLMMesh:
         
     def set_Lref(self, Lref):
         self.__LLW.set_Lref(Lref)
+        
+    def set_Sref_grad(self, Sref_grad):
+        self.__LLW.set_Sref_grad(Sref_grad)
+        
+    def set_Lref_grad(self, Lref_grad):
+        self.__LLW.set_Lref_grad(Lref_grad)
     
     #-- Methods
     def recompute(self):
-        self.__N   = self.get_wing_geom().get_n_elements()
+        self.__N   = self.get_wing_param().get_n_sect()
         
         # compute Lref and Sref from LLW attributes
         self.__set_Lref_Sref()
@@ -47,8 +54,8 @@ class DLLMMesh:
         '''
         Computes the aspect ratio wingspan²/S
         '''
-        wingspan = self.get_wing_geom().get_wing_span()
-        Sref     = self.get_wing_geom().get_Sref()
+        wingspan = self.get_wing_param().get_wing_span()
+        Sref     = self.get_wing_param().get_Sref()
         return wingspan**2/Sref
         
     #-- Private methods
@@ -58,25 +65,33 @@ class DLLMMesh:
         """
         Lref=0.
         Sref=0.
+        Lref_grad=zeros(self.__ndv)
+        Sref_grad=zeros(self.__ndv)
+        
         for airfoil in self.get_airfoils():
             Sref+=airfoil.get_Sref()
             Lref+=airfoil.get_Lref()
+            Sref_grad+=airfoil.get_Sref_grad()
+            Lref_grad+=airfoil.get_Lref_grad()
         Lref/=self.__N
+        Lref_grad/=self.__N
         
         self.set_Sref(Sref)
         self.set_Lref(Lref)
+        self.set_Sref_grad(Sref_grad)
+        self.set_Lref_grad(Lref_grad)
         
     def __setGeom(self):
         '''
         Sets the geometry of the wing, builds the stiffness geometry matrix
         '''
-        eta=self.get_wing_geom().get_eta()[:,1]
-        y=self.get_wing_geom().get_XYZ()[:,1]
+        eta=self.get_wing_param().get_eta()[1,:]
+        y=self.get_wing_param().get_XYZ()[1,:]
+        
         
         YminEta=transpose(outer(ones([self.__N+1]),y))-outer(ones([self.__N]),eta)
         self.__K=divide(ones([self.__N,self.__N+1]),YminEta)
         self.__K/=4.*numpy.pi
-        
         
 #     Why this method is not in the geometry handling ? If more geometrical parameters, what happens?
 #     def set_relative_thickness(self,thickness):

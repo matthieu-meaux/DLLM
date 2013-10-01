@@ -13,69 +13,48 @@ class Airfoil(DifferentiatedAeroShape):
     Supports the computation of the circulation and the sensibility of moments to AoA.
     '''
     
-    def __init__(self, Sref, Lref, relative_thickness=0.0):
+    def __init__(self, Sref, Lref, rel_thick=0.0):
         '''
         Constructor
         @param Sref : reference surface
         @param Lref : reference length
         '''
         DifferentiatedAeroShape.__init__(self,Sref,Lref)
-        self.__relative_thickness=relative_thickness
+        self.__rel_thick = rel_thick
+        self.__rel_thick_grad = None 
         
-    def set_relative_thickness(self,relative_thickness):
-        """
-        Setter for the relative_thickness
-        """
-        self.__relative_thickness=relative_thickness
+    def set_rel_thick(self, rel_thick):
+        self.__rel_thick = rel_thick
         
-    def get_relative_thickness(self):
-        """
-        Accessor for the relative_thickness
-        """
-        return self.__relative_thickness
+    def set_rel_thick_grad(self, rel_thick_grad):
+        self.__rel_thick_grad = rel_thick_grad
+        
+    def get_rel_thick(self):
+        return self.__rel_thick
+    
+    def get_rel_thick_grad(self):
+        return self.__rel_thick_grad
     
     def gamma(self,alpha,Mach=0.0):
-        '''
-        Computes the circulation due to lift at aOa alpha
-        @param alpha: angle of Attack 
-        '''
         return 0.5*self.get_Lref()*self.Cl(alpha,Mach=Mach)
     
-    def dCl_dthickness(self,alpha,Mach=0.0):
-        """
-        Derivative of Cl with respect to relative thickness
-        """
+    def dCl_dchi(self,alpha,Mach=0.0):
         return 0.0
     
-    def dCd_dthickness(self,alpha,Mach=0.0):
-        """
-        Derivative of Cd with respect to relative thickness
-        """
+    def dCd_dchi(self,alpha,Mach=0.0):
         return 0.0    
  
-    def dCm_dthickness(self,alpha,Mach=0.0):
-        """
-        Derivative of Cm with respect to relative thickness
-        """
+    def dCm_dchi(self,alpha,Mach=0.0):
         return 0.0  
      
     def DGammaDAoA(self,alpha,Mach):
-        '''
-        Computes the sensibility of the circulation to the angle of attack
-        @param alpha: angle of Attack 
-        '''
         return 0.5*self.get_Lref()*self.ClAlpha(alpha,Mach)
-
-    def DGammaDThickness(self,alpha,Mach):
-        """
-        Sensibility of Gamma to the relative thickness of the airfoil.
-        """
-        return 0.5*self.get_Lref()*self.dCl_dthickness(alpha,Mach)
     
-    def get_scaled_copy(self,Sref,Lref,relative_thickness=0.0):
-        """
-        Instances a copy of this airfoil with different Lref and Sref
-        """
-        return Airfoil(Sref,Lref,relative_thickness=relative_thickness)
+    def DGammaDchi(self, alpha, Mach):
+        dgammadchi =  0.5*self.get_Lref_grad()*self.Cl(alpha,Mach=Mach) + 0.5*self.get_Lref()*self.dCl_dchi(alpha,Mach)
+        return dgammadchi
+    
+    def get_scaled_copy(self,Sref,Lref,rel_thick=0.0):
+        return Airfoil(Sref,Lref,rel_thick=rel_thick)
     
 

@@ -18,7 +18,8 @@ class DLLMDirect:
     def __init__(self, LLW):
         self.__LLW = LLW
         self.__K   = self.__LLW.get_K()
-        self.__N   = self.get_wing_geom().get_n_elements()
+        self.__N   = self.get_wing_param().get_n_sect()
+        self.__ndv = self.get_wing_param().get_ndv()
         self.__computed = False
         self.__gamma_f_name = None
         
@@ -29,8 +30,8 @@ class DLLMDirect:
         self.__init_local_variables()
         
     #-- Accessors
-    def get_wing_geom(self):
-        return self.__LLW.get_wing_geom()
+    def get_wing_param(self):
+        return self.__LLW.get_wing_param()
     
     def get_airfoils(self):
         return self.__LLW.get_airfoils()
@@ -50,23 +51,14 @@ class DLLMDirect:
     def get_DR_DiAoA(self):
         return self.__DR_DiAoA
     
-    def get_DR_DTwist(self):
-        return self.__DR_DTwist
-    
-    def get_DR_DAoA(self):
-        return self.__DR_DAoA
-    
-    def get_DR_DThickness(self):
-        return self.__DR_DThickness
+    def get_DR_Dchi(self):
+        return self.__DR_Dchi
     
     def get_DlocalAoA_DiAoA(self):
         return self.__DlocalAoA_DiAoA
     
-    def get_DlocalAoA_DTwist(self):
-        return self.__DlocalAoA_DTwist
- 
-    def get_DlocalAoA_DAoA(self):
-        return self.__DlocalAoA_DAoA
+    def get_DlocalAoA_Dchi(self):
+        return self.__DlocalAoA_Dchi
     
     def get_func_list(self):
         return self.__DLLMPost.get_func_list()
@@ -135,17 +127,14 @@ class DLLMDirect:
         self.__R0       = None
         self.__R        = zeros([self.__N])
         self.__DR_DiAoA = zeros([self.__N])
-        self.__DR_DTwist= None
-        self.__DR_DAoA  = None
-        self.__DR_DThickness = None
+        self.__DR_Dchi  = None
         self.__residual = None
         self.__residuals_hist=[]
         
         # Angle of attack variables
         self.__localAoA = zeros([self.__N])
         self.__DlocalAoA_DiAoA  = -diag(ones([self.__N])) # This is a constant matrix
-        self.__DlocalAoA_DTwist = diag(ones([self.__N]))  # This is a constant matrix
-        self.__DlocalAoA_DAoA   = ones(self.__N)          # This is a constant matrix
+        self.__DlocalAoA_Dchi   = zeros([self.__N,self.__ndv])
         
         # Induced angle of attack variables
         self.__iAoA    = zeros([self.__N])
@@ -157,10 +146,10 @@ class DLLMDirect:
         self.__gamma  = zeros(self.__N)
         self.__Dgamma_DiAoA = None
         self.__DdGammaDy_DiAoA = None
-        self.__Dgamma_DlocalAoA=zeros([self.__N,self.__N])
-        self.__Dgamma_DThickness=zeros([self.__N,self.__N])
-        self.__dGamma=zeros([self.__N+1])
-        self.__DdGammaDy_DGamma=zeros([self.__N+1,self.__N])
+        self.__Dgamma_DlocalAoA = zeros([self.__N,self.__N])
+        self.__Dgamma_Dchi = zeros([self.__N,self.__ndv])
+        self.__dGamma = zeros([self.__N+1])
+        self.__DdGammaDy_DGamma = zeros([self.__N+1,self.__N])
         
     def __init_iterations(self):
         self.__iAoA=zeros([self.__N])
@@ -203,7 +192,9 @@ class DLLMDirect:
         
         # Why this formula ? twist increases the local airfoil angle of attack normally...
         #self.__localAoA=alpha-iaOa-self.get_wing_geom().get_twist()
-        self.__localAoA = AoA + self.get_wing_geom().get_twist() - self.__iAoA 
+        self.__localAoA = AoA + self.get_wing_param().get_twist() - self.__iAoA
+        for i in xrange(self.__N):
+            self.__DlocalAoA_Dchi[i,:] = self.get_wing_param().get_twist_grad()[i,:] # + dAoAdksi - diAoAdksi ?? 
         
         for i in xrange(self.__N):
             if self.__localAoA[i] > numpy.pi/2. or self.__localAoA[i] < -numpy.pi/2.:
@@ -219,8 +210,8 @@ class DLLMDirect:
         for i in xrange(self.__N):
             self.__gamma[i] = self.get_airfoils()[i].gamma(self.__localAoA[i],Mach)
             self.__Dgamma_DlocalAoA[i,i]  = self.get_airfoils()[i].DGammaDAoA(self.__localAoA[i],Mach)
-            self.__Dgamma_DThickness[i,i] = self.get_airfoils()[i].DGammaDThickness(self.__localAoA[i],Mach)
-        
+            self.__Dgamma_Dchi[i,:] = self.get_airfoils()[i].DGammaDchi(self.__localAoA[i],Mach)
+            
         self.__Dgamma_DiAoA = dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_DiAoA)
         
     def __compute_dGamma(self):
@@ -265,20 +256,20 @@ class DLLMDirect:
         fid.close()
         
     def __compute_partial_derivatives(self):
-        self.__dRdTwist()
-        self.__dRdAoA()
-        self.__dRdThickness()
-        
-    def __dRdTwist(self):
-        Dgamma_DTwist    =  dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_DTwist)
-        DdGammaDy_DTwist =  dot(self.__DdGammaDy_DGamma,Dgamma_DTwist)
-        self.__DR_DTwist = -dot(self.__DiAoA_DdGamma,DdGammaDy_DTwist) # (-) Because R=Gamma_input-Gamma_computed_from_input
-    
-    def __dRdAoA(self):
-        Dgamma_DAoA    =  dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_DAoA)
-        DdGammaDy_DAoA =  dot(self.__DdGammaDy_DGamma,Dgamma_DAoA)
-        self.__DR_DAoA = -dot(self.__DiAoA_DdGamma,DdGammaDy_DAoA) # (-) Because R=Gamma_input-Gamma_computed_from_input
-        
-    def __dRdThickness(self):
-        DdGammaDy_DThickness =  dot(self.__DdGammaDy_DGamma,self.__Dgamma_DThickness)
-        self.__DR_DThickness = -dot(self.__DiAoA_DdGamma,DdGammaDy_DThickness) # (-) Because R=Gamma_input-Gamma_computed_from_input
+        Dgamma_Dchi     = dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_Dchi) + self.__Dgamma_Dchi
+        DdGammaDy_Dchi  = dot(self.__DdGammaDy_DGamma,Dgamma_Dchi)
+        self.__DR_Dchi  = -dot(self.__DiAoA_DdGamma,DdGammaDy_Dchi)
+      
+#     def __dRdTwist(self):
+#         Dgamma_DTwist    =  dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_DTwist)
+#         DdGammaDy_DTwist =  dot(self.__DdGammaDy_DGamma,Dgamma_DTwist)
+#         self.__DR_DTwist = -dot(self.__DiAoA_DdGamma,DdGammaDy_DTwist) # (-) Because R=Gamma_input-Gamma_computed_from_input
+#     
+#     def __dRdAoA(self):
+#         Dgamma_DAoA    =  dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_DAoA)
+#         DdGammaDy_DAoA =  dot(self.__DdGammaDy_DGamma,Dgamma_DAoA)
+#         self.__DR_DAoA = -dot(self.__DiAoA_DdGamma,DdGammaDy_DAoA) # (-) Because R=Gamma_input-Gamma_computed_from_input
+#         
+#     def __dRdThickness(self):
+#         DdGammaDy_DThickness =  dot(self.__DdGammaDy_DGamma,self.__Dgamma_DThickness)
+#         self.__DR_DThickness = -dot(self.__DiAoA_DdGamma,DdGammaDy_DThickness) # (-) Because R=Gamma_input-Gamma_computed_from_input

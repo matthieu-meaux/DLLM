@@ -4,7 +4,10 @@
 # @author: Matthieu Meaux
 
 # - Local imports -
+import sys
 from padge.PCADEngine.Base.PCADModel import PCADModel
+from DLLM.polarManager.analyticAirfoil import AnalyticAirfoil
+from DLLM.polarManager.airfoilPolar import AirfoilPolar
 from numpy import zeros, array
 from numpy import pi, sqrt
 
@@ -31,6 +34,7 @@ class Wing_param():
         self.__ndv        = 0
         
         self.__init_discrete_attributes()
+        self.__init_airfoils_attributes()
         
         
     def __init_discrete_attributes(self):
@@ -73,6 +77,36 @@ class Wing_param():
         
         self.__eta                = None
         self.__eta_grad           = None
+        
+    def __init_airfoils_attributes(self):
+        self.__ref_airfoil     = None   # reference airfoil, only used if the same airfoil is put for all sections
+        self.__airfoils        = None   # Airfoil list for each section
+        self.__linked_airfoils = None   # Airfoil scaled to the the planform
+        
+    # -- Accessors
+    def get_n_sect(self):
+        return self.__n_sect
+    
+    def get_ndv(self):
+        return self.__ndv
+    
+    def get_eta(self):
+        return self.__eta
+    
+    def get_eta_grad(self):
+        return self.__eta_grad
+    
+    def get_XYZ(self):
+        return self.__XYZ
+    
+    def get_XYZ_grad(self):
+        return self.__XYZ_grad
+    
+    def get_twist(self):
+        return self.__twist
+    
+    def get_twist_grad(self):
+        return self.__twist_grad
         
     # -- Setters
     def set_geom_type(self, geom_type):
@@ -131,6 +165,8 @@ class Wing_param():
         self.__PCADModel.update()
         self.__ndv = self.__BC_manager.get_ndv()
         self.__build_discretization()
+        self.__check_airfoils_inputs()
+        self.__link_airfoils_to_geom()
 
         
     def __repr__(self):
@@ -353,44 +389,73 @@ class Wing_param():
             ifl=float(i-n)
             self.__eta[1,i]      = (ifl/float(n))*self.__span/2.
             self.__eta_grad[1,i] = (ifl/float(n))*self.__span_grad[:]/2.
-           
-#         
-#     def build_Discrete_wing(self,N,twist_law=None):
-#         '''
-#         Builds an elliptic liftingLineWing
-#         @param reference_airfoil : The reference airfoil from which others will be built
-#         @param N : the number of elements for the whole wing
-#         @param twist_law : the twist law
-#         '''
-#         if N%2!=0:
-#             raise Exception, "The total number of elements in the wing must be odd."
-#         
-#         n=int(N/2)
-#         XYZ=zeros([N,3])
-#         eta=zeros([N+1,3])
-#         chords=zeros(N)
-#         heights=zeros(N)
-#         wbs = zeros(N)  # wingbox length
-#         wingspan=self.__wingspan
-#         twist=self.__cast_twist(n,twist_law)
-#         for i in range(2*n+1):
-#             eta[i,1]=self.__compute_eta(i,n)
-#             
-#         for i in range(N):
-#             y=self.__compute_y(i,n)
-#             Lloc=self.__compute_chord(i,n)
-#             x=Lloc/2.#3quarters chord
-#             XYZ[i,:]=array([x,y,0])
-#             chords[i]=Lloc
-#             heights[i]=self.__compute_h(i,n)
-#      
-#         dw=Discrete_wing(XYZ,eta,chords,heights,twist,wingspan)
-#         
-#         self.__discrete_wing = dw
-#         
-#         return dw
-# 
-#     def __linear(self, x,y_min,y_max,x_min=0.,x_max=1.):
-#         return (y_max-y_min)*float(x-x_min)/(float(x_max-x_min))+y_min
-#     
+            
+    # -- Airfoils methods 
+    def get_linked_airfoils(self):
+        return self.__linked_airfoils
+    
+    def set_ref_aifoil(self, ref_airfoil):
+        self.__ref_airfoil = ref_airfoil
+        
+    def set_airfoils(self, airfoils):
+        ERROR_MSG=self.ERROR_MSG+'set_airfoils: '
+        if len(airfoils)!=self.__n_sect:
+            print ERROR_MSG+'number of airfoils is different than the number of sections. attribute not set'
+            self.__airfoils = None
+        else:
+            self.__airfoils = airfoils
+            
+    def build_linear_airfoil(self, AoA0=0., Cd0=0., Cm0=0., rel_thick=0., Sref=1., Lref=1., set_as_ref=True):
+        degToRad = pi/180.
+        airfoil  = AnalyticAirfoil(AoA0=degToRad*AoA0, Cd0=Cd0, Cm0=Cm0, rel_thick=rel_thick, Sref=Sref, Lref=Lref)
+        if set_as_ref:
+            self.set_ref_aifoil(airfoil)
+        return airfoil
+    
+    def build_polar_airoil(self, database, Sref=1., Lref=1., interpolator='2DSpline', set_as_ref=True):
+        # Why relative thickness usage ? The extraction from a polar should give us more freedom.
+        airfoil = AirfoilPolar(database,rel_thick=0.15, interpolator=interpolator, Sref=Sref, Lref=Lref)
+        if set_as_ref:
+            self.set_ref_aifoil(airfoil)
+        return airfoil
 
+    def build_airfoils_from_ref(self):
+        ERROR_MSG=self.ERROR_MSG+'build_airfoils_from_ref: '
+        if self.__ref_airfoil is None:
+            print ERROR_MSG+'cannot build airfoils if reference airfoil is not defined.'
+        else:
+            airfoils=[]
+            for n in xrange(self.__n_sect):
+                airfoils.append(self.__ref_airfoil.get_scaled_copy())
+            
+            self.set_airfoils(airfoils)
+            
+    def __link_airfoils_to_geom(self):
+        self.__linked_airfoils=[]
+        for i in range(self.__n_sect):
+            LLoc,LLoc_grad,SLoc,SLoc_grad=self.__compute_local_info(i)
+            linked_af = self.__airfoils[i].get_scaled_copy(SLoc, LLoc, self.__rel_thicks[i])
+            linked_af.set_Sref_grad(SLoc_grad)
+            linked_af.set_Lref_grad(LLoc_grad)
+            linked_af.set_rel_thick_grad(self.__rel_thicks_grad[i])
+            self.__linked_airfoils.append(linked_af)
+        
+    def __compute_local_info(self,i):
+        LLoc      = self.__chords[i]
+        LLoc_grad = self.__chords_grad[i]
+        SLoc      = self.__span * LLoc / float(self.__n_sect)
+        SLoc_grad = (self.__span_grad * LLoc + self.__span * LLoc_grad) / float(self.__n_sect)
+        return LLoc, LLoc_grad, SLoc, SLoc_grad
+    
+    def __check_airfoils_inputs(self):
+        ERROR_MSG=self.ERROR_MSG+'__check_airfoils_inputs: '+str(self.__tag)+': '
+        checked=True
+        if self.__airfoils is None:
+            checked=False
+            print ERROR_MSG+'airfoils attribute undefined. please set airfoils attribute.'
+        elif len(self.__airfoils)!=self.__n_sect:
+            checked=False
+            print ERROR_MSG+'number of airfoils must equal to the number of geometrical sections.'
+        
+        if not checked:
+            sys.exit(1)
