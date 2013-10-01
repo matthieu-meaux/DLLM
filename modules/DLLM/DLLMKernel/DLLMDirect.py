@@ -16,11 +16,12 @@ class DLLMDirect:
     STOP_CRITERIA_N_ITER='Niterations'
     
     def __init__(self, LLW):
-        self.__LLW = LLW
-        self.__K   = self.__LLW.get_K()
-        self.__N   = self.get_wing_param().get_n_sect()
-        self.__ndv = self.get_wing_param().get_ndv()
-        self.__computed = False
+        self.__LLW          = LLW
+        self.__K            = self.__LLW.get_K()
+        self.__dK_dchi      = self.__LLW.get_dK_dchi()
+        self.__N            = self.get_wing_param().get_n_sect()
+        self.__ndv          = self.get_wing_param().get_ndv()
+        self.__computed     = False
         self.__gamma_f_name = None
         
         # initialize numerical parameters
@@ -140,6 +141,7 @@ class DLLMDirect:
         self.__iAoA    = zeros([self.__N])
         self.__iAoANew = zeros([self.__N])
         self.__DiAoA_DdGamma=zeros([self.__N,self.__N+1])
+        self.__DpiAoA_Dpchi = zeros([self.__N,self.__ndv])   
         self.__DiAoA_DiAoA = None
         
         # Circulation variables
@@ -233,9 +235,11 @@ class DLLMDirect:
         '''
         Computes the induced angle on an airfoil for a given circulation on the wing.
         '''
-        self.__iAoANew       = dot(self.__K,self.__dGamma)
-        self.__DiAoA_DdGamma = dot(self.__K,diag(ones(self.__N+1)))
-        self.__DiAoA_DiAoA   = dot(self.__DiAoA_DdGamma,self.__DdGammaDy_DiAoA)
+        self.__iAoANew        = dot(self.__K,self.__dGamma)
+        self.__DiAoA_DdGamma  = dot(self.__K,diag(ones(self.__N+1)))
+        self.__DiAoA_DiAoA    = dot(self.__DiAoA_DdGamma,self.__DdGammaDy_DiAoA)
+        for n in xrange(self.__ndv):
+            self.__DpiAoA_Dpchi[:,n] = dot(self.__dK_dchi[:,:,n],self.__dGamma) 
         
     def __write_gamma_to_file(self):
         '''
@@ -258,7 +262,7 @@ class DLLMDirect:
     def __compute_partial_derivatives(self):
         Dgamma_Dchi     = dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_Dchi) + self.__Dgamma_Dchi
         DdGammaDy_Dchi  = dot(self.__DdGammaDy_DGamma,Dgamma_Dchi)
-        self.__DR_Dchi  = -dot(self.__DiAoA_DdGamma,DdGammaDy_Dchi)
+        self.__DR_Dchi  = -dot(self.__DiAoA_DdGamma,DdGammaDy_Dchi) - self.__DpiAoA_Dpchi
       
 #     def __dRdTwist(self):
 #         Dgamma_DTwist    =  dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_DTwist)

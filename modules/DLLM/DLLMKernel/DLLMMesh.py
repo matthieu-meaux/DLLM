@@ -14,6 +14,8 @@ class DLLMMesh:
     def __init__(self, LLW):
         self.__LLW = LLW
         self.__ndv = self.get_wing_param().get_ndv()
+        self.__K       = None
+        self.__dK_dchi = None
         self.recompute()
     
     #-- Accessors
@@ -25,6 +27,9 @@ class DLLMMesh:
     
     def get_K(self):
         return self.__K
+    
+    def get_dK_dchi(self):
+        return self.__dK_dchi
     
     #-- Setters
     def set_Sref(self, Sref):
@@ -47,7 +52,8 @@ class DLLMMesh:
         self.__set_Lref_Sref()
         
         # Set computational geometry
-        self.__K   = None 
+        self.__K       = None 
+        self.__dK_dchi = None
         self.__setGeom()
         
     def getAspectRatio(self):
@@ -85,33 +91,27 @@ class DLLMMesh:
         '''
         Sets the geometry of the wing, builds the stiffness geometry matrix
         '''
-        eta=self.get_wing_param().get_eta()[1,:]
-        y=self.get_wing_param().get_XYZ()[1,:]
-        
+        eta = self.get_wing_param().get_eta()[1,:]
+        y   = self.get_wing_param().get_XYZ()[1,:]
         
         YminEta=transpose(outer(ones([self.__N+1]),y))-outer(ones([self.__N]),eta)
         self.__K=divide(ones([self.__N,self.__N+1]),YminEta)
         self.__K/=4.*numpy.pi
         
-#     Why this method is not in the geometry handling ? If more geometrical parameters, what happens?
-#     def set_relative_thickness(self,thickness):
-#         """
-#         Setter for the height of the airfoils
-#         """
-#         if type(thickness)==type([]):
-#             thick=array(thickness)
-#         elif type(thickness)==type(array([0.])):
-#             thick=thickness
-#         else:
-#             raise Exception, "Incorrect type for thickness : "+str(type(thickness))
-#         
-#         self.get_wing_geom().set_relative_thickness(thick)
-#         
-#         print "LLW set_relative_thickness thick = "+str(thick)
-#         for airfoil, thickness in zip(self.__airfoils,thick):
-#             airfoil.set_relative_thickness(thickness)
-  
-#     What is the use of these methods ??? estimation of the structual stiffness matrix ? Why there ?
+        eta_grad = self.get_wing_param().get_eta_grad()[1,:,:]
+        y_grad   = self.get_wing_param().get_XYZ_grad()[1,:,:]
+        
+        YminEta_grad=zeros((self.__N,self.__N+1,self.__ndv))
+        for n in xrange(self.__ndv):
+            YminEta_grad[:,:,n] = transpose(outer(ones([self.__N+1]),y_grad[:,n]))-outer(ones([self.__N]),eta_grad[:,n])
+        
+        self.__dK_dchi=zeros((self.__N,self.__N+1,self.__ndv))
+        for n in xrange(self.__ndv):
+            for j in xrange(self.__N+1):
+                for i in xrange(self.__N):
+                    self.__dK_dchi[i,j,n]=-YminEta_grad[i,j,n]/YminEta[i,j]**2
+        self.__dK_dchi/=4.*numpy.pi       
+
 #     def __setGeomWeissinger(self):
 #         '''
 #         Sets the geometry of the wing, builds the stiffness geometry matrix

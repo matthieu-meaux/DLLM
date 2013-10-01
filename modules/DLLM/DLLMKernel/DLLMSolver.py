@@ -61,6 +61,9 @@ class DLLMSolver:
     def get_K(self):
         return self.__DLLMMesh.get_K()
     
+    def get_dK_dchi(self):
+        return self.__DLLMMesh.get_dK_dchi()
+    
     #-- DLLMDirect accessors
     def is_direct_computed(self):
         return self.__DLLMDirect.is_computed()

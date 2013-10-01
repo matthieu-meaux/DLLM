@@ -340,7 +340,7 @@ class Wing_param():
                 if r <= p:
                     self.__chords[i]        = (self.__break_chord - self.__root_chord)*r/p + self.__root_chord
                     self.__chords_grad[i,:] = (self.__break_chord_grad[:] - self.__root_chord_grad[:])*r/p + self.__root_chord_grad[:] \
-                                            + (self.__break_chord - self.__root_chord)*r*p_grad[:]/p**2
+                                            - (self.__break_chord - self.__root_chord)*r*p_grad[:]/p**2
                     
                 else:
                     self.__chords[i]        = (self.__tip_chord - self.__break_chord)*(r-p)/(1.-p) + self.__break_chord
@@ -364,7 +364,7 @@ class Wing_param():
                     self.__rel_thicks[i] = term / self.__chords[i]
 
                     term_grad = (self.__break_height_grad[:] - self.__root_height_grad[:])*r/p + self.__root_height_grad[:] \
-                              + (self.__break_height - self.__root_height)*r*p_grad[:]/p**2
+                              - (self.__break_height - self.__root_height)*r*p_grad[:]/p**2
                     self.__rel_thicks_grad[i,:] = (term_grad[:]*self.__chords[i]-term*self.__chords_grad[i,:])/(self.__chords[i])**2
                 
                 else:
