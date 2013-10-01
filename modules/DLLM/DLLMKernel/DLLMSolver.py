@@ -96,6 +96,9 @@ class DLLMSolver:
     def get_func_list(self):
         return self.__DLLMPost.get_func_list()
     
+    def get_func_values(self):
+        return self.__DLLMPost.get_func_values()
+    
     def get_dfunc_diAoA(self):
         return self.__DLLMPost.get_dfunc_diAoA()
     

@@ -95,9 +95,6 @@ class DLLMAdjoint:
             self.__adj_corr[i]   = self.__adjoint_correction(i)
             print '  - Convergence adjoint correction for '+str(func)+' = '+str(self.__adj_corr[i])
             self.__dJ_dchi[i,:]  = self.__DJ_Dchi(i)[:]
-        print self.__adj_list
-        print self.__adj_corr
-        print self.__dJ_dchi
         
     def __DJ_Dchi(self,i):
         dR_dchi   = self.get_DR_Dchi()

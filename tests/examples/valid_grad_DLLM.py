@@ -1,8 +1,7 @@
-# Imports
+from OpenDACE.ValidGrad.FDValidGrad import FDValidGrad
 from DLLM.DLLMGeom.wing_param import Wing_param
 from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
 from MDOTools.Base.operating_condition import OperatingCondition
-
 
 wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
 wing_param.build_wing()
@@ -38,8 +37,37 @@ OC.set_humidity(0.)
 OC.compute_atmosphere()
 
 #print OC
+x0=wing_param.get_dv_array()
+print 'dv array shape',x0.shape
+print 'dv_array=',x0
 
-DLLM = DLLMSolver(wing_param,OC)
-DLLM.run_direct()
-DLLM.run_post()
-DLLM.run_adjoint()
+def f(x):
+    wing_param.update_from_x_list(x)
+    DLLM = DLLMSolver(wing_param,OC)
+    DLLM.run_direct()
+    DLLM.run_post(func_list=['Cl'])
+    func=DLLM.get_func_values()
+    return func
+
+def df(x):
+    wing_param.update_from_x_list(x)
+    DLLM = DLLMSolver(wing_param,OC)
+    DLLM.run_direct()
+    DLLM.run_post(func_list=['Cl'])
+    DLLM.run_adjoint()
+    func_grad=DLLM.get_dJ_dchi()
+    return func_grad
+
+val_grad=FDValidGrad(2,f,df,fd_step=1.e-3)
+ok,df_fd,df=val_grad.compare(x0,treshold=1.e-2,return_all=True)
+
+fid=open('gradient_file.dat','w')
+for i in xrange(len(x0)):
+    fid.write(str(i)+' '+str(df_fd[0,i])+' '+str(df[0,i])+'\n')
+
+print '\n****************************************************'
+if ok:
+    print 'Gradients are valid.'
+else:
+    print 'Gradients are not valid!'
+print '****************************************************'

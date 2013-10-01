@@ -107,6 +107,18 @@ class Wing_param():
     
     def get_twist_grad(self):
         return self.__twist_grad
+    
+    def get_chords(self):
+        return self.__chords
+    
+    def get_chords_grad(self):
+        return self.__chords_grad
+    
+    def get_rel_thicks(self):
+        return self.__rel_thicks
+    
+    def get_rel_thicks_grad(self):
+        return self.__rel_thicks_grad
         
     # -- Setters
     def set_geom_type(self, geom_type):
@@ -142,6 +154,12 @@ class Wing_param():
     def convert_to_parameter(self, Id, fexpr):
         self.__BC_manager.convert_to_parameter(Id, fexpr)
         
+    def get_dv_array(self):
+        return self.__BC_manager.get_dv_array()
+    
+    def get_dv_id_list(self):
+        return self.__BC_manager.get_dv_id_list()
+        
     def build_wing(self):
         self.__BC_manager.clean()
         self.__BC_manager.create_variable(self.__tag+'.span',0.)
@@ -167,8 +185,12 @@ class Wing_param():
         self.__build_discretization()
         self.__check_airfoils_inputs()
         self.__link_airfoils_to_geom()
-
         
+    def update_from_x_list(self,x):
+        #print 'update wing_param with x=',x
+        self.__BC_manager.update_dv_from_x_list(x)
+        self.update()
+   
     def __repr__(self):
         info_string ='\n*** Wing param information ***'
         info_string+='\n  geom_type : '+str(self.__geom_type)
@@ -343,7 +365,7 @@ class Wing_param():
 
                     term_grad = (self.__break_height_grad[:] - self.__root_height_grad[:])*r/p + self.__root_height_grad[:] \
                               + (self.__break_height - self.__root_height)*r*p_grad[:]/p**2
-                    self.__rel_thicks_grad[i,:] = (term_grad[:]*self.__chords[i]+term*self.__chords_grad[i,:])/(self.__chords[i])**2
+                    self.__rel_thicks_grad[i,:] = (term_grad[:]*self.__chords[i]-term*self.__chords_grad[i,:])/(self.__chords[i])**2
                 
                 else:
                     term = ((self.__tip_height - self.__break_height)*(r-p)/(1.-p) + self.__break_height)
@@ -351,7 +373,7 @@ class Wing_param():
                     
                     term_grad = (self.__tip_height_grad[:] - self.__break_height_grad[:])*(r-p)/(1.-p) + self.__break_height_grad[:] \
                                + (self.__tip_height- self.__break_height)*(1-r)*p_grad[:]/(1.-p)**2
-                    self.__rel_thicks_grad[i,:] = (term_grad[:]*self.__chords[i]+term*self.__chords_grad[i,:])/(self.__chords[i])**2         
+                    self.__rel_thicks_grad[i,:] = (term_grad[:]*self.__chords[i]-term*self.__chords_grad[i,:])/(self.__chords[i])**2         
                                
         else:
             for i in xrange(N):

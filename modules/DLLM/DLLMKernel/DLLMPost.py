@@ -33,6 +33,9 @@ class DLLMPost:
     def get_func_list(self):
         return self.__func_list
     
+    def get_func_values(self):
+        return self.__func_values
+    
     def get_dfunc_diAoA(self):
         return self.__dfunc_diAoA
     
@@ -148,7 +151,7 @@ class DLLMPost:
             Cl+=af.Cl(localAoA[i],Mach)*af.get_Sref()
             dCl+=af.ClAlpha(localAoA[i],Mach)*af.get_Sref()*dlAoAdchi[i,:] + af.dCl_dchi(localAoA[i],Mach)*af.get_Sref() + af.Cl(localAoA[i],Mach)*af.get_Sref_grad()
             
-        dCldchi = (dCl*self.get_Sref()+ Cl*self.get_Sref_grad())/(self.get_Sref()**2)        
+        dCldchi = (dCl*self.get_Sref() - Cl*self.get_Sref_grad())/(self.get_Sref()**2)        
         return dCldchi
     
     #-- Cd related methods
@@ -206,7 +209,7 @@ class DLLMPost:
             Cd+=Cdloc*af.get_Sref()
             dCd+=dCdloc*af.get_Sref()+Cdloc*af.get_Sref_grad()
         Cd/=self.get_Sref()
-        dCddchi = (dCd*self.get_Sref()+ Cd*self.get_Sref_grad())/(self.get_Sref()**2) 
+        dCddchi = (dCd*self.get_Sref()- Cd*self.get_Sref_grad())/(self.get_Sref()**2) 
          
         return dCddchi
     
@@ -249,7 +252,7 @@ class DLLMPost:
             Cm+=af.Cm(localAoA[i],Mach)*af.get_Sref()
             dCm+=af.CmAlpha(localAoA[i],Mach)*af.get_Sref()*dlAoAchi[i]+af.dCm_dchi(localAoA[i],Mach)*af.get_Sref()+af.Cm(localAoA[i],Mach)*af.get_Sref_grad()
         Cm/=self.get_Sref()
-        dCmdchi = (dCm*self.get_Sref()+ Cm*self.get_Sref_grad())/(self.get_Sref()**2) 
+        dCmdchi = (dCm*self.get_Sref()- Cm*self.get_Sref_grad())/(self.get_Sref()**2) 
         
         return dCmdchi
     
