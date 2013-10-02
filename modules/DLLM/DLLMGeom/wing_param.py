@@ -338,14 +338,20 @@ class Wing_param():
                 r = abs(float(i+0.5-n)/float(n))
                 
                 if r <= p:
-                    self.__chords[i]        = (self.__break_chord - self.__root_chord)*r/p + self.__root_chord
-                    self.__chords_grad[i,:] = (self.__break_chord_grad[:] - self.__root_chord_grad[:])*r/p + self.__root_chord_grad[:] \
-                                            - (self.__break_chord - self.__root_chord)*r*p_grad[:]/p**2
+                    coeff = r/p
+                    dcoeff = -r*p_grad[:]/p**2
+                    self.__chords[i]        = (self.__break_chord - self.__root_chord)*coeff + self.__root_chord
+                    self.__chords_grad[i,:] = (self.__break_chord_grad[:] - self.__root_chord_grad[:])*coeff  \
+                                            + (self.__break_chord - self.__root_chord)*dcoeff \
+                                            + self.__root_chord_grad[:]
                     
                 else:
-                    self.__chords[i]        = (self.__tip_chord - self.__break_chord)*(r-p)/(1.-p) + self.__break_chord
-                    self.__chords_grad[i,:] = (self.__tip_chord_grad[:] - self.__break_chord_grad[:])*(r-p)/(1.-p) + self.__break_chord_grad[:] \
-                                            + (self.__tip_chord - self.__break_chord)*(1-r)*p_grad[:]/(1.-p)**2
+                    coeff = (r-p)/(1.-p)
+                    dcoeff = (r-1)*p_grad[:]/(1.-p)**2
+                    self.__chords[i]        = (self.__tip_chord - self.__break_chord)*coeff + self.__break_chord
+                    self.__chords_grad[i,:] = (self.__tip_chord_grad[:] - self.__break_chord_grad[:])*coeff  \
+                                            + (self.__tip_chord - self.__break_chord)*dcoeff \
+                                            + self.__break_chord_grad[:]
                     
     def __build_rel_thicks(self):
         N = self.__n_sect
@@ -360,19 +366,25 @@ class Wing_param():
             for i in xrange(N):
                 r=abs(float(i+0.5-n)/float(n))
                 if r <= p:
-                    term = ((self.__break_height - self.__root_height)*r/p + self.__root_height)
+                    coeff = r/p
+                    term = ((self.__break_height - self.__root_height)*coeff + self.__root_height)
                     self.__rel_thicks[i] = term / self.__chords[i]
 
-                    term_grad = (self.__break_height_grad[:] - self.__root_height_grad[:])*r/p + self.__root_height_grad[:] \
-                              - (self.__break_height - self.__root_height)*r*p_grad[:]/p**2
+                    dcoeff = -r*p_grad[:]/p**2
+                    term_grad = (self.__break_height_grad[:] - self.__root_height_grad[:])*coeff \
+                              + (self.__break_height - self.__root_height)*dcoeff \
+                              + self.__root_height_grad[:]
                     self.__rel_thicks_grad[i,:] = (term_grad[:]*self.__chords[i]-term*self.__chords_grad[i,:])/(self.__chords[i])**2
                 
                 else:
-                    term = ((self.__tip_height - self.__break_height)*(r-p)/(1.-p) + self.__break_height)
+                    coeff = (r-p)/(1.-p)
+                    term = ((self.__tip_height - self.__break_height)*coeff + self.__break_height)
                     self.__rel_thicks[i]  =  term / self.__chords[i]
                     
-                    term_grad = (self.__tip_height_grad[:] - self.__break_height_grad[:])*(r-p)/(1.-p) + self.__break_height_grad[:] \
-                               + (self.__tip_height- self.__break_height)*(1-r)*p_grad[:]/(1.-p)**2
+                    dcoeff = (r-1)*p_grad[:]/(1.-p)**2
+                    term_grad = (self.__tip_height_grad[:] - self.__break_height_grad[:])*coeff \
+                               + (self.__tip_height- self.__break_height)*dcoeff \
+                               + self.__break_height_grad[:]
                     self.__rel_thicks_grad[i,:] = (term_grad[:]*self.__chords[i]-term*self.__chords_grad[i,:])/(self.__chords[i])**2         
                                
         else:

@@ -130,12 +130,12 @@ else:
     print '  XYZ: Gradients are not valid !!!'
 print '****************************************************'
 
-# print '*************************************'
-# print '  check invalid gradients for Rel_thicks'
-# shape=df3.shape
-# for i in xrange(shape[0]):
-#     for j in xrange(shape[1]):
-#         err=abs(df_fd3[i,j] - df3[i,j])
-#         if err > 1.e-2:
-#             print 'Issue with variable ',x_id[j], 'at section',i,'error=',err,'df_fd3',df_fd3[i,j],'df3',df3[i,j]
-# #df_fd2,df2
+print '*************************************'
+print '  check invalid gradients for Chords'
+shape=df2.shape
+for i in xrange(shape[0]):
+    for j in xrange(shape[1]):
+        err=abs(df_fd2[i,j] - df2[i,j])
+        if err > 1.e-2:
+            print 'Issue with variable ',x_id[j], 'at section',i,'error=',err,'df_fd2',df_fd3[i,j],'df2',df3[i,j]
+#df_fd2,df2
