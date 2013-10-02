@@ -45,7 +45,8 @@ def f(x):
     wing_param.update_from_x_list(x)
     DLLM = DLLMSolver(wing_param,OC)
     DLLM.run_direct()
-    DLLM.run_post(func_list=['Cl'])
+    #DLLM.run_post(func_list=['Cl'])
+    DLLM.run_post()
     func=DLLM.get_func_values()
     return func
 
@@ -53,7 +54,8 @@ def df(x):
     wing_param.update_from_x_list(x)
     DLLM = DLLMSolver(wing_param,OC)
     DLLM.run_direct()
-    DLLM.run_post(func_list=['Cl'])
+    #DLLM.run_post(func_list=['Cl'])
+    DLLM.run_post()
     DLLM.run_adjoint()
     func_grad=DLLM.get_dJ_dchi()
     return func_grad
@@ -61,9 +63,11 @@ def df(x):
 val_grad=FDValidGrad(2,f,df,fd_step=1.e-3)
 ok,df_fd,df=val_grad.compare(x0,treshold=1.e-2,return_all=True)
 
-fid=open('gradient_file.dat','w')
-for i in xrange(len(x0)):
-    fid.write(str(i)+' '+str(df_fd[0,i])+' '+str(df[0,i])+'\n')
+for j in xrange(len(df[:,0])):
+    fid=open('gradient_file'+str(j)+'.dat','w')
+    for i in xrange(len(x0)):
+        fid.write(str(i)+' '+str(df_fd[j,i])+' '+str(df[j,i])+'\n')
+    fid.close()
 
 print '\n****************************************************'
 if ok:

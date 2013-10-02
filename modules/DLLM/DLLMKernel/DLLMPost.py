@@ -208,7 +208,6 @@ class DLLMPost:
             dCdloc=(af.ClAlpha(AoA,Mach)*sin(iAoA[i])+af.CdAlpha(AoA,Mach))*dlAoAdchi[i] + af.dCl_dchi(AoA,Mach)*sin(iAoA[i])+af.dCd_dchi(AoA,Mach)
             Cd+=Cdloc*af.get_Sref()
             dCd+=dCdloc*af.get_Sref()+Cdloc*af.get_Sref_grad()
-        Cd/=self.get_Sref()
         dCddchi = (dCd*self.get_Sref()- Cd*self.get_Sref_grad())/(self.get_Sref()**2) 
          
         return dCddchi
