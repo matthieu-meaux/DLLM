@@ -5,7 +5,7 @@
 
 # - Local imports -
 from differentiatedAeroShape import DifferentiatedAeroShape
-from math import sqrt
+from numpy import sqrt,sin,cos
 
 class Airfoil(DifferentiatedAeroShape):
     '''
@@ -13,7 +13,7 @@ class Airfoil(DifferentiatedAeroShape):
     Supports the computation of the circulation and the sensibility of moments to AoA.
     '''
     
-    def __init__(self, Sref, Lref, rel_thick=0.0):
+    def __init__(self, Sref, Lref, rel_thick=0.0, sweep=0.0):
         '''
         Constructor
         @param Sref : reference surface
@@ -21,7 +21,10 @@ class Airfoil(DifferentiatedAeroShape):
         '''
         DifferentiatedAeroShape.__init__(self,Sref,Lref)
         self.__rel_thick = rel_thick
-        self.__rel_thick_grad = None 
+        self.__rel_thick_grad = 0.
+        
+        self.__sweep      = sweep
+        self.__sweep_grad = 0.
         
     def set_rel_thick(self, rel_thick):
         self.__rel_thick = rel_thick
@@ -35,8 +38,24 @@ class Airfoil(DifferentiatedAeroShape):
     def get_rel_thick_grad(self):
         return self.__rel_thick_grad
     
+    def set_sweep(self, sweep):
+        self.__sweep = sweep
+        
+    def set_sweep_grad(self, sweep_grad):
+        self.__sweep_grad = sweep_grad
+        
+    def get_sweep(self):
+        return self.__sweep
+    
+    def get_sweep_grad(self):
+        return self.__sweep_grad
+    
     def gamma(self,alpha,Mach=0.0):
-        return 0.5*self.get_Lref()*self.Cl(alpha,Mach=Mach)
+        sweep=self.get_sweep()
+        L=self.get_Lref()
+        Cl=self.Cl(alpha,Mach=Mach)
+        gamma =  0.5*L*Cl/cos(sweep)
+        return gamma
     
     def dCl_dchi(self,alpha,Mach=0.0):
         return 0.0
@@ -48,13 +67,23 @@ class Airfoil(DifferentiatedAeroShape):
         return 0.0  
      
     def DGammaDAoA(self,alpha,Mach):
-        return 0.5*self.get_Lref()*self.ClAlpha(alpha,Mach)
+        sweep=self.get_sweep()
+        L=self.get_Lref()
+        dCl_dAoA=self.ClAlpha(alpha,Mach)
+        dgamma_dAoA = 0.5*L*dCl_dAoA/cos(sweep)
+        return dgamma_dAoA
     
     def DGammaDchi(self, alpha, Mach):
-        dgammadchi =  0.5*self.get_Lref_grad()*self.Cl(alpha,Mach=Mach) + 0.5*self.get_Lref()*self.dCl_dchi(alpha,Mach)
+        L=self.get_Lref()
+        dL=self.get_Lref_grad()
+        Cl=self.Cl(alpha,Mach=Mach)
+        dCl=self.dCl_dchi(alpha,Mach)
+        sweep=self.get_sweep()
+        dsweep=self.get_sweep_grad()
+        dgammadchi =  0.5*dL*Cl/cos(sweep) + 0.5*L*dCl/cos(sweep) + 0.5*L*Cl*sin(sweep)*dsweep/(cos(sweep))**2
         return dgammadchi
     
-    def get_scaled_copy(self,Sref,Lref,rel_thick=0.0):
-        return Airfoil(Sref,Lref,rel_thick=rel_thick)
+    def get_scaled_copy(self,Sref, Lref, rel_thick=0.0, sweep=0.):
+        return Airfoil(Sref,Lref,rel_thick=rel_thick, sweep=sweep)
     
 

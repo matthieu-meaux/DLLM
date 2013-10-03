@@ -9,7 +9,7 @@ from padge.PCADEngine.Base.PCADModel import PCADModel
 from DLLM.polarManager.analyticAirfoil import AnalyticAirfoil
 from DLLM.polarManager.airfoilPolar import AirfoilPolar
 from numpy import zeros, array
-from numpy import pi, sqrt
+from numpy import pi, sqrt, cos,sin
 
 class Wing_param():
     
@@ -41,6 +41,9 @@ class Wing_param():
         # -- discrete attributes
         self.__span               = None
         self.__span_grad          = None
+        
+        self.__sweep              = None
+        self.__sweep_grad         = None
         
         self.__break_percent      = None
         self.__break_percent_grad = None
@@ -163,6 +166,8 @@ class Wing_param():
     def build_wing(self):
         self.__BC_manager.clean()
         self.__BC_manager.create_variable(self.__tag+'.span',0.)
+        if self.__geom_type not in ['Elliptic']:
+            self.__BC_manager.create_variable(self.__tag+'.sweep',0.)
         if   self.__geom_type in ['Rectangular','Elliptic']:
             self.__BC_manager.create_variable(self.__tag+'.root_chord',0.)
             self.__BC_manager.create_variable(self.__tag+'.root_height',0.)
@@ -220,6 +225,8 @@ class Wing_param():
         
 
     def __build_planform(self):
+        deg_to_rad = pi/180.
+        
         # -- span
         Id   = self.__tag+'.span'
         pt   = self.__BC_manager.get_pt(Id)
@@ -227,6 +234,15 @@ class Wing_param():
         grad = pt.get_gradient()
         self.__span      = val
         self.__span_grad = grad
+        
+        if self.__geom_type not in ['Elliptic']:
+            # -- sweep
+            Id   = self.__tag+'.sweep'
+            pt   = self.__BC_manager.get_pt(Id)
+            val  = pt.get_value()
+            grad = pt.get_gradient()
+            self.__sweep      = val*deg_to_rad
+            self.__sweep_grad = grad*deg_to_rad
         
         if   self.__geom_type in ['Rectangular','Elliptic']:
             Id   = self.__tag+'.root_chord'
@@ -300,7 +316,6 @@ class Wing_param():
             self.__tip_height      = val
             self.__tip_height_grad = grad
             
-        deg_to_rad = pi/180.
         self.__twist      = zeros((self.__n_sect))
         self.__twist_grad = zeros((self.__n_sect,self.__ndv))
         for i in xrange(self.__n_sect):
@@ -402,16 +417,17 @@ class Wing_param():
         self.__XYZ_grad = zeros((3,N,self.__ndv))
         
         for i in xrange(N):
-            self.__XYZ[0,i]        = 0.25*self.__chords[i]
-            self.__XYZ_grad[0,i,:] = 0.25*self.__chords_grad[i]
-            
             r=float(i+0.5-n)/float(n)
+            abs_r=abs(r)
+            self.__XYZ[0,i]        = 0.25*self.__chords[i] + abs_r*self.__span*cos(self.__sweep)/2.
+            self.__XYZ_grad[0,i,:] = 0.25*self.__chords_grad[i] + abs_r*self.__span_grad[:]*cos(self.__sweep)/2.-abs_r*self.__span*sin(self.__sweep)*self.__sweep_grad[:]/2.
+            
             self.__XYZ[1,i]        = r*self.__span/2.
             self.__XYZ_grad[1,i,:] = r*self.__span_grad[:]/2.
         
             self.__XYZ[2,i]        = 0.
             self.__XYZ_grad[2,i,:] = zeros(self.__ndv)
-            
+        
     def __build_eta(self):
         N = self.__n_sect
         n = N/2
@@ -439,9 +455,9 @@ class Wing_param():
         else:
             self.__airfoils = airfoils
             
-    def build_linear_airfoil(self, AoA0=0., Cd0=0., Cm0=0., rel_thick=0., Sref=1., Lref=1., set_as_ref=True):
+    def build_linear_airfoil(self, AoA0=0., Cd0=0., Cm0=0., Sref=1., Lref=1., rel_thick=0., sweep=0., set_as_ref=True):
         degToRad = pi/180.
-        airfoil  = AnalyticAirfoil(AoA0=degToRad*AoA0, Cd0=Cd0, Cm0=Cm0, rel_thick=rel_thick, Sref=Sref, Lref=Lref)
+        airfoil  = AnalyticAirfoil(AoA0=degToRad*AoA0, Cd0=Cd0, Cm0=Cm0, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep)
         if set_as_ref:
             self.set_ref_aifoil(airfoil)
         return airfoil
@@ -468,10 +484,13 @@ class Wing_param():
         self.__linked_airfoils=[]
         for i in range(self.__n_sect):
             LLoc,LLoc_grad,SLoc,SLoc_grad=self.__compute_local_info(i)
-            linked_af = self.__airfoils[i].get_scaled_copy(SLoc, LLoc, self.__rel_thicks[i])
+            linked_af = self.__airfoils[i].get_scaled_copy(SLoc, LLoc)
             linked_af.set_Sref_grad(SLoc_grad)
             linked_af.set_Lref_grad(LLoc_grad)
             linked_af.set_rel_thick_grad(self.__rel_thicks_grad[i])
+            linked_af.set_rel_thick(self.__rel_thicks[i])
+            linked_af.set_sweep(self.__sweep)
+            linked_af.set_sweep_grad(self.__sweep_grad)
             self.__linked_airfoils.append(linked_af)
         
     def __compute_local_info(self,i):
