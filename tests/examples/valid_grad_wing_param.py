@@ -1,5 +1,16 @@
 from OpenDACE.ValidGrad.FDValidGrad import FDValidGrad
 from DLLM.DLLMGeom.wing_param import Wing_param
+from MDOTools.Base.operating_condition import OperatingCondition
+
+OC=OperatingCondition('cond1',atmospheric_model='simple')
+OC.set_Mach(0.7)
+OC.set_AoA(3.0)
+OC.set_altitude(5000.)
+OC.set_T0_deg(20.)
+OC.set_P0(101325.)
+OC.set_humidity(0.)
+OC.compute_atmosphere()
+
 
 wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
 wing_param.build_wing()
@@ -21,7 +32,7 @@ wing_param.convert_to_design_variable('test_param.tip_chord',1.,2.)
 wing_param.convert_to_design_variable('test_param.root_height',1.,1.5)
 wing_param.convert_to_design_variable('test_param.break_height',0.8,1.2)
 wing_param.convert_to_design_variable('test_param.tip_height',0.2,0.5)
-wing_param.build_linear_airfoil(AoA0=-2., Cd0=0.01, Cm0=-0.1, set_as_ref=True)
+wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()
 

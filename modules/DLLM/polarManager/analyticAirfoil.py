@@ -14,7 +14,7 @@ class AnalyticAirfoil(Airfoil):
     THICKNESS_CORRECTION=0.7698
     CLALPHA_BASE=2.*pi
     
-    def __init__(self, AoA0=0., Cd0=0., Cm0=0.0, Sref=1., Lref=1., rel_thick=0.0, sweep=0.0):
+    def __init__(self, OC, AoA0=0., Cm0=0.0, Sref=1., Lref=1., rel_thick=0.0, sweep=0.0, Ka=0.95):
         '''
         Constructor for airfoils
         @param AoA0:angle of attack of null lift
@@ -27,10 +27,10 @@ class AnalyticAirfoil(Airfoil):
         if rel_thick<0. or rel_thick>0.25:
             raise Exception, "Relative thickness must be >0. and <0.25"
         
-        Airfoil.__init__(self,Sref,Lref,rel_thick,sweep)
-        self.__AoA0=AoA0
-        self.__Cd0=Cd0
-        self.__Cm0=Cm0
+        Airfoil.__init__(self,OC, Sref,Lref,rel_thick,sweep)
+        self.__AoA0 = AoA0
+        self.__Cm0  = Cm0
+        self.__Ka   = Ka
         
     #-- Cl related methods       
     def Cl(self,alpha,Mach=0.0):
@@ -47,7 +47,7 @@ class AnalyticAirfoil(Airfoil):
         Clalpha=self.CLALPHA_BASE*prandlt_corr*thick_corr*sweep_corr
         return Clalpha
     
-    def dCl_dchi(self,alpha,Mach=0.0):
+    def dCl_dchi(self, alpha, Mach):
         return self.__dClAlpha_dchi(alpha,Mach)*(alpha-self.__AoA0)
     
     def __dClAlpha_dchi(self, alpha, Mach):
@@ -87,7 +87,7 @@ class AnalyticAirfoil(Airfoil):
         elif Mach<0.3:
             dcorr=0.
         elif Mach<1.:
-            dcorr=Mach/(1-Mach**2)**(1.5)
+            dcorr=Mach/(1.-Mach**2)**(1.5)
         else:
             raise Exception, 'ERROR: Analytic airfoil with Prandtl correction cannot be used for Mach >= 1.'
         return dcorr
@@ -102,10 +102,116 @@ class AnalyticAirfoil(Airfoil):
     
     #-- Cd related methods
     def Cd(self,alpha,Mach=0.0):
-        return self.__Cd0
+        Cdw = self.__Cd_wave(alpha, Mach)
+        Cdf = self.__Cd_friction(alpha, Mach)
+        Cd  = Cdw+ Cdf
+        return Cd
     
     def CdAlpha(self,alpha,Mach):
-        return 0.0
+        dCdw = self.__dCd_wave_dAoA(alpha, Mach)
+        dCdf = self.__dCd_friction_dAoA(alpha, Mach)
+        dCd = dCdw+dCdf
+        return dCd
+    
+    def dCd_dchi(self, alpha, Mach):
+        dCdw = self.__dCd_wave_dchi(alpha, Mach)
+        dCdf = self.__dCd_friction_dchi(alpha, Mach)
+        dCd  = dCdw + dCdf
+        return dCd
+        
+    def __Cd_wave(self, alpha, Mach):
+        sweep  = self.get_sweep()
+        toc    = self.get_rel_thick()
+        Cl     = self.Cl(alpha, Mach)
+        
+        Mdd    = self.__Ka/cos(sweep) - toc/(cos(sweep))**2 - Cl/(10.*cos(sweep)**3)
+        Mcrit  = Mdd - (0.1/80)**(1./3.)
+        if Mach < Mcrit:
+            Cdw = 0.0
+        else:
+            Cdw = 20*(Mach-Mcrit)**4
+        return Cdw
+    
+    def __dCd_wave_dAoA(self, alpha, Mach):
+        sweep  = self.get_sweep()
+        toc    = self.get_rel_thick()
+        Cl     = self.Cl(alpha, Mach)
+        dCl    = self.ClAlpha(alpha, Mach)
+        
+        Mdd    = self.__Ka/cos(sweep) - toc/cos(sweep)**2 - Cl/(10.*cos(sweep)**3)
+        dMdd   = -dCl/(10.*cos(sweep)**3)
+        Mcrit  = Mdd - (0.1/80)**(1./3.)
+        dMcrit = dMdd
+        
+        if Mach < Mcrit:
+            dCdw = 0.0
+        else:
+            dCdw = -80.*(Mach-Mcrit)**3*dMcrit
+        return dCdw
+    
+    def __dCd_wave_dchi(self, alpha, Mach):
+        sweep  = self.get_sweep()
+        dsweep = self.get_sweep_grad()
+        toc    = self.get_rel_thick()
+        dtoc   = self.get_rel_thick_grad()
+        Cl     = self.Cl(alpha, Mach)
+        dCl    = self.dCl_dchi(alpha, Mach)
+        
+        Mdd    = self.__Ka/cos(sweep) - toc/cos(sweep)**2 - Cl/(10.*cos(sweep)**3)
+        
+        dMdd   = self.__Ka*sin(sweep)*dsweep/(cos(sweep))**2 \
+               - dtoc/(cos(sweep))**2 - toc*(2.*sin(sweep)*dsweep)/cos(sweep)**3 \
+               - dCl/(10.*cos(sweep)**3) - Cl*(3.*sin(sweep)*dsweep)/(10.*cos(sweep)**4)
+               
+        Mcrit  = Mdd - (0.1/80)**(1./3.)
+        dMcrit = dMdd
+        
+        if Mach < Mcrit:
+            dCdw = 0.0
+        else:
+            dCdw = -80.*(Mach-Mcrit)**3*dMcrit
+            
+        return dCdw
+    
+    def __Cd_friction(self, alpha, Mach):
+        # Re= V_corr*Lref_corr/nu=Mach*cos(sweep)*c*Lref/cos(sweep)/nu = Mach*c*Lref/cos(sweep)
+        OC = self.get_OC()
+        c  = OC.get_c()
+        nu = OC.get_nu()
+        L  = self.get_Lref()
+        Re = Mach*c*L/nu
+        if Re < 1.e-6:
+            # Prevent division by 0. Drag is null at zero Re number anyway
+            Cdf = 0.
+        elif Re < 1.e5:
+            # Laminar flow
+            Cdf=1.328/sqrt(Re)
+        else:
+            # Turbulent flow
+            Cdf=0.074*Re**(-0.2)
+        return Cdf
+    
+    def __dCd_friction_dAoA(self, alpha, Mach):
+        return 0.
+    
+    def __dCd_friction_dchi(self, alpha, Mach):
+        OC  = self.get_OC()
+        c   = OC.get_c()
+        nu  = OC.get_nu()
+        L   = self.get_Lref()
+        dL  = self.get_Lref_grad()
+        Re  = Mach*c*L/nu
+        dRe = Mach*c*dL/nu
+        if Re < 1.e-6:
+            # Prevent division by 0. Drag is null at zero Re number anyway
+            dCdf = 0.
+        elif Re < 1.e5:
+            # Laminar flow
+            dCdf=-0.664/(Re**1.5)*dRe
+        else:
+            # Turbulent flow
+            dCdf=-0.0148*Re**(-1.2)*dRe
+        return dCdf
     
     #-- Cm related methods
     def Cm(self,alpha,Mach=0.0):
@@ -114,7 +220,7 @@ class AnalyticAirfoil(Airfoil):
     def CmAlpha(self,alpha,Mach):
         return 0.0
     
-    def get_scaled_copy(self, Sref=None,Lref=None, rel_thick=None, sweep=None):
+    def get_scaled_copy(self, OC=None, Sref=None,Lref=None, rel_thick=None, sweep=None):
         if Sref is None:
             Sref=self.get_Sref()
         if Lref is None:
@@ -123,4 +229,6 @@ class AnalyticAirfoil(Airfoil):
             rel_thick = self.get_rel_thick()
         if sweep is None:
             sweep = self.get_sweep()
-        return AnalyticAirfoil(self.__AoA0,self.__Cd0, self.__Cm0, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep)
+        if OC is None:
+            OC = self.get_OC()
+        return AnalyticAirfoil(OC, self.__AoA0, self.__Cm0, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep)

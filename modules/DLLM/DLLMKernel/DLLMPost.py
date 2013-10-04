@@ -63,6 +63,9 @@ class DLLMPost:
     def get_iAoA(self):
         return self.__LLW.get_iAoA()
     
+    def get_Lref(self):
+        return self.__LLW.get_Lref()
+    
     def get_Sref(self):
         return self.__LLW.get_Sref()
     
@@ -307,6 +310,8 @@ class DLLMPost:
     def __display_info(self):
         print self.get_OC()
         print '\n*** aerodynamic functions and coefficients ***'
+        print '  Sref  = ',self.get_Sref()
+        print '  Lref  = ',self.get_Lref()
         for i, func in enumerate(self.__func_list):
             if func in ['Lift', 'Drag']:
                 unit = '(N)'

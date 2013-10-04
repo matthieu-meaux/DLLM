@@ -455,16 +455,16 @@ class Wing_param():
         else:
             self.__airfoils = airfoils
             
-    def build_linear_airfoil(self, AoA0=0., Cd0=0., Cm0=0., Sref=1., Lref=1., rel_thick=0., sweep=0., set_as_ref=True):
+    def build_linear_airfoil(self, OC, AoA0=0., Cm0=0., Sref=1., Lref=1., rel_thick=0., sweep=0., set_as_ref=True):
         degToRad = pi/180.
-        airfoil  = AnalyticAirfoil(AoA0=degToRad*AoA0, Cd0=Cd0, Cm0=Cm0, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep)
+        airfoil  = AnalyticAirfoil(OC, AoA0=degToRad*AoA0, Cm0=Cm0, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep)
         if set_as_ref:
             self.set_ref_aifoil(airfoil)
         return airfoil
     
-    def build_polar_airoil(self, database, Sref=1., Lref=1., interpolator='2DSpline', set_as_ref=True):
+    def build_polar_airoil(self, OC, database, Sref=1., Lref=1., interpolator='2DSpline', set_as_ref=True):
         # Why relative thickness usage ? The extraction from a polar should give us more freedom.
-        airfoil = AirfoilPolar(database,rel_thick=0.15, interpolator=interpolator, Sref=Sref, Lref=Lref)
+        airfoil = AirfoilPolar(OC, database,rel_thick=0.15, interpolator=interpolator, Sref=Sref, Lref=Lref)
         if set_as_ref:
             self.set_ref_aifoil(airfoil)
         return airfoil
@@ -484,7 +484,7 @@ class Wing_param():
         self.__linked_airfoils=[]
         for i in range(self.__n_sect):
             LLoc,LLoc_grad,SLoc,SLoc_grad=self.__compute_local_info(i)
-            linked_af = self.__airfoils[i].get_scaled_copy(SLoc, LLoc)
+            linked_af = self.__airfoils[i].get_scaled_copy(Sref=SLoc, Lref=LLoc)
             linked_af.set_Sref_grad(SLoc_grad)
             linked_af.set_Lref_grad(LLoc_grad)
             linked_af.set_rel_thick_grad(self.__rel_thicks_grad[i])
