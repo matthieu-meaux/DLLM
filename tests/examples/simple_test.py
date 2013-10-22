@@ -1,42 +1,44 @@
-from DLLM.DLLMEval.lifting_line_evaluator import Lifting_line_evaluator
-from OpenDACE.evalcontrol.dv_handler import DVHandler
-import numpy
+# Imports
+from DLLM.DLLMGeom.wing_param import Wing_param
+from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
+from MDOTools.Base.operating_condition import OperatingCondition
 
-#Mach=
-#Alpha=s
-data={}
-data['Evaluation conditions.Mach']=0.5
-data['Evaluation conditions.AoA']=3.0
-data['Airfoils.Airfoil aerodynamic model']='Linear'
-data['Airfoils.AoA0']=-2.0
-data['Airfoils.Cd0']=0.01
-data['Airfoils.Cm']=-0.1
-data['Numerical parameters.Stop criteria']='Residual decrease'
-data['Numerical parameters.Relaxation factor']=0.95
-data['Numerical parameters.Decrease ratio']=1e-06
-data['Wing geometry.Planform']='Broken'
-data['Wing geometry.Wingspan']=34.1
-data['Wing geometry.Break %']=33.
-data['Wing geometry.Root chord']=6.1
-data['Wing geometry.Break chord']=4.6
-data['Wing geometry.Tip chord']=1.5
-data['Wing geometry.Root thickness']=1.28
-data['Wing geometry.Break thickness']=0.97
-data['Wing geometry.Tip thickness']=0.33
-data['Wing geometry.Number of sections']=40
-data['design_variables']='twist.dat'
+OC=OperatingCondition('cond1',atmospheric_model='simple')
+OC.set_Mach(0.8)
+OC.set_AoA(3.5)
+OC.set_altitude(10000.)
+OC.set_T0_deg(15.)
+OC.set_P0(101325.)
+OC.set_humidity(0.)
+OC.compute_atmosphere()
 
-llw_evaluator = Lifting_line_evaluator(data)
+wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
+wing_param.build_wing()
+wing_param.set_value('test_param.span',34.1)
+wing_param.set_value('test_param.sweep',34.)
+wing_param.set_value('test_param.break_percent',33.)
+wing_param.set_value('test_param.root_chord',6.1)
+wing_param.set_value('test_param.break_chord',4.6)
+wing_param.set_value('test_param.tip_chord',1.5)
+wing_param.set_value('test_param.root_height',1.28)
+wing_param.set_value('test_param.break_height',0.97)
+wing_param.set_value('test_param.tip_height',0.33)
+wing_param.convert_to_design_variable('test_param.span',10.,50.)
+wing_param.convert_to_design_variable('test_param.sweep',0.,40.)
+wing_param.convert_to_design_variable('test_param.break_percent',20.,40.)
+wing_param.convert_to_design_variable('test_param.root_chord',5.,7.)
+wing_param.convert_to_design_variable('test_param.break_chord',3.,5.)
+wing_param.convert_to_design_variable('test_param.tip_chord',1.,2.)
+wing_param.convert_to_design_variable('test_param.root_height',1.,1.5)
+wing_param.convert_to_design_variable('test_param.break_height',0.8,1.2)
+wing_param.convert_to_design_variable('test_param.tip_height',0.2,0.5)
+wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
+wing_param.build_airfoils_from_ref()
+wing_param.update()
 
-alpha=data['Evaluation conditions.AoA']*numpy.pi/180.
-Mach=data['Evaluation conditions.Mach']
+print wing_param
 
-DVH=DVHandler()
-DVH.import_from_file(data['design_variables'])
-
-llw_evaluator.eval(data,DVH,alpha,Mach,noise_level=0.)
-wing=llw_evaluator.get_wing()
-print 'Cl=',wing.Cl(alpha,beta=0.,Mach=Mach)
-print 'Cd=',wing.Cd(alpha,beta=0.,Mach=Mach)
-print 'Cm=',wing.Cm(alpha,beta=0.,Mach=Mach)
-
+DLLM = DLLMSolver(wing_param,OC)
+DLLM.run_direct()
+DLLM.run_post()
+DLLM.run_adjoint()
