@@ -190,13 +190,16 @@ class DLLMDirect:
         '''
         Computes the local angle of attack = AoA + twist - induced downwash angle
         '''
-        AoA = self.get_OC().get_AoA_rad()
+        Ry    = self.get_wing_param().get_struct_disp()[4,:]
+        twist = self.get_wing_param().get_twist()
+        twist_grad = self.get_wing_param().get_twist_grad()
+        AoA   = self.get_OC().get_AoA_rad()
         
         # Why this formula ? twist increases the local airfoil angle of attack normally...
         #self.__localAoA=alpha-iaOa-self.get_wing_geom().get_twist()
-        self.__localAoA = AoA + self.get_wing_param().get_twist() - self.__iAoA
+        self.__localAoA = AoA +twist - self.__iAoA + Ry
         for i in xrange(self.__N):
-            self.__DlocalAoA_Dchi[i,:] = self.get_wing_param().get_twist_grad()[i,:] # + dAoAdksi - diAoAdksi ?? 
+            self.__DlocalAoA_Dchi[i,:] =twist_grad[i,:] # + dAoAdksi - diAoAdksi ?? 
         
         for i in xrange(self.__N):
             if self.__localAoA[i] > numpy.pi/2. or self.__localAoA[i] < -numpy.pi/2.:
