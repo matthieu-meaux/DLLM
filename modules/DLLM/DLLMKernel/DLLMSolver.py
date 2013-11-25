@@ -151,8 +151,11 @@ class DLLMSolver:
     def set_relax_factor(self, relax_factor):
         self.__DLLMDirect.set_relax_factor(relax_factor)
         
-    def set_stop_criteria(self, residual=None, n_it=None):
-        self.__DLLMDirect.set_stop_criteria(residual=residual, n_it=n_it)
+    def set_stop_residual(self, residual):
+        self.__DLLMDirect.set_stop_residual(residual)
+    
+    def set_max_iterations(self, max_it):
+        self.__DLLMDirect.set_max_iterations(max_it)
         
     def set_gamma_file_name(self, gamma_f_name):
         self.__DLLMDirect.set_gamma_file_name(gamma_f_name)

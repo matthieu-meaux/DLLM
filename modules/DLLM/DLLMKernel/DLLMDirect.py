@@ -8,13 +8,12 @@ import numpy
 from numpy import array, transpose,outer, ones, zeros, copy, divide, diag, dot
 from numpy.linalg import norm, solve
 
+from MDOTools.Solvers.newton_raphson_problem import NewtonRaphsonProblem
+
 class DLLMDirect:
     """
     Direct solver for the lifting line wing model
     """
-    STOP_CRITERIA_RESIDUAL='Residual decrease'
-    STOP_CRITERIA_N_ITER='Niterations'
-    
     def __init__(self, LLW):
         self.__LLW          = LLW
         self.__K            = self.__LLW.get_K()
@@ -24,11 +23,12 @@ class DLLMDirect:
         self.__computed     = False
         self.__gamma_f_name = None
         
-        # initialize numerical parameters
-        self.__init_numerical_parameters()
-        
         # initialize local variables
         self.__init_local_variables()
+        
+        # initialize the Newton-Raphson problem
+        self.__NRPb = None 
+        self.__init_Newton_Raphson()
         
     #-- Accessors
     def get_wing_param(self):
@@ -80,57 +80,36 @@ class DLLMDirect:
     def set_gamma_file_name(self, gamma_f_name):
         self.__gamma_f_name = gamma_f_name
     
-    #-- Numerical parameters related methods
-    def __init_numerical_parameters(self):
-        self.__relaxFactor=0.99
-        self.__stopCriteria=1e-6
-        self.__stop_criteria_type=self.STOP_CRITERIA_RESIDUAL
-        self.set_stop_criteria()
+    #-- Newton-Raphson related methods
+    def __init_Newton_Raphson(self):
+        iAoA0= zeros(self.__N)
+        self.__NRPb = NewtonRaphsonProblem(iAoA0, self.__comp_R, self.__comp_DR_DiAoA)
+        self.__NRPb.set_relax_factor(0.99)
+        self.__NRPb.set_stop_residual(1.e-9)
+        self.__NRPb.set_max_iterations(100)
         
     def set_relax_factor(self, relax_factor):
-        self.__relaxFactor = relax_factor
-        
-    def set_stop_criteria(self,residual=None,n_it=None):
-        if n_it is not None:
-            if type(n_it) != type(1):
-                raise Exception, "n_it stop criteria must be an integer"
-            self.__stop_criteria_type=self.STOP_CRITERIA_N_ITER
-            self.__stopCriteria=n_it
-        else :
-            self.__stop_criteria_type=self.STOP_CRITERIA_RESIDUAL
-            if residual is not None:
-                if type(residual) != type(1.1):
-                    raise Exception, "residual stop criteria must be a float"
-                self.__stopCriteria=residual
-            else:
-                self.__stopCriteria=1e-6
+        self.__NRPb.set_relax_factor(relax_factor)
     
+    def set_stop_residual(self, residual):
+        self.__NRPb.set_stop_residual(residual)
+        
+    def set_max_iterations(self, max_it):
+        self.__NRPb.set_max_iterations(max_it)
+
     #-- Computation related methods
     def run(self):
-        print 'Direct solver newton iterations...'
-        self.__init_iterations()
-        
-        if self.__stop_criteria_type == self.STOP_CRITERIA_RESIDUAL:
-            while(self.__residual>self.__stopCriteria):
-                self.__iteration()
-        else:
-            for i in xrange(self.__stopCriteria):
-                self.__iteration()
-                
+        self.__NRPb.solve()
         self.set_computed(True)
         self.__write_gamma_to_file()
-        self.__compute_partial_derivatives()
-        print 'Done.'
+        self.__compute_DR_Dchi()
                 
     def __init_local_variables(self):
         # Initializing local variables for lifting line computations
         # Residual variables
-        self.__R0       = None
         self.__R        = zeros([self.__N])
         self.__DR_DiAoA = zeros([self.__N])
         self.__DR_Dchi  = None
-        self.__residual = None
-        self.__residuals_hist=[]
         
         # Angle of attack variables
         self.__localAoA = zeros([self.__N])
@@ -138,8 +117,8 @@ class DLLMDirect:
         self.__DlocalAoA_Dchi   = zeros([self.__N,self.__ndv])
         
         # Induced angle of attack variables
-        self.__iAoA    = zeros([self.__N])
-        self.__iAoANew = zeros([self.__N])
+        self.__iAoA    = None
+        self.__iAoANew = None
         self.__DiAoA_DdGamma=zeros([self.__N,self.__N+1])
         self.__DpiAoA_Dpchi = zeros([self.__N,self.__ndv])   
         self.__DiAoA_DiAoA = None
@@ -152,97 +131,86 @@ class DLLMDirect:
         self.__Dgamma_Dchi = zeros([self.__N,self.__ndv])
         self.__dGamma = zeros([self.__N+1])
         self.__DdGammaDy_DGamma = zeros([self.__N+1,self.__N])
-        
-    def __init_iterations(self):
-        self.__iAoA=zeros([self.__N])
-        self.__Residual()
-        self.__R0       = norm(self.__R)
-        self.__residual = 1.0
-        self.__residuals_hist = []
-        
-    def __iteration(self):
-        self.__Residual()
-        self.__newton_iteration()
-        
-    def __newton_iteration(self):
-        #Newton zero search method
-        self.__iAoA-=self.__relaxFactor*solve(self.__DR_DiAoA,self.__R)
-        
-        #Compute stop criteria
-        self.__residual=norm(self.__R)/self.__R0
-        self.__residuals_hist.append(self.__residual)
-        print "  ||R||/||R0||= "+str(self.__residual)
                 
     #-- Residual related methods
-    def __Residual(self):
-        '''
-        Computes the residual and its derivatives
-        '''
+    def __comp_R(self, iAoA):
+        self.__iAoA = iAoA
         self.__compute_localAoA()
         self.__compute_gamma()
         self.__compute_dGamma()
         self.__compute_iAoA()
         
-        self.__R=self.__iAoA-self.__iAoANew
-        self.__DR_DiAoA=numpy.diag(ones([self.__N]))-self.__DiAoA_DiAoA
+        self.__R = self.__iAoA - self.__iAoANew
+        
+        return self.__R
     
+    def __comp_DR_DiAoA(self, iAoA):
+        R=self.__comp_R(iAoA)
+        
+        # dlocalAoAdiAoA is a constant matrix, no need to compute it (self.__DlocalAoA_DiAoA)
+        self.__compute_Dgamma_DiAoA()
+        self.__compute_DdGamma_DiAoA()
+        self.__compute_DiAoA_DiAoA()
+        
+        self.__DR_DiAoA=numpy.diag(ones([self.__N]))-self.__DiAoA_DiAoA
+        
+        return self.__DR_DiAoA
+
     def __compute_localAoA(self):
-        '''
-        Computes the local angle of attack = AoA + twist - induced downwash angle
-        '''
-        Ry    = self.get_wing_param().get_struct_disp()[4,:]
-        twist = self.get_wing_param().get_twist()
-        twist_grad = self.get_wing_param().get_twist_grad()
-        AoA   = self.get_OC().get_AoA_rad()
-        
-        # Why this formula ? twist increases the local airfoil angle of attack normally...
-        #self.__localAoA=alpha-iaOa-self.get_wing_geom().get_twist()
-        self.__localAoA = AoA +twist - self.__iAoA + Ry
-        for i in xrange(self.__N):
-            self.__DlocalAoA_Dchi[i,:] =twist_grad[i,:] # + dAoAdksi - diAoAdksi ?? 
-        
-        for i in xrange(self.__N):
-            if self.__localAoA[i] > numpy.pi/2. or self.__localAoA[i] < -numpy.pi/2.:
-                raise Exception, "Local angle of attack out of bounds [-pi/2, pi/2]"
-            
-        #print 'local AoA = ',self.__localAoA
-        
+         Thetay = self.get_wing_param().get_struct_disp()[4,:]
+         twist  = self.get_wing_param().get_twist()
+         AoA    = self.get_OC().get_AoA_rad()
+         
+         # Why this formula ? twist increases the local airfoil angle of attack normally...
+         #self.__localAoA=alpha-iaOa-self.get_wing_geom().get_twist()
+         self.__localAoA = AoA + twist - self.__iAoA + Thetay
+         
+         for i in xrange(self.__N):
+             if self.__localAoA[i] > numpy.pi/2. or self.__localAoA[i] < -numpy.pi/2.:
+                 raise Exception, "Local angle of attack out of bounds [-pi/2, pi/2]"
+
     def __compute_gamma(self):
-        '''
+        """
         Update the circulation
-        '''
+        """
         Mach = self.get_OC().get_Mach()
         for i in xrange(self.__N):
             self.__gamma[i] = self.get_airfoils()[i].gamma(self.__localAoA[i],Mach)
-            self.__Dgamma_DlocalAoA[i,i]  = self.get_airfoils()[i].DGammaDAoA(self.__localAoA[i],Mach)
-            self.__Dgamma_Dchi[i,:] = self.get_airfoils()[i].DGammaDchi(self.__localAoA[i],Mach)
             
-        self.__Dgamma_DiAoA = dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_DiAoA)
-        
+    def __compute_Dgamma_DiAoA(self):
+         Mach = self.get_OC().get_Mach()
+         for i in xrange(self.__N):
+             self.__Dgamma_DlocalAoA[i,i]  = self.get_airfoils()[i].DGammaDAoA(self.__localAoA[i],Mach)
+             
+         self.__Dgamma_DiAoA = dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_DiAoA)
+
     def __compute_dGamma(self):
         '''
-        Computes the circulation y derivation
+        Computes the circulation y derivation (dGammady)
         '''
         self.__dGamma[0:self.__N]   = self.__gamma
         self.__dGamma[self.__N]     = 0.0
         self.__dGamma[1:self.__N+1]-= self.__gamma
         
-        #Differentiation
+    def __compute_DdGamma_DiAoA(self):
         self.__DdGammaDy_DGamma[0:self.__N,:]   = diag(ones([self.__N]))
         self.__DdGammaDy_DGamma[self.__N,:]     = 0.0
         self.__DdGammaDy_DGamma[1:self.__N+1,:]-= diag(ones([self.__N]))
-        
+         
         self.__DdGammaDy_DiAoA = dot(self.__DdGammaDy_DGamma,self.__Dgamma_DiAoA)
-        
+
     def __compute_iAoA(self):
         '''
         Computes the induced angle on an airfoil for a given circulation on the wing.
         '''
         self.__iAoANew        = dot(self.__K,self.__dGamma)
+        
+    def __compute_DiAoA_DiAoA(self):
+        """
+        Computes the deritvate DiAoAnew_DiAoA
+        """
         self.__DiAoA_DdGamma  = dot(self.__K,diag(ones(self.__N+1)))
         self.__DiAoA_DiAoA    = dot(self.__DiAoA_DdGamma,self.__DdGammaDy_DiAoA)
-        for n in xrange(self.__ndv):
-            self.__DpiAoA_Dpchi[:,n] = dot(self.__dK_dchi[:,:,n],self.__dGamma) 
         
     def __write_gamma_to_file(self):
         '''
@@ -262,21 +230,24 @@ class DLLMDirect:
             fid.write(line)
         fid.close()
         
-    def __compute_partial_derivatives(self):
+    def __compute_DR_Dchi(self):
+        self.__compute_DlocalAoA_Dchi()
+        self.__compute_Dgamma_Dchi()
+        self.__compute_DiAoA_Dchi()
         Dgamma_Dchi     = dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_Dchi) + self.__Dgamma_Dchi
         DdGammaDy_Dchi  = dot(self.__DdGammaDy_DGamma,Dgamma_Dchi)
         self.__DR_Dchi  = -dot(self.__DiAoA_DdGamma,DdGammaDy_Dchi) - self.__DpiAoA_Dpchi
-      
-#     def __dRdTwist(self):
-#         Dgamma_DTwist    =  dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_DTwist)
-#         DdGammaDy_DTwist =  dot(self.__DdGammaDy_DGamma,Dgamma_DTwist)
-#         self.__DR_DTwist = -dot(self.__DiAoA_DdGamma,DdGammaDy_DTwist) # (-) Because R=Gamma_input-Gamma_computed_from_input
-#     
-#     def __dRdAoA(self):
-#         Dgamma_DAoA    =  dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_DAoA)
-#         DdGammaDy_DAoA =  dot(self.__DdGammaDy_DGamma,Dgamma_DAoA)
-#         self.__DR_DAoA = -dot(self.__DiAoA_DdGamma,DdGammaDy_DAoA) # (-) Because R=Gamma_input-Gamma_computed_from_input
-#         
-#     def __dRdThickness(self):
-#         DdGammaDy_DThickness =  dot(self.__DdGammaDy_DGamma,self.__Dgamma_DThickness)
-#         self.__DR_DThickness = -dot(self.__DiAoA_DdGamma,DdGammaDy_DThickness) # (-) Because R=Gamma_input-Gamma_computed_from_input
+        
+    def __compute_DlocalAoA_Dchi(self):
+        twist_grad  = self.get_wing_param().get_twist_grad()
+        for i in xrange(self.__N):
+            self.__DlocalAoA_Dchi[i,:] =twist_grad[i,:] # + dAoAdksi - diAoAdksi ?? 
+            
+    def __compute_Dgamma_Dchi(self):
+        Mach = self.get_OC().get_Mach()
+        for i in xrange(self.__N):
+            self.__Dgamma_Dchi[i,:] = self.get_airfoils()[i].DGammaDchi(self.__localAoA[i],Mach)
+            
+    def __compute_DiAoA_Dchi(self):
+        for n in xrange(self.__ndv):
+            self.__DpiAoA_Dpchi[:,n] = dot(self.__dK_dchi[:,:,n],self.__dGamma)
