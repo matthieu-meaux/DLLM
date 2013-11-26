@@ -109,11 +109,14 @@ class DLLMSolver:
         return self.__DLLMPost.get_dpJ_dpchi()
     
     #-- DLLMAdjoint accessors
-    def get_adjoint(self):
-        return self.__DLLMAdjoint.get_adjoint()
+    def get_adjoint_list(self):
+        return self.__DLLMAdjoint.get_adjoint_list()
     
-    def get_dJ_dchi(self):
-        return self.__DLLMAdjoint.get_dJ_dchi()
+    def get_adjoint_convergence_correction_list(self):
+        return self.__DLLMAdjoint.get_adjoint_convergence_correction_list()
+    
+    def get_dJ_dchi_list(self):
+        return self.__DLLMAdjoint.get_dJ_dchi_list()
     
     #-- Setters
     def __reinit_modules(self):

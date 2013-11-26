@@ -2,6 +2,7 @@ from OpenDACE.ValidGrad.FDValidGrad import FDValidGrad
 from DLLM.DLLMGeom.wing_param import Wing_param
 from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
 from MDOTools.OC.operating_condition import OperatingCondition
+import numpy
 
 OC=OperatingCondition('cond1',atmospheric_model='simple')
 OC.set_Mach(0.7)
@@ -58,7 +59,7 @@ def df(x):
     #DLLM.run_post(func_list=['Cl'])
     DLLM.run_post()
     DLLM.run_adjoint()
-    func_grad=DLLM.get_dJ_dchi()
+    func_grad=numpy.array(DLLM.get_dJ_dchi_list())
     return func_grad
 
 val_grad=FDValidGrad(2,f,df,fd_step=1.e-3)
