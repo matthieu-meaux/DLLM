@@ -119,26 +119,21 @@ class DLLMDirect:
         # Induced angle of attack variables
         self.__iAoA    = None
         self.__iAoANew = None
-        self.__DiAoA_DdGamma=zeros([self.__N,self.__N+1])
-        self.__DpiAoA_Dpchi = zeros([self.__N,self.__ndv])   
-        self.__DiAoA_DiAoA = None
+        self.__DpiAoAnew_Dpchi = zeros([self.__N,self.__ndv])   
+        self.__DiAoAnew_DiAoA = None
         
         # Circulation variables
         self.__gamma  = zeros(self.__N)
         self.__Dgamma_DiAoA = None
-        self.__DdGammaDy_DiAoA = None
         self.__Dgamma_DlocalAoA = zeros([self.__N,self.__N])
         self.__Dgamma_Dchi = zeros([self.__N,self.__ndv])
-        self.__dGamma = zeros([self.__N+1])
-        self.__DdGammaDy_DGamma = zeros([self.__N+1,self.__N])
                 
     #-- Residual related methods
     def __comp_R(self, iAoA):
         self.__iAoA = iAoA
         self.__compute_localAoA()
         self.__compute_gamma()
-        self.__compute_dGamma()
-        self.__compute_iAoA()
+        self.__compute_iAoAnew()
         
         self.__R = self.__iAoA - self.__iAoANew
         
@@ -149,10 +144,9 @@ class DLLMDirect:
         
         # dlocalAoAdiAoA is a constant matrix, no need to compute it (self.__DlocalAoA_DiAoA)
         self.__compute_Dgamma_DiAoA()
-        self.__compute_DdGamma_DiAoA()
-        self.__compute_DiAoA_DiAoA()
+        self.__compute_DiAoAnew_DiAoA()
         
-        self.__DR_DiAoA=numpy.diag(ones([self.__N]))-self.__DiAoA_DiAoA
+        self.__DR_DiAoA=numpy.diag(ones([self.__N]))-self.__DiAoAnew_DiAoA
         
         return self.__DR_DiAoA
 
@@ -184,33 +178,17 @@ class DLLMDirect:
              
          self.__Dgamma_DiAoA = dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_DiAoA)
 
-    def __compute_dGamma(self):
-        '''
-        Computes the circulation y derivation (dGammady)
-        '''
-        self.__dGamma[0:self.__N]   = self.__gamma
-        self.__dGamma[self.__N]     = 0.0
-        self.__dGamma[1:self.__N+1]-= self.__gamma
-        
-    def __compute_DdGamma_DiAoA(self):
-        self.__DdGammaDy_DGamma[0:self.__N,:]   = diag(ones([self.__N]))
-        self.__DdGammaDy_DGamma[self.__N,:]     = 0.0
-        self.__DdGammaDy_DGamma[1:self.__N+1,:]-= diag(ones([self.__N]))
-         
-        self.__DdGammaDy_DiAoA = dot(self.__DdGammaDy_DGamma,self.__Dgamma_DiAoA)
-
-    def __compute_iAoA(self):
+    def __compute_iAoAnew(self):
         '''
         Computes the induced angle on an airfoil for a given circulation on the wing.
         '''
-        self.__iAoANew        = dot(self.__K,self.__dGamma)
+        self.__iAoANew        = dot(self.__K,self.__gamma)
         
-    def __compute_DiAoA_DiAoA(self):
+    def __compute_DiAoAnew_DiAoA(self):
         """
-        Computes the deritvate DiAoAnew_DiAoA
+        Computes the derivative DiAoAnew_DiAoA
         """
-        self.__DiAoA_DdGamma  = dot(self.__K,diag(ones(self.__N+1)))
-        self.__DiAoA_DiAoA    = dot(self.__DiAoA_DdGamma,self.__DdGammaDy_DiAoA)
+        self.__DiAoAnew_DiAoA = dot(self.__K,self.__Dgamma_DiAoA)
         
     def __write_gamma_to_file(self):
         '''
@@ -233,21 +211,21 @@ class DLLMDirect:
     def __compute_DR_Dchi(self):
         self.__compute_DlocalAoA_Dchi()
         self.__compute_Dgamma_Dchi()
-        self.__compute_DiAoA_Dchi()
-        Dgamma_Dchi     = dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_Dchi) + self.__Dgamma_Dchi
-        DdGammaDy_Dchi  = dot(self.__DdGammaDy_DGamma,Dgamma_Dchi)
-        self.__DR_Dchi  = -dot(self.__DiAoA_DdGamma,DdGammaDy_Dchi) - self.__DpiAoA_Dpchi
+        self.__compute_DiAoAnew_Dchi()
+        self.__DR_Dchi  = -dot(self.__K,self.__Dgamma_Dchi) - self.__DpiAoAnew_Dpchi
         
     def __compute_DlocalAoA_Dchi(self):
         twist_grad  = self.get_wing_param().get_twist_grad()
         for i in xrange(self.__N):
-            self.__DlocalAoA_Dchi[i,:] =twist_grad[i,:] # + dAoAdksi - diAoAdksi ?? 
+            self.__DlocalAoA_Dchi[i,:] =twist_grad[i,:] # + dAoAdksi ?? 
             
     def __compute_Dgamma_Dchi(self):
         Mach = self.get_OC().get_Mach()
         for i in xrange(self.__N):
             self.__Dgamma_Dchi[i,:] = self.get_airfoils()[i].DGammaDchi(self.__localAoA[i],Mach)
+        
+        self.__Dgamma_Dchi = self.__Dgamma_Dchi + dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_Dchi) 
             
-    def __compute_DiAoA_Dchi(self):
+    def __compute_DiAoAnew_Dchi(self):
         for n in xrange(self.__ndv):
-            self.__DpiAoA_Dpchi[:,n] = dot(self.__dK_dchi[:,:,n],self.__dGamma)
+            self.__DpiAoAnew_Dpchi[:,n] = dot(self.__dK_dchi[:,:,n],self.__gamma)

@@ -42,3 +42,5 @@ DLLM = DLLMSolver(wing_param,OC)
 DLLM.run_direct()
 DLLM.run_post()
 DLLM.run_adjoint()
+
+print DLLM.get_iAoA()

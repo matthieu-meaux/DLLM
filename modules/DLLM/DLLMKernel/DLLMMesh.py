@@ -14,6 +14,7 @@ class DLLMMesh:
     def __init__(self, LLW):
         self.__LLW = LLW
         self.__ndv = self.get_wing_param().get_ndv()
+        self.__N       = None
         self.__K       = None
         self.__dK_dchi = None
         self.recompute()
@@ -89,14 +90,21 @@ class DLLMMesh:
         
     def __setGeom(self):
         '''
-        Sets the geometry of the wing, builds the stiffness geometry matrix
+        Sets the geometry of the wing, builds the liftinf line metric matrix
         '''
         eta = self.get_wing_param().get_eta()[1,:]
         y   = self.get_wing_param().get_XYZ()[1,:]
         
         YminEta=transpose(outer(ones([self.__N+1]),y))-outer(ones([self.__N]),eta)
-        self.__K=divide(ones([self.__N,self.__N+1]),YminEta)
-        self.__K/=4.*numpy.pi
+        Kmetric=divide(ones([self.__N,self.__N+1]),YminEta)
+        Kmetric/=4.*numpy.pi
+        
+        DdGammaDy_DGamma = zeros([self.__N+1,self.__N])
+        DdGammaDy_DGamma[0:self.__N,:]   = diag(ones([self.__N]))
+        DdGammaDy_DGamma[self.__N,:]     = 0.0
+        DdGammaDy_DGamma[1:self.__N+1,:]-= diag(ones([self.__N]))
+        
+        self.__K = dot(Kmetric,DdGammaDy_DGamma)
         
         eta_grad = self.get_wing_param().get_eta_grad()[1,:,:]
         y_grad   = self.get_wing_param().get_XYZ_grad()[1,:,:]
@@ -105,12 +113,17 @@ class DLLMMesh:
         for n in xrange(self.__ndv):
             YminEta_grad[:,:,n] = transpose(outer(ones([self.__N+1]),y_grad[:,n]))-outer(ones([self.__N]),eta_grad[:,n])
         
-        self.__dK_dchi=zeros((self.__N,self.__N+1,self.__ndv))
+        dKmetric_dchi=zeros((self.__N,self.__N+1,self.__ndv))
         for n in xrange(self.__ndv):
             for j in xrange(self.__N+1):
                 for i in xrange(self.__N):
-                    self.__dK_dchi[i,j,n]=-YminEta_grad[i,j,n]/YminEta[i,j]**2
-        self.__dK_dchi/=4.*numpy.pi       
+                    dKmetric_dchi[i,j,n]=-YminEta_grad[i,j,n]/YminEta[i,j]**2
+        dKmetric_dchi/=4.*numpy.pi
+        
+        self.__dK_dchi = zeros((self.__N,self.__N,self.__ndv))
+        for n in xrange(self.__ndv):
+            self.__dK_dchi[:,:,n]=dot(dKmetric_dchi[:,:,n],DdGammaDy_DGamma)
+              
 
 #     def __setGeomWeissinger(self):
 #         '''
