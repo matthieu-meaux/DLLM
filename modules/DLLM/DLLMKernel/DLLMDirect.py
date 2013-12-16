@@ -83,7 +83,7 @@ class DLLMDirect:
     #-- Newton-Raphson related methods
     def __init_Newton_Raphson(self):
         iAoA0= zeros(self.__N)
-        self.__NRPb = NewtonRaphsonProblem(iAoA0, self.__comp_R, self.__comp_DR_DiAoA)
+        self.__NRPb = NewtonRaphsonProblem(iAoA0, self.comp_R, self.comp_DR_DiAoA)
         self.__NRPb.set_relax_factor(0.99)
         self.__NRPb.set_stop_residual(1.e-9)
         self.__NRPb.set_max_iterations(100)
@@ -102,7 +102,7 @@ class DLLMDirect:
         self.__NRPb.solve()
         self.set_computed(True)
         self.__write_gamma_to_file()
-        self.__compute_DR_Dchi()
+        self.comp_DR_Dchi()
                 
     def __init_local_variables(self):
         # Initializing local variables for lifting line computations
@@ -129,7 +129,7 @@ class DLLMDirect:
         self.__Dgamma_Dchi = zeros([self.__N,self.__ndv])
                 
     #-- Residual related methods
-    def __comp_R(self, iAoA):
+    def comp_R(self, iAoA):
         self.__iAoA = iAoA
         self.__compute_localAoA()
         self.__compute_gamma()
@@ -139,8 +139,8 @@ class DLLMDirect:
         
         return self.__R
     
-    def __comp_DR_DiAoA(self, iAoA):
-        R=self.__comp_R(iAoA)
+    def comp_DR_DiAoA(self, iAoA):
+        R=self.comp_R(iAoA)
         
         # dlocalAoAdiAoA is a constant matrix, no need to compute it (self.__DlocalAoA_DiAoA)
         self.__compute_Dgamma_DiAoA()
@@ -208,11 +208,13 @@ class DLLMDirect:
             fid.write(line)
         fid.close()
         
-    def __compute_DR_Dchi(self):
+    def comp_DR_Dchi(self):
         self.__compute_DlocalAoA_Dchi()
         self.__compute_Dgamma_Dchi()
         self.__compute_DiAoAnew_Dchi()
         self.__DR_Dchi  = -dot(self.__K,self.__Dgamma_Dchi) - self.__DpiAoAnew_Dpchi
+        
+        return self.__DR_Dchi
         
     def __compute_DlocalAoA_Dchi(self):
         twist_grad  = self.get_wing_param().get_twist_grad()

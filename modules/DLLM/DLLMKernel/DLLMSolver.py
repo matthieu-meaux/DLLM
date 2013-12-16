@@ -65,6 +65,9 @@ class DLLMSolver:
         return self.__DLLMMesh.get_dK_dchi()
     
     #-- DLLMDirect accessors
+    def set_direct_computed(self, bool=True):
+        self.__DLLMDirect.set_computed(bool)
+    
     def is_direct_computed(self):
         return self.__DLLMDirect.is_computed()
     
@@ -91,6 +94,15 @@ class DLLMSolver:
     
     def get_DlocalAoA_Dchi(self):
         return self.__DLLMDirect.get_DlocalAoA_Dchi()
+    
+    def comp_R(self, iAoA):
+        return self.__DLLMDirect.comp_R(iAoA)
+    
+    def comp_DR_DiAoA(self, iAoA):
+        return self.__DLLMDirect.comp_DR_DiAoA(iAoA)
+    
+    def comp_DR_Dchi(self):
+        return self.__DLLMDirect.comp_DR_Dchi()
     
     #-- DLLMPost accessors
     def is_post_computed(self):
