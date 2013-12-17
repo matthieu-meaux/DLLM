@@ -13,7 +13,7 @@ class Airfoil(DifferentiatedAeroShape):
     Supports the computation of the circulation and the sensibility of moments to AoA.
     '''
     
-    def __init__(self, OC, Sref, Lref, rel_thick=0.0, sweep=0.0):
+    def __init__(self, OC, Sref, Lref, rel_thick=0.0, sweep=0.0, camber=0.0):
         '''
         Constructor
         @param Sref : reference surface
@@ -24,6 +24,9 @@ class Airfoil(DifferentiatedAeroShape):
         
         self.__rel_thick = rel_thick
         self.__rel_thick_grad = 0.
+        
+        self.__camber      = camber
+        self.__camber_grad = 0.
         
         self.__sweep      = sweep
         self.__sweep_grad = 0.
@@ -45,6 +48,18 @@ class Airfoil(DifferentiatedAeroShape):
     
     def get_rel_thick_grad(self):
         return self.__rel_thick_grad
+        
+    def set_camber(self, camber):
+        self.__camber = camber
+        
+    def set_camber_grad(self, camber_grad):
+        self.__camber_grad = camber_grad
+        
+    def get_camber(self):
+        return self.__camber
+    
+    def get_camber_grad(self):
+        return self.__camber_grad
     
     def set_sweep(self, sweep):
         self.__sweep = sweep

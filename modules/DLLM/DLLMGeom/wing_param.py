@@ -8,6 +8,7 @@ import sys
 from padge.PCADEngine.Base.PCADModel import PCADModel
 from DLLM.polarManager.analyticAirfoil import AnalyticAirfoil
 from DLLM.polarManager.airfoilPolar import AirfoilPolar
+from DLLM.polarManager.MetaAirfoil import MetaAirfoil
 from numpy import zeros, array
 from numpy import pi, sqrt, cos,sin
 
@@ -473,6 +474,12 @@ class Wing_param():
     def build_polar_airoil(self, OC, database, Sref=1., Lref=1., interpolator='2DSpline', set_as_ref=True):
         # Why relative thickness usage ? The extraction from a polar should give us more freedom.
         airfoil = AirfoilPolar(OC, database,rel_thick=0.15, interpolator=interpolator, Sref=Sref, Lref=Lref)
+        if set_as_ref:
+            self.set_ref_aifoil(airfoil)
+        return airfoil
+        
+    def build_meta_airfoil(self, OC, airfoil_model, relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True):
+        airfoil = MetaAirfoil(OC, airfoil_model, relative_thickness=relative_thickness, camber=camber, Sref=Sref, Lref=Lref, sweep=sweep)
         if set_as_ref:
             self.set_ref_aifoil(airfoil)
         return airfoil
