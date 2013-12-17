@@ -104,6 +104,9 @@ class DLLMSolver:
     def comp_DR_Dchi(self):
         return self.__DLLMDirect.comp_DR_Dchi()
     
+    def comp_DR_DthetaY(self):
+        return self.__DLLMDirect.comp_DR_DthetaY()
+    
     #-- DLLMPost accessors
     def is_post_computed(self):
         return self.__DLLMPost.is_computed()

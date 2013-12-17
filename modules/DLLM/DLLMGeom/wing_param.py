@@ -34,7 +34,7 @@ class Wing_param():
         self.__BC_manager = self.__PCADModel.get_BC_manager()
         self.__ndv        = 0
         
-        self.__struct_disp= None
+        self.__thetaY     = None
         
         self.__init_discrete_attributes()
         self.__init_airfoils_attributes()
@@ -126,8 +126,8 @@ class Wing_param():
     def get_rel_thicks_grad(self):
         return self.__rel_thicks_grad
     
-    def get_struct_disp(self):
-        return self.__struct_disp
+    def get_thetaY(self):
+        return self.__thetaY
         
     # -- Setters
     def set_geom_type(self, geom_type):
@@ -189,7 +189,7 @@ class Wing_param():
     def update(self):
         self.__PCADModel.update()
         self.__ndv = self.__BC_manager.get_ndv()
-        self.__check_struct_disp()
+        self.__check_thetaY()
         self.__build_discretization()
         self.__check_airfoils_inputs()
         self.__link_airfoils_to_geom()
@@ -219,10 +219,10 @@ class Wing_param():
         return info_string
     
     # -- Structural displacement methods
-    def __check_struct_disp(self):
+    def __check_thetaY(self):
         # 6 dimensions for structural displacement: dx,dy,dz,dthetax,dthetay,dthetaz at each section
-        if self.__struct_disp is None:
-            self.__struct_disp = zeros((6, self.__n_sect)) 
+        if self.__thetaY is None:
+            self.__thetaY = zeros(self.__n_sect) 
     
     # -- discretization methods
     def __build_discretization(self):
@@ -428,13 +428,14 @@ class Wing_param():
         for i in xrange(N):
             r=float(i+0.5-n)/float(n)
             abs_r=abs(r)
-            self.__XYZ[0,i]        = 0.25*self.__chords[i] + abs_r*self.__span*cos(self.__sweep)/2. + self.__struct_disp[0,i]
+            self.__XYZ[0,i]        = 0.25*self.__chords[i] + abs_r*self.__span*cos(self.__sweep)/2. #+ self.__struct_disp[0,i]
             self.__XYZ_grad[0,i,:] = 0.25*self.__chords_grad[i] + abs_r*self.__span_grad[:]*cos(self.__sweep)/2.-abs_r*self.__span*sin(self.__sweep)*self.__sweep_grad[:]/2.
             
-            self.__XYZ[1,i]        = r*self.__span/2. + self.__struct_disp[1,i]
+            self.__XYZ[1,i]        = r*self.__span/2. #+ self.__struct_disp[1,i]
             self.__XYZ_grad[1,i,:] = r*self.__span_grad[:]/2.
         
-            self.__XYZ[2,i]        = self.__struct_disp[2,i]
+#             self.__XYZ[2,i]        = self.__struct_disp[2,i]
+            self.__XYZ[2,i]        = 0.
             self.__XYZ_grad[2,i,:] = zeros(self.__ndv)
         
     def __build_eta(self):

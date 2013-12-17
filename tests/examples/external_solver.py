@@ -56,6 +56,8 @@ DLLM.set_direct_computed()
 print iAoA
 
 DLLM.comp_DR_Dchi()
+DRDthetaY=DLLM.comp_DR_DthetaY()
+print 'DRDthetaY=',DRDthetaY
 
 print DLLM.get_iAoA()
 
