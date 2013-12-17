@@ -2,8 +2,10 @@
 # @version: 1.0
 # @author: Regis LEBRUN
 # @author: Andre BORTOLAZZI
-
-from openturns import *
+try:
+    from openturns import *
+except:
+    pass
 import numpy as np
 
 class SurrogateCoefs:

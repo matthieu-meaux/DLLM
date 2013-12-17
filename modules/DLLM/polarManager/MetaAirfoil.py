@@ -3,11 +3,8 @@
 # @author: Andre BORTOLAZZI
 
 from airfoil import Airfoil
-from OpenDACE.database.Database import Database
 import numpy as np 
-from spline_interpolator import Spline2D_interpolator
 from surrogate_coefs import SurrogateCoefs
-from differentiatedAeroShape import  DifferentiatedAeroShape
 
 class MetaAirfoil(Airfoil):
     """
