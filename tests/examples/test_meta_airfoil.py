@@ -1,7 +1,7 @@
 # Imports
 from DLLM.DLLMGeom.wing_param import Wing_param
 from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
-from MDOTools.Base.operating_condition import OperatingCondition
+from MDOTools.OC.operating_condition import OperatingCondition
 
 OC=OperatingCondition('cond1',atmospheric_model='simple')
 OC.set_Mach(0.3)

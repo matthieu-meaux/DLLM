@@ -149,6 +149,9 @@ class Wing_param():
         pt=self.__BC_manager.get_pt(Id)
         pt.set_value(val)
         
+    def set_thetaY(self, thetaY):
+        self.__thetaY = thetaY
+        
     # -- controller management
     def convert_to_variable(self,Id):
         self.__BC_manager.convert_to_variable(Id)
