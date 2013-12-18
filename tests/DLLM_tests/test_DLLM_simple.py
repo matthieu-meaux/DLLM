@@ -10,10 +10,10 @@ class TestDLLMSimple(unittest.TestCase):
     
     def __init_wing_param(self):
         OC=OperatingCondition('cond1',atmospheric_model='simple')
-        OC.set_Mach(0.7)
-        OC.set_AoA(3.0)
-        OC.set_altitude(5000.)
-        OC.set_T0_deg(20.)
+        OC.set_Mach(0.8)
+        OC.set_AoA(3.5)
+        OC.set_altitude(10000.)
+        OC.set_T0_deg(15.)
         OC.set_P0(101325.)
         OC.set_humidity(0.)
         OC.compute_atmosphere()
@@ -21,7 +21,7 @@ class TestDLLMSimple(unittest.TestCase):
         wing_param=Wing_param('test_param',geom_type='Broken',n_sect=40)
         wing_param.build_wing()
         wing_param.set_value('test_param.span',34.1)
-        wing_param.set_value('test_param.sweep',32.)
+        wing_param.set_value('test_param.sweep',34.)
         wing_param.set_value('test_param.break_percent',33.)
         wing_param.set_value('test_param.root_chord',6.1)
         wing_param.set_value('test_param.break_chord',4.6)
@@ -151,6 +151,83 @@ class TestDLLMSimple(unittest.TestCase):
         ok3,df_fd3,df3=val_grad3.compare(thetaY0,treshold=1.e-2,return_all=True)
         assert(ok3)
         
+    def test_DLLM_valid_dfunc_diAoA(self):
+        OC,wing_param = self.__init_wing_param()
+        DLLM = DLLMSolver(wing_param,OC)
+        print ''
+        DLLM.run_direct()
+        iAoA0=DLLM.get_iAoA()
+        def f4(x):
+            DLLM.comp_R(x)
+            DLLM.set_direct_computed()
+            DLLM.run_post()
+            func=DLLM.get_func_values()
+            return func
+        
+        def df4(x):
+            DLLM.comp_R(x)
+            DLLM.set_direct_computed()
+            DLLM.run_post()
+            func_grad=DLLM.get_dfunc_diAoA()
+            return func_grad
+        
+        val_grad4=FDValidGrad(2,f4,df4,fd_step=1.e-3)
+        ok4,df_fd4,df4=val_grad4.compare(iAoA0,treshold=1.e-2,return_all=True)
+        assert(ok4)
+        
+    def test_DLLM_valid_dpJ_dpchi(self):
+        OC,wing_param = self.__init_wing_param()
+        DLLM = DLLMSolver(wing_param,OC)
+        print ''
+        DLLM.run_direct()
+        iAoA=DLLM.get_iAoA()
+        x0=wing_param.get_dv_array()
+        def f5(x):
+            wing_param.update_from_x_list(x)
+            DLLM.set_wing_param(wing_param)
+            DLLM.comp_R(iAoA)
+            DLLM.set_direct_computed()
+            DLLM.run_post()
+            func=DLLM.get_func_values()
+            return func
+        
+        def df5(x):
+            wing_param.update_from_x_list(x)
+            DLLM.set_wing_param(wing_param)
+            DLLM.comp_R(iAoA)
+            DLLM.set_direct_computed()
+            DLLM.run_post()
+            func_grad=DLLM.get_dpJ_dpchi()
+            return func_grad
+        
+        val_grad5=FDValidGrad(2,f5,df5,fd_step=1.e-3)
+        ok5,df_fd5,df5=val_grad5.compare(x0,treshold=1.e-2,return_all=True)
+        assert(ok5)
+        
+    def test_DLLM_valid_adjoint_gradients(self):
+        OC,wing_param = self.__init_wing_param()
+        x0=wing_param.get_dv_array()
+        def f6(x):
+            wing_param.update_from_x_list(x)
+            DLLM = DLLMSolver(wing_param,OC)
+            DLLM.run_direct()
+            DLLM.run_post()
+            func=DLLM.get_func_values()
+            return func
+        
+        def df6(x):
+            wing_param.update_from_x_list(x)
+            DLLM = DLLMSolver(wing_param,OC)
+            DLLM.run_direct()
+            DLLM.run_post()
+            DLLM.run_adjoint()
+            func_grad=array(DLLM.get_dJ_dchi_list())
+            return func_grad
+
+        val_grad6=FDValidGrad(2,f6,df6,fd_step=1.e-3)
+        ok6,df_fd6,df6=val_grad6.compare(x0,treshold=1.e-2,return_all=True)
+        assert(ok6)
+                
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestDLLMSimple)
     unittest.TextTestRunner(verbosity=2).run(suite)
