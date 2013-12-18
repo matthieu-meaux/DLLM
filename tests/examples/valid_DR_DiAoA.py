@@ -39,31 +39,29 @@ wing_param.update()
 
 print wing_param
 
-thetaY0=wing_param.get_thetaY()
-print 'thetaY0 shape',thetaY0.shape
-print 'thetaY0=',thetaY0
+
 
 DLLM = DLLMSolver(wing_param,OC)
 DLLM.run_direct()
-iAoA=DLLM.get_iAoA()
+iAoA0=DLLM.get_iAoA()
+print 'iAoA0 shape',iAoA0.shape
+print 'iAoA0=',iAoA0
 
 def f(x):
-    wing_param.set_thetaY(x)
-    func=DLLM.comp_R(iAoA)
+    func=DLLM.comp_R(x)
     return func
 
 def df(x):
-    wing_param.set_thetaY(x)
-    func_grad=DLLM.comp_DR_DthetaY()
+    func_grad=DLLM.comp_DR_DiAoA(x)
     return func_grad
 
 val_grad=FDValidGrad(2,f,df,fd_step=1.e-3)
-ok,df_fd,df=val_grad.compare(thetaY0,treshold=1.e-2,return_all=True)
+ok,df_fd,df=val_grad.compare(iAoA0,treshold=1.e-2,return_all=True)
 
 
 print '\n****************************************************'
 if ok:
-    print 'DR_DthetaY is valid.'
+    print 'DR_DiAoA is valid.'
 else:
-    print '!!!! DR_DthetaY is NOT valid !!!!'
+    print '!!!! DR_DiAoA is NOT valid !!!!'
 print '****************************************************'

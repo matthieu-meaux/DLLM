@@ -39,31 +39,38 @@ wing_param.update()
 
 print wing_param
 
-thetaY0=wing_param.get_thetaY()
-print 'thetaY0 shape',thetaY0.shape
-print 'thetaY0=',thetaY0
+x0=wing_param.get_dv_array()
+print 'dv array shape',x0.shape
+print 'dv_array=',x0
 
 DLLM = DLLMSolver(wing_param,OC)
 DLLM.run_direct()
 iAoA=DLLM.get_iAoA()
 
 def f(x):
-    wing_param.set_thetaY(x)
-    func=DLLM.comp_R(iAoA)
+    wing_param.update_from_x_list(x)
+    DLLM.set_wing_param(wing_param)
+    DLLM.comp_R(iAoA)
+    DLLM.set_direct_computed()
+    DLLM.run_post()
+    func=DLLM.get_func_values()
     return func
 
 def df(x):
-    wing_param.set_thetaY(x)
-    func_grad=DLLM.comp_DR_DthetaY()
+    wing_param.update_from_x_list(x)
+    DLLM.set_wing_param(wing_param)
+    DLLM.comp_R(iAoA)
+    DLLM.set_direct_computed()
+    DLLM.run_post()
+    func_grad=DLLM.get_dpJ_dpchi()
     return func_grad
 
 val_grad=FDValidGrad(2,f,df,fd_step=1.e-3)
-ok,df_fd,df=val_grad.compare(thetaY0,treshold=1.e-2,return_all=True)
+ok,df_fd,df=val_grad.compare(x0,treshold=1.e-2,return_all=True)
 
 
 print '\n****************************************************'
 if ok:
-    print 'DR_DthetaY is valid.'
+    print 'dpJ_dpchi is valid.'
 else:
-    print '!!!! DR_DthetaY is NOT valid !!!!'
-print '****************************************************'
+    print '!!!! dpJ_dpchi is NOT valid !!!!'

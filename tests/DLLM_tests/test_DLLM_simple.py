@@ -106,6 +106,30 @@ class TestDLLMSimple(unittest.TestCase):
         ok1,df_fd1,df1=val_grad1.compare(iAoA0,treshold=1.e-2,return_all=True)
         assert(ok1)
         
+    def test_DLLM_valid_DR_Dchi(self):
+        OC,wing_param = self.__init_wing_param()
+        DLLM = DLLMSolver(wing_param,OC)
+        print ''
+        DLLM.run_direct()
+        iAoA=DLLM.get_iAoA()
+        x0=wing_param.get_dv_array()
+        def f2(x):
+            wing_param.update_from_x_list(x)
+            DLLM.set_wing_param(wing_param)
+            func=DLLM.comp_R(iAoA)
+            return func
+        
+        def df2(x):
+            wing_param.update_from_x_list(x)
+            DLLM.set_wing_param(wing_param)
+            func=DLLM.comp_R(iAoA)
+            func_grad=DLLM.comp_DR_Dchi()
+            return func_grad
+        
+        val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-3)
+        ok2,df_fd2,df2=val_grad2.compare(x0,treshold=1.e-2,return_all=True)
+        assert(ok2)
+        
     def test_DLLM_valid_DR_DthetaY(self):
         OC,wing_param = self.__init_wing_param()
         DLLM = DLLMSolver(wing_param,OC)
@@ -113,18 +137,19 @@ class TestDLLMSimple(unittest.TestCase):
         DLLM.run_direct()
         iAoA=DLLM.get_iAoA()
         thetaY0=wing_param.get_thetaY()
-        def f2(x):
+        def f3(x):
             wing_param.set_thetaY(x)
             func=DLLM.comp_R(iAoA)
             return func
         
-        def df2(x):
+        def df3(x):
             wing_param.set_thetaY(x)
             func_grad=DLLM.comp_DR_DthetaY()
             return func_grad
         
-        val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-3)
-        ok,df_fd,df=val_grad2.compare(thetaY0,treshold=1.e-2,return_all=True)
+        val_grad3=FDValidGrad(2,f3,df3,fd_step=1.e-3)
+        ok3,df_fd3,df3=val_grad3.compare(thetaY0,treshold=1.e-2,return_all=True)
+        assert(ok3)
         
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestDLLMSimple)
