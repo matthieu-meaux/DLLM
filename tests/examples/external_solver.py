@@ -45,7 +45,7 @@ iAoA0=numpy.zeros(N)
 
 DLLM = DLLMSolver(wing_param,OC)
 
-NRPb = NewtonRaphsonProblem(iAoA0, DLLM.comp_R, DLLM.comp_DR_DiAoA)
+NRPb = NewtonRaphsonProblem(iAoA0, DLLM.comp_R, DLLM.comp_dpR_dpiAoA)
 NRPb.set_relax_factor(0.99)
 NRPb.set_stop_residual(1.e-9)
 NRPb.set_max_iterations(100)
@@ -55,9 +55,9 @@ iAoA=NRPb.solve()
 DLLM.set_direct_computed()
 print iAoA
 
-DLLM.comp_DR_Dchi()
-DRDthetaY=DLLM.comp_DR_DthetaY()
-print 'DRDthetaY=',DRDthetaY
+DLLM.comp_dpR_dpchi()
+dpRdpthetaY=DLLM.comp_dpR_dpthetaY()
+print 'dpRdpthetaY=',dpRdpthetaY
 
 print DLLM.get_iAoA()
 

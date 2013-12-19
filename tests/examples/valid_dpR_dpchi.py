@@ -57,7 +57,7 @@ def df(x):
     wing_param.update_from_x_list(x)
     DLLM.set_wing_param(wing_param)
     func=DLLM.comp_R(iAoA)
-    func_grad=DLLM.comp_DR_Dchi()
+    func_grad=DLLM.comp_dpR_dpchi()
     return func_grad
 
 val_grad=FDValidGrad(2,f,df,fd_step=1.e-3)
@@ -66,7 +66,7 @@ ok,df_fd,df=val_grad.compare(x0,treshold=1.e-2,return_all=True)
 
 print '\n****************************************************'
 if ok:
-    print 'DR_Dchi is valid.'
+    print 'dpR_dpchi is valid.'
 else:
-    print '!!!! DR_Dchi is NOT valid !!!!'
+    print '!!!! dpR_dpchi is NOT valid !!!!'
 print '****************************************************'

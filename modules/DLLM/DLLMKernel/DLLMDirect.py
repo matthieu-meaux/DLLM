@@ -49,20 +49,17 @@ class DLLMDirect:
     def get_R(self):
         return self.__R
     
-    def get_DR_DiAoA(self):
-        return self.__DR_DiAoA
+    def get_dpR_dpiAoA(self):
+        return self.__dpR_dpiAoA
     
-    def get_DR_Dchi(self):
-        return self.__DR_Dchi
+    def get_dpR_dpchi(self):
+        return self.__dpR_dpchi
     
-    def get_DlocalAoA_DiAoA(self):
-        return self.__DlocalAoA_DiAoA
+    def get_dplocalAoA_dpiAoA(self):
+        return self.__dplocalAoA_dpiAoA
     
-    def get_DlocalAoA_Dchi(self):
-        return self.__DlocalAoA_Dchi
-    
-    def get_func_list(self):
-        return self.__DLLMPost.get_func_list()
+    def get_dplocalAoA_dpchi(self):
+        return self.__dplocalAoA_dpchi
     
     def get_convergence_history(self):
         """
@@ -83,7 +80,7 @@ class DLLMDirect:
     #-- Newton-Raphson related methods
     def __init_Newton_Raphson(self):
         iAoA0= zeros(self.__N)
-        self.__NRPb = NewtonRaphsonProblem(iAoA0, self.comp_R, self.comp_DR_DiAoA)
+        self.__NRPb = NewtonRaphsonProblem(iAoA0, self.comp_R, self.comp_dpR_dpiAoA)
         self.__NRPb.set_relax_factor(0.99)
         self.__NRPb.set_stop_residual(1.e-9)
         self.__NRPb.set_max_iterations(100)
@@ -102,34 +99,34 @@ class DLLMDirect:
         self.__NRPb.solve()
         self.set_computed(True)
         self.__write_gamma_to_file()
-        self.comp_DR_Dchi()
+        self.comp_dpR_dpchi()
                 
     def __init_local_variables(self):
         # Initializing local variables for lifting line computations
         # Residual variables
-        self.__R          = zeros([self.__N])
-        self.__DR_DiAoA   = None
-        self.__DR_Dchi    = None
-        self.__DR_DthetaY = None
+        self.__R            = zeros([self.__N])
+        self.__dpR_dpiAoA   = None
+        self.__dpR_dpchi    = None
+        self.__dpR_dpthetaY = None
         
         # Angle of attack variables
-        self.__localAoA          = zeros([self.__N])
-        self.__DlocalAoA_DiAoA   = -diag(ones([self.__N])) # This is a constant matrix
-        self.__DlocalAoA_DthetaY = diag(ones([self.__N]))  # This is a constant matrix
-        self.__DlocalAoA_Dchi    = zeros([self.__N,self.__ndv])
+        self.__localAoA            = zeros([self.__N])
+        self.__dplocalAoA_dpiAoA   = -diag(ones([self.__N])) # This is a constant matrix
+        self.__dplocalAoA_dpthetaY = diag(ones([self.__N]))  # This is a constant matrix
+        self.__dplocalAoA_dpchi    = zeros([self.__N,self.__ndv])
         
         # Induced angle of attack variables
         self.__iAoA    = None
         self.__iAoANew = None
-        self.__DpiAoAnew_Dpchi = zeros([self.__N,self.__ndv])   
-        self.__DiAoAnew_DiAoA = None
+        self.__dpiAoAnew_dpchi  = zeros([self.__N,self.__ndv])   
+        self.__dpiAoAnew_dpiAoA = None
         
         # Circulation variables
         self.__gamma  = zeros(self.__N)
-        self.__Dgamma_DiAoA   = None
-        self.__Dgamma_DthetaY = None
-        self.__Dgamma_DlocalAoA = zeros([self.__N,self.__N])
-        self.__Dgamma_Dchi = zeros([self.__N,self.__ndv])
+        self.__dpgamma_dpiAoA   = None
+        self.__dpgamma_dpthetaY = None
+        self.__dpgamma_dplocalAoA = zeros([self.__N,self.__N])
+        self.__dpgamma_dpchi      = zeros([self.__N,self.__ndv])
                 
     #-- Residual related methods
     def comp_R(self, iAoA):
@@ -142,53 +139,53 @@ class DLLMDirect:
         
         return self.__R
     
-    def comp_DR_DiAoA(self, iAoA):
+    def comp_dpR_dpiAoA(self, iAoA):
         R=self.comp_R(iAoA)
         
-        # dlocalAoAdiAoA is a constant matrix, no need to compute it (self.__DlocalAoA_DiAoA)
-        self.__compute_Dgamma_DiAoA()
-        self.__compute_DiAoAnew_DiAoA()
+        # dplocalAoA_dpiAoA is a constant matrix, no need to compute it (self.__dplocalAoA_dpiAoA)
+        self.__compute_dpgamma_dpiAoA()
+        self.__compute_dpiAoAnew_dpiAoA()
         
-        self.__DR_DiAoA=numpy.diag(ones([self.__N]))-self.__DiAoAnew_DiAoA
+        self.__dpR_dpiAoA=numpy.diag(ones([self.__N]))-self.__dpiAoAnew_dpiAoA
         
-        return self.__DR_DiAoA
+        return self.__dpR_dpiAoA
     
-    def comp_DR_Dchi(self):
-        self.__compute_DlocalAoA_Dchi()
-        self.__compute_Dgamma_Dchi()
-        self.__compute_DiAoAnew_Dchi()
-        self.__DR_Dchi  = -dot(self.__K,self.__Dgamma_Dchi) - self.__DpiAoAnew_Dpchi
+    def comp_dpR_dpchi(self):
+        self.__compute_dplocalAoA_dpchi()
+        self.__compute_dpgamma_dpchi()
+        self.__compute_dpiAoAnew_dpchi()
+        self.__dpR_dpchi = -dot(self.__K,self.__dpgamma_dpchi) - self.__dpiAoAnew_dpchi
         
-        return self.__DR_Dchi
+        return self.__dpR_dpchi
     
-    def comp_DR_DthetaY(self):
-        self.__compute_Dgamma_DthetaY()    
-        self.__DR_DthetaY = -dot(self.__K,self.__Dgamma_DthetaY)
+    def comp_dpR_dpthetaY(self):
+        self.__compute_dpgamma_dpthetaY()    
+        self.__dpR_dpthetaY = -dot(self.__K,self.__dpgamma_dpthetaY)
         
-        return self.__DR_DthetaY
+        return self.__dpR_dpthetaY
     
-    def __compute_Dgamma_DthetaY(self):
+    def __compute_dpgamma_dpthetaY(self):
          Mach = self.get_OC().get_Mach()
          for i in xrange(self.__N):
-             self.__Dgamma_DlocalAoA[i,i]  = self.get_airfoils()[i].DGammaDAoA(self.__localAoA[i],Mach)
+             self.__dpgamma_dplocalAoA[i,i]  = self.get_airfoils()[i].DGammaDAoA(self.__localAoA[i],Mach)
              
-         self.__Dgamma_DthetaY = dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_DthetaY)
+         self.__dpgamma_dpthetaY = dot(self.__dpgamma_dplocalAoA,self.__dplocalAoA_dpthetaY)
     
-    def __compute_DlocalAoA_Dchi(self):
+    def __compute_dplocalAoA_dpchi(self):
         twist_grad  = self.get_wing_param().get_twist_grad()
         for i in xrange(self.__N):
-            self.__DlocalAoA_Dchi[i,:] =twist_grad[i,:] # + dAoAdksi ?? 
+            self.__dplocalAoA_dpchi[i,:] =twist_grad[i,:] # + dAoAdksi ?? 
             
-    def __compute_Dgamma_Dchi(self):
+    def __compute_dpgamma_dpchi(self):
         Mach = self.get_OC().get_Mach()
         for i in xrange(self.__N):
-            self.__Dgamma_Dchi[i,:] = self.get_airfoils()[i].DGammaDchi(self.__localAoA[i],Mach)
+            self.__dpgamma_dpchi[i,:] = self.get_airfoils()[i].DGammaDchi(self.__localAoA[i],Mach)
         
-        self.__Dgamma_Dchi = self.__Dgamma_Dchi + dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_Dchi) 
+        self.__dpgamma_dpchi = self.__dpgamma_dpchi + dot(self.__dpgamma_dplocalAoA,self.__dplocalAoA_dpchi) 
             
-    def __compute_DiAoAnew_Dchi(self):
+    def __compute_dpiAoAnew_dpchi(self):
         for n in xrange(self.__ndv):
-            self.__DpiAoAnew_Dpchi[:,n] = dot(self.__dK_dchi[:,:,n],self.__gamma)
+            self.__dpiAoAnew_dpchi[:,n] = dot(self.__dK_dchi[:,:,n],self.__gamma)
 
     def __compute_localAoA(self):
          Thetay = self.get_wing_param().get_thetaY()
@@ -211,12 +208,12 @@ class DLLMDirect:
         for i in xrange(self.__N):
             self.__gamma[i] = self.get_airfoils()[i].gamma(self.__localAoA[i],Mach)
             
-    def __compute_Dgamma_DiAoA(self):
+    def __compute_dpgamma_dpiAoA(self):
          Mach = self.get_OC().get_Mach()
          for i in xrange(self.__N):
-             self.__Dgamma_DlocalAoA[i,i]  = self.get_airfoils()[i].DGammaDAoA(self.__localAoA[i],Mach)
+             self.__dpgamma_dplocalAoA[i,i]  = self.get_airfoils()[i].DGammaDAoA(self.__localAoA[i],Mach)
              
-         self.__Dgamma_DiAoA = dot(self.__Dgamma_DlocalAoA,self.__DlocalAoA_DiAoA)
+         self.__dpgamma_dpiAoA = dot(self.__dpgamma_dplocalAoA,self.__dplocalAoA_dpiAoA)
 
     def __compute_iAoAnew(self):
         '''
@@ -224,11 +221,11 @@ class DLLMDirect:
         '''
         self.__iAoANew        = dot(self.__K,self.__gamma)
         
-    def __compute_DiAoAnew_DiAoA(self):
+    def __compute_dpiAoAnew_dpiAoA(self):
         """
-        Computes the derivative DiAoAnew_DiAoA
+        Computes the derivative dpiAoAnew_dpiAoA
         """
-        self.__DiAoAnew_DiAoA = dot(self.__K,self.__Dgamma_DiAoA)
+        self.__dpiAoAnew_dpiAoA = dot(self.__K,self.__dpgamma_dpiAoA)
         
     def __write_gamma_to_file(self):
         '''

@@ -50,7 +50,7 @@ def f(x):
     DLLM.run_direct()
     #DLLM.run_post(func_list=['Cl'])
     DLLM.run_post()
-    func=DLLM.get_func_values()
+    func=DLLM.get_F_list()
     return func
 
 def df(x):
@@ -60,7 +60,7 @@ def df(x):
     #DLLM.run_post(func_list=['Cl'])
     DLLM.run_post()
     DLLM.run_adjoint()
-    func_grad=numpy.array(DLLM.get_dJ_dchi_list())
+    func_grad=numpy.array(DLLM.get_dF_list_dchi())
     return func_grad
 
 val_grad=FDValidGrad(2,f,df,fd_step=1.e-9)

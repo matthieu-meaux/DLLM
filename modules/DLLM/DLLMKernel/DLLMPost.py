@@ -13,11 +13,11 @@ class DLLMPost:
         Post-Processing module compatible with adjoint for DLLM
         """
         self.__LLW = LLW
-        self.__func_list   = None
-        self.__func_dim    = 0
-        self.__func_values = None
-        self.__dfunc_diAoA = None
-        self.__dpJ_dpchi   = None
+        self.__F_list_names = None
+        self.__F_list_dim   = 0
+        self.__F_list       = None
+        self.__dpF_list_dpiAoA = None
+        self.__dpF_list_dpchi  = None
         self.__N           = self.get_wing_param().get_n_sect()
         self.__ndv         = self.get_wing_param().get_ndv()
         self.__computed    = False
@@ -30,17 +30,17 @@ class DLLMPost:
         self.__computed = bool
         
     #-- Accessors
-    def get_func_list(self):
-        return self.__func_list
+    def get_F_list_names(self):
+        return self.__F_list_names
     
-    def get_func_values(self):
-        return self.__func_values
+    def get_F_list(self):
+        return self.__F_list
     
-    def get_dfunc_diAoA(self):
-        return self.__dfunc_diAoA
+    def get_dpF_list_dpiAoA(self):
+        return self.__dpF_list_dpiAoA
     
-    def get_dpJ_dpchi(self):
-        return self.__dpJ_dpchi
+    def get_dpF_list_dpchi(self):
+        return self.__dpF_list_dpchi
     
     def get_wing_param(self):
         return self.__LLW.get_wing_param()
@@ -54,11 +54,11 @@ class DLLMPost:
     def get_localAoA(self):
         return self.__LLW.get_localAoA()
     
-    def get_DlocalAoA_DiAoA(self):
-        return self.__LLW.get_DlocalAoA_DiAoA()
+    def get_dplocalAoA_dpiAoA(self):
+        return self.__LLW.get_dplocalAoA_dpiAoA()
     
-    def get_DlocalAoA_Dchi(self):
-        return self.__LLW.get_DlocalAoA_Dchi()
+    def get_dplocalAoA_dpchi(self):
+        return self.__LLW.get_dplocalAoA_dpchi()
     
     def get_iAoA(self):
         return self.__LLW.get_iAoA()
@@ -73,44 +73,44 @@ class DLLMPost:
         return self.__LLW.get_Sref_grad()
     
     #-- Setters 
-    def set_func_list(self, func_list):
-        if func_list is None:
+    def set_F_list_names(self, F_list_names):
+        if F_list_names is None:
             #func_list = ['Lift', 'Drag', 'Moment', 'Cl', 'Cd', 'Cm']
-            func_list = ['Lift', 'Drag', 'Cl', 'Cd']
-        self.__func_list   = func_list
-        self.__func_dim    = len(func_list)
-        self.__func_values = zeros(self.__func_dim)
-        self.__dfunc_diAoA = zeros((self.__func_dim, self.__N))
-        self.__dpJ_dpchi   = zeros((self.__func_dim,self.__ndv))
+            F_list_names = ['Lift', 'Drag', 'Cl', 'Cd']
+        self.__F_list_names    = F_list_names
+        self.__F_list_dim      = len(F_list_names)
+        self.__F_list          = zeros(self.__F_list_dim)
+        self.__dpF_list_dpiAoA = zeros((self.__F_list_dim, self.__N))
+        self.__dpF_list_dpchi  = zeros((self.__F_list_dim,self.__ndv))
         
     #-- Run method
-    def run(self, func_list=None):
-        self.set_func_list(func_list)
-        for i,func in enumerate(self.__func_list):
-            if   func == 'Cl':
-                val      = self.__Cl()
-                dfdiAoA  = self.__dCl_diAoA()
-                dpJdpchi = self.__dpCl_dpchi()
-            elif func == 'Cd':
-                val      = self.__Cd()
-                dfdiAoA  = self.__dCd_diAoA()
-                dpJdpchi = self.__dpCd_dpchi()
+    def run(self, F_list_names=None):
+        self.set_F_list_names(F_list_names)
+        for i,F_name in enumerate(self.__F_list_names):
+            if   F_name == 'Cl':
+                val       = self.__Cl()
+                dpfdpiAoA = self.__dpCl_dpiAoA()
+                dpJdpchi  = self.__dpCl_dpchi()
+            elif F_name == 'Cd':
+                val       = self.__Cd()
+                dpfdpiAoA = self.__dpCd_dpiAoA()
+                dpJdpchi  = self.__dpCd_dpchi()
 #            Moments calculation are bugged for now
 #             elif func == 'Cm':
 #                 val = self.__Cm()
-            elif func == 'Lift':
-                val      = self.__Lift()
-                dfdiAoA  = self.__dLift_diAoA()
-                dpJdpchi = self.__dpLift_dpchi()
-            elif func == 'Drag':
-                val      = self.__Drag()
-                dfdiAoA  = self.__dDrag_diAoA()
-                dpJdpchi = self.__dpDrag_dpchi()
+            elif F_name == 'Lift':
+                val       = self.__Lift()
+                dpfdpiAoA = self.__dpLift_dpiAoA()
+                dpJdpchi  = self.__dpLift_dpchi()
+            elif F_name == 'Drag':
+                val       = self.__Drag()
+                dpfdpiAoA = self.__dpDrag_dpiAoA()
+                dpJdpchi  = self.__dpDrag_dpchi()
             else:
                 val = None
-            self.__func_values[i]   = val
-            self.__dfunc_diAoA[i,:] = dfdiAoA[:]
-            self.__dpJ_dpchi[i,:]   = dpJdpchi[:]
+            self.__F_list[i]            = val
+            self.__dpF_list_dpiAoA[i,:] = dpfdpiAoA[:]
+            self.__dpF_list_dpchi[i,:]  = dpJdpchi[:]
 
         self.__display_info()
         self.set_computed(True)
@@ -128,15 +128,15 @@ class DLLMPost:
         Cl/=self.get_Sref()
         return Cl
     
-    def __dCl_diAoA(self):
+    def __dpCl_dpiAoA(self):
         Mach     = self.get_OC().get_Mach()
         localAoA = self.get_localAoA()
-        DlocalAoA_DiAoA = self.get_DlocalAoA_DiAoA()
+        dplocalAoA_dpiAoA = self.get_dplocalAoA_dpiAoA()
         airfoils = self.get_airfoils()
         dCl_diAoA=zeros(self.__N)
         for i in range(self.__N):
             af = airfoils[i]
-            dCl_diAoA+=af.ClAlpha(localAoA[i],Mach=Mach)*af.get_Sref()*DlocalAoA_DiAoA[i]
+            dCl_diAoA+=af.ClAlpha(localAoA[i],Mach=Mach)*af.get_Sref()*dplocalAoA_dpiAoA[i]
         dCl_diAoA/=self.get_Sref()
         
         return dCl_diAoA
@@ -145,7 +145,7 @@ class DLLMPost:
         Mach     = self.get_OC().get_Mach()
         localAoA = self.get_localAoA()
         airfoils = self.get_airfoils()
-        dlAoAdchi=self.get_DlocalAoA_Dchi()
+        dlAoAdchi=self.get_dplocalAoA_dpchi()
         
         Cl=0.0
         dCl=zeros(self.__ndv)
@@ -173,12 +173,12 @@ class DLLMPost:
         
         return Cd
     
-    def __dCd_diAoA(self):
+    def __dpCd_dpiAoA(self):
         Mach     = self.get_OC().get_Mach()
         airfoils = self.get_airfoils()
         localAoA = self.get_localAoA()
         iAoA     = self.get_iAoA()
-        DlocalAoA_DiAoA = self.get_DlocalAoA_DiAoA()
+        dplocalAoA_dpiAoA = self.get_dplocalAoA_dpiAoA()
         
         dCd_dAoA=zeros(self.__N)
         for i in range(self.__N):#Dependance by induced angles
@@ -186,7 +186,7 @@ class DLLMPost:
             AoA=localAoA[i]
             dCd_dAoA[i]=(af.ClAlpha(AoA,Mach)*sin(iAoA[i])+af.CdAlpha(AoA,Mach))*af.get_Sref()
  
-        dCd_diAoA=dot(dCd_dAoA,DlocalAoA_DiAoA)
+        dCd_diAoA=dot(dCd_dAoA,dplocalAoA_dpiAoA)
         
         for i in range(self.__N):#Dependance by projection of Cl : the induced drag.
             af=airfoils[i]
@@ -200,7 +200,7 @@ class DLLMPost:
         localAoA = self.get_localAoA()
         iAoA     = self.get_iAoA()
         airfoils = self.get_airfoils()
-        dlAoAdchi=self.get_DlocalAoA_Dchi()
+        dlAoAdchi=self.get_dplocalAoA_dpchi()
  
         Cd=0.0 
         dCd=zeros(self.__ndv)
@@ -229,15 +229,15 @@ class DLLMPost:
         Cm/=self.get_Sref()
         return Cm
     
-    def __dCm_diAoA(self):
+    def __dpCm_dpiAoA(self):
         Mach     = self.get_OC().get_Mach()
         airfoils = self.get_airfoils()
         localAoA = self.get_localAoA()
-        DlocalAoA_DiAoA = self.get_DlocalAoA_DiAoA()
+        dplocalAoA_dpiAoA = self.get_dplocalAoA_dpiAoA()
         dCm=0.0
         for i in range(self.__N):
             af=airfoils[i]
-            dCm+=af.CmAlpha(localAoA[i],Mach)*af.getSref()*DlocalAoA_DiAoA[i]
+            dCm+=af.CmAlpha(localAoA[i],Mach)*af.getSref()*dplocalAoA_dpiAoA[i]
         dCm/=self.get_Sref()
         return dCm_diAoA
     
@@ -245,7 +245,7 @@ class DLLMPost:
         Mach     = self.get_OC().get_Mach()
         localAoA = self.get_localAoA()
         airfoils = self.get_airfoils()
-        dlAoAdchi=self.get_DlocalAoA_Dchi()
+        dlAoAdchi=self.get_dplocalAoA_dpchi()
         
         Cm=0.0
         dCm=0.0
@@ -266,10 +266,10 @@ class DLLMPost:
         Lift = Pdyn*Sref*Cl
         return Lift
     
-    def __dLift_diAoA(self):
+    def __dpLift_dpiAoA(self):
         Pdyn=self.get_OC().get_Pdyn()
         Sref=self.get_Sref()
-        dCl_diAoA=self.__dCl_diAoA()
+        dCl_diAoA=self.__dpCl_dpiAoA()
         dLift_diAoA = Pdyn*Sref*dCl_diAoA
         return dLift_diAoA
     
@@ -290,10 +290,10 @@ class DLLMPost:
         Drag = Pdyn*Sref*Cd
         return Drag
     
-    def __dDrag_diAoA(self):
+    def __dpDrag_dpiAoA(self):
         Pdyn=self.get_OC().get_Pdyn()
         Sref=self.get_Sref()
-        dCd_diAoA = self.__dCd_diAoA()
+        dCd_diAoA = self.__dpCd_dpiAoA()
         dDrag_diAoA = Pdyn*Sref*dCd_diAoA
         return dDrag_diAoA
     
@@ -312,9 +312,9 @@ class DLLMPost:
         print '\n*** aerodynamic functions and coefficients ***'
         print '  Sref  = ',self.get_Sref()
         print '  Lref  = ',self.get_Lref()
-        for i, func in enumerate(self.__func_list):
+        for i, func in enumerate(self.__F_list_names):
             if func in ['Lift', 'Drag']:
                 unit = '(N)'
             else:
                 unit = ''
-            print '  '+self.__func_list[i]+'\t=\t'+str(self.__func_values[i])+' '+unit 
+            print '  '+self.__F_list_names[i]+'\t=\t'+str(self.__F_list[i])+' '+unit 

@@ -39,8 +39,6 @@ wing_param.update()
 
 print wing_param
 
-
-
 DLLM = DLLMSolver(wing_param,OC)
 DLLM.run_direct()
 iAoA0=DLLM.get_iAoA()
@@ -48,11 +46,17 @@ print 'iAoA0 shape',iAoA0.shape
 print 'iAoA0=',iAoA0
 
 def f(x):
-    func=DLLM.comp_R(x)
+    DLLM.comp_R(x)
+    DLLM.set_direct_computed()
+    DLLM.run_post()
+    func=DLLM.get_F_list()
     return func
 
 def df(x):
-    func_grad=DLLM.comp_DR_DiAoA(x)
+    DLLM.comp_R(x)
+    DLLM.set_direct_computed()
+    DLLM.run_post()
+    func_grad=DLLM.get_dpF_list_dpiAoA()
     return func_grad
 
 val_grad=FDValidGrad(2,f,df,fd_step=1.e-3)
@@ -61,7 +65,7 @@ ok,df_fd,df=val_grad.compare(iAoA0,treshold=1.e-2,return_all=True)
 
 print '\n****************************************************'
 if ok:
-    print 'DR_DiAoA is valid.'
+    print 'dpF_list_dpiAoA is valid.'
 else:
-    print '!!!! DR_DiAoA is NOT valid !!!!'
+    print '!!!! dpF_list_dpiAoA is NOT valid !!!!'
 print '****************************************************'

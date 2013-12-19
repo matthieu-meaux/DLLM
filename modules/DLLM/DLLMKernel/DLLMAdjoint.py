@@ -19,7 +19,7 @@ class DLLMAdjoint:
 
         self.__adj_list           = None
         self.__adj_conv_corr_list = None
-        self.__dJ_dchi_list       = None
+        self.__dF_list_dchi       = None
         
     #-- accessors
     def get_adjoint_list(self):
@@ -28,8 +28,8 @@ class DLLMAdjoint:
     def get_adjoint_convergence_correction_list(self):
         return self.__adj_conv_corr_list
     
-    def get_dJ_dchi_list(self):
-        return self.__dJ_dchi_list
+    def get_dF_list_dchi(self):
+        return self.__dF_list_dchi
         
     #-- computed related methods
     def is_computed(self):
@@ -42,39 +42,39 @@ class DLLMAdjoint:
     def get_R(self):
         return self.__LLW.get_R()
     
-    def get_DR_DiAoA(self):
-        return self.__LLW.get_DR_DiAoA()
+    def get_dpR_dpiAoA(self):
+        return self.__LLW.get_dpR_dpiAoA()
     
-    def get_DR_Dchi(self):
-        return self.__LLW.get_DR_Dchi()
+    def get_dpR_dpchi(self):
+        return self.__LLW.get_dpR_dpchi()
     
     #-- Post-processing accessors
-    def get_func_list(self):
-        return self.__LLW.get_func_list()
+    def get_F_list_names(self):
+        return self.__LLW.get_F_list_names()
     
-    def get_dfunc_diAoA(self):
-        return self.__LLW.get_dfunc_diAoA()
+    def get_dpF_list_dpiAoA(self):
+        return self.__LLW.get_dpF_list_dpiAoA()
     
-    def get_dpJ_dpchi(self):
-        return self.__LLW.get_dpJ_dpchi()
+    def get_dpF_list_dpchi(self):
+        return self.__LLW.get_dpF_list_dpchi()
     
     #-- Run adjoint problem for each cost function
     def run(self):
-        func_list = self.get_func_list()
+        F_list_names = self.get_F_list_names()
         
         self.__adj_list           = []
         self.__adj_conv_corr_list = []
-        self.__dJ_dchi_list       = []
+        self.__dF_list_dchi       = []
         
         R        = self.get_R()
-        dpRdpW   = self.get_DR_DiAoA()
-        dpRdpchi = self.get_DR_Dchi()
+        dpRdpW   = self.get_dpR_dpiAoA()
+        dpRdpchi = self.get_dpR_dpchi()
         
-        dpFdpW_list   = self.get_dfunc_diAoA()
-        dpFdpchi_list = self.get_dpJ_dpchi()
+        dpFdpW_list   = self.get_dpF_list_dpiAoA()
+        dpFdpchi_list = self.get_dpF_list_dpchi()
         
-        for i, func in enumerate(func_list):
-           print 'Run adjoint problem for func = '+str(func)
+        for i, F_name in enumerate(F_list_names):
+           print 'Run adjoint problem for func = '+str(F_name)
            dpFdpW   = dpFdpW_list[i]
            dpFdpchi = dpFdpchi_list[i]
            
@@ -83,7 +83,7 @@ class DLLMAdjoint:
            
            self.__adj_list.append(AdjPb.get_adjoint_state())
            self.__adj_conv_corr_list.append(AdjPb.get_convergence_correction())
-           self.__dJ_dchi_list.append(AdjPb.get_dFdchi())
+           self.__dF_list_dchi.append(AdjPb.get_dFdchi())
            
-           print '  - Convergence adjoint correction for '+str(func)+' = '+str(self.__adj_conv_corr_list[i])
+           print '  - Convergence adjoint correction for '+str(F_name)+' = '+str(self.__adj_conv_corr_list[i])
            

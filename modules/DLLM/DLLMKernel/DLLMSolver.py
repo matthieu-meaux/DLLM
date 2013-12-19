@@ -83,45 +83,45 @@ class DLLMSolver:
     def get_R(self):
         return self.__DLLMDirect.get_R()
     
-    def get_DR_DiAoA(self):
-        return self.__DLLMDirect.get_DR_DiAoA()
+    def get_dpR_dpiAoA(self):
+        return self.__DLLMDirect.get_dpR_dpiAoA()
     
-    def get_DR_Dchi(self):
-        return self.__DLLMDirect.get_DR_Dchi()
+    def get_dpR_dpchi(self):
+        return self.__DLLMDirect.get_dpR_dpchi()
     
-    def get_DlocalAoA_DiAoA(self):
-        return self.__DLLMDirect.get_DlocalAoA_DiAoA()
+    def get_dplocalAoA_dpiAoA(self):
+        return self.__DLLMDirect.get_dplocalAoA_dpiAoA()
     
-    def get_DlocalAoA_Dchi(self):
-        return self.__DLLMDirect.get_DlocalAoA_Dchi()
+    def get_dplocalAoA_dpchi(self):
+        return self.__DLLMDirect.get_dplocalAoA_dpchi()
     
     def comp_R(self, iAoA):
         return self.__DLLMDirect.comp_R(iAoA)
     
-    def comp_DR_DiAoA(self, iAoA):
-        return self.__DLLMDirect.comp_DR_DiAoA(iAoA)
+    def comp_dpR_dpiAoA(self, iAoA):
+        return self.__DLLMDirect.comp_dpR_dpiAoA(iAoA)
     
-    def comp_DR_Dchi(self):
-        return self.__DLLMDirect.comp_DR_Dchi()
+    def comp_dpR_dpchi(self):
+        return self.__DLLMDirect.comp_dpR_dpchi()
     
-    def comp_DR_DthetaY(self):
-        return self.__DLLMDirect.comp_DR_DthetaY()
+    def comp_dpR_dpthetaY(self):
+        return self.__DLLMDirect.comp_dpR_dpthetaY()
     
     #-- DLLMPost accessors
     def is_post_computed(self):
         return self.__DLLMPost.is_computed()
     
-    def get_func_list(self):
-        return self.__DLLMPost.get_func_list()
+    def get_F_list_names(self):
+        return self.__DLLMPost.get_F_list_names()
     
-    def get_func_values(self):
-        return self.__DLLMPost.get_func_values()
+    def get_F_list(self):
+        return self.__DLLMPost.get_F_list()
     
-    def get_dfunc_diAoA(self):
-        return self.__DLLMPost.get_dfunc_diAoA()
+    def get_dpF_list_dpiAoA(self):
+        return self.__DLLMPost.get_dpF_list_dpiAoA()
     
-    def get_dpJ_dpchi(self):
-        return self.__DLLMPost.get_dpJ_dpchi()
+    def get_dpF_list_dpchi(self):
+        return self.__DLLMPost.get_dpF_list_dpchi()
     
     #-- DLLMAdjoint accessors
     def get_adjoint_list(self):
@@ -130,8 +130,8 @@ class DLLMSolver:
     def get_adjoint_convergence_correction_list(self):
         return self.__DLLMAdjoint.get_adjoint_convergence_correction_list()
     
-    def get_dJ_dchi_list(self):
-        return self.__DLLMAdjoint.get_dJ_dchi_list()
+    def get_dF_list_dchi(self):
+        return self.__DLLMAdjoint.get_dF_list_dchi()
     
     #-- Setters
     def __reinit_modules(self):
@@ -182,10 +182,10 @@ class DLLMSolver:
     def run_direct(self):
         self.__DLLMDirect.run()
         
-    def run_post(self,func_list=None):
+    def run_post(self,F_list_names=None):
         ERROR_MSG=self.ERROR_MSG+'run_post: '
         if self.is_direct_computed():
-            self.__DLLMPost.run(func_list=func_list)
+            self.__DLLMPost.run(F_list_names=F_list_names)
         else:
             print ERROR_MSG+'Cannot run post-processing if solution is not computed'
             
