@@ -204,7 +204,7 @@ class TestDLLMSimple(unittest.TestCase):
         ok5,df_fd5,df5=val_grad5.compare(x0,treshold=1.e-2,return_all=True)
         assert(ok5)
         
-    def test_DLLM_valid_adjoint_gradients(self):
+    def test_DLLM_valid_dF_list_dchi(self):
         OC,wing_param = self.__init_wing_param()
         x0=wing_param.get_dv_array()
         def f6(x):
