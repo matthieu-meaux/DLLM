@@ -42,17 +42,18 @@ class MetaAirfoil(Airfoil):
         sweep=self.get_sweep()
         Mach_normal= Mach*np.cos(sweep)
         Cd = self.__coefs.meta_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)  
-        sweep_corr = np.cos(self.get_sweep())**2
+        #sweep_corr = np.cos(self.get_sweep())**2
         
-        return Cd*sweep_corr
+        #return Cd*sweep_corr
+        return Cd
     
     def CdAlpha(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal= Mach*np.cos(sweep)
         dCd_dAoA = self.__coefs.grad_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[2]
-        sweep_corr = np.cos(self.get_sweep())**2
+        #sweep_corr = np.cos(self.get_sweep())**2
         
-        return dCd_dAoA*sweep_corr
+        return dCd_dAoA#*sweep_corr
         
     def Cm(self, alpha, Mach):
         sweep=self.get_sweep()
@@ -74,35 +75,30 @@ class MetaAirfoil(Airfoil):
         dCl_dthick = self.gradCl(alpha, Mach)[0]
         dthick_dchi = self.get_rel_thick_grad()
         
-        dCl_dMach = self.gradCl(alpha, Mach_normal)[3]
+        dCl_dMach = self.gradCl(alpha, Mach)[3]
         dMach_dchi = -Mach*np.sin(sweep)*dsweep
         
-        #dCl_dalpha = self.gradCl(alpha, Mach_normal)[2]
-        # dalpha_dtwist = 1
-        #dalpha_dchi = self.get_twist_grad()
-        #dalpha_dchi = np.zeros(len(dsweep))
+    
         return (dCl_dthick*dthick_dchi + dCl_dMach*dMach_dchi)*sweep_corr + Cl*dsweep_corr
         
     def dCd_dchi(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal = Mach*np.cos(sweep)
         Cd = self.__coefs.meta_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)
-        sweep_corr = np.cos(self.get_sweep())**2
+        
+        #sweep_corr = np.cos(self.get_sweep())**2
         dsweep=self.get_sweep_grad()
-        dsweep_corr = -2.*np.sin(sweep)*np.cos(sweep)*dsweep
+        #dsweep_corr = -2.*np.sin(sweep)*np.cos(sweep)*dsweep
         
         dCd_dthick = self.gradCd(alpha, Mach)[0]
         dthick_dchi = self.get_rel_thick_grad()
         
-        dCd_dMach = self.gradCd(alpha, Mach_normal)[3]
+        dCd_dMach = self.gradCd(alpha, Mach)[3]
         dMach_dchi = -Mach*np.sin(sweep)*dsweep
         
-        #dCd_dalpha = self.gradCd(alpha, Mach_normal)[2]
-        # dalpha_dtwist = 1
-        #dalpha_dchi = self.get_twist_grad()
-        #dalpha_dchi = np.zeros(len(dsweep))
-        return (dCd_dthick*dthick_dchi + dCd_dMach*dMach_dchi)*sweep_corr + Cd*dsweep_corr
-    
+        #return (dCd_dthick*dthick_dchi + dCd_dMach*dMach_dchi)*sweep_corr + Cd*dsweep_corr
+        return (dCd_dthick*dthick_dchi + dCd_dMach*dMach_dchi)
+        
     def gradCl(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal= Mach*np.cos(sweep)
