@@ -33,7 +33,7 @@ wing_param.convert_to_design_variable('test_param.root_height',0.7,1.)
 wing_param.convert_to_design_variable('test_param.break_height',0.45,0.8)
 wing_param.convert_to_design_variable('test_param.tip_height',0.10,0.26)
 #wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
-wing_param.build_meta_airfoil(OC, 'RAE2822.dat', relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True)
+wing_param.build_meta_airfoil(OC, 'MetaModelFixed.xml', relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()
 

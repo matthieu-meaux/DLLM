@@ -482,8 +482,8 @@ class Wing_param():
             self.set_ref_aifoil(airfoil)
         return airfoil
         
-    def build_meta_airfoil(self, OC, airfoil_model, relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True):
-        airfoil = MetaAirfoil(OC, airfoil_model, relative_thickness=relative_thickness, camber=camber, Sref=Sref, Lref=Lref, sweep=sweep)
+    def build_meta_airfoil(self, OC, surrogate_model, relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True):
+        airfoil = MetaAirfoil(OC, surrogate_model, relative_thickness=relative_thickness, camber=camber, Sref=Sref, Lref=Lref, sweep=sweep)
         if set_as_ref:
             self.set_ref_aifoil(airfoil)
         return airfoil

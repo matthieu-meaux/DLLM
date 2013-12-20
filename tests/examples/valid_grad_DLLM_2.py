@@ -6,7 +6,7 @@ import numpy
 
 OC=OperatingCondition('cond1',atmospheric_model='simple')
 OC.set_Mach(0.6) #.7
-OC.set_AoA(4.0) #3.
+OC.set_AoA(6.0) #3.
 OC.set_altitude(10000.) #5000
 OC.set_T0_deg(20.)
 OC.set_P0(101325.)
@@ -34,7 +34,7 @@ wing_param.convert_to_design_variable('test_param.root_height',.7,1.5)
 wing_param.convert_to_design_variable('test_param.break_height',0.45,1.2)
 wing_param.convert_to_design_variable('test_param.tip_height',0.1,0.5)
 #wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
-wing_param.build_meta_airfoil(OC, 'RAE2822.dat', relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True)
+wing_param.build_meta_airfoil(OC, 'MetaModelFixed.xml', relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()
 
@@ -63,7 +63,7 @@ def df(x):
     func_grad=numpy.array(DLLM.get_dF_list_dchi())
     return func_grad
 
-val_grad=FDValidGrad(2,f,df,fd_step=1.e-9)
+val_grad=FDValidGrad(2,f,df,fd_step=1.e-8)
 ok,df_fd,df=val_grad.compare(x0,treshold=1.e-2,return_all=True)
 
 for j in xrange(len(df[:,0])):

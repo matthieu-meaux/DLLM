@@ -15,21 +15,21 @@ class SurrogateCoefs:
     Evaluate aerodynamic coefficients through the meta model
     Compute gradients of the meta model functions
     """
-    def __init__(self, airfoil_model):
+    def __init__(self, surrogate_model):
         
-        fileName = "indep.xml"
+        fileName = surrogate_model
         study = Study()
         study.setStorageManager(XMLStorageManager(fileName))
         study.load()
         
         self.__meta_CL = NumericalMathFunction()
-        study.fillObject("meta_CL", self.__meta_CL)
+        study.fillObject("MetaModel_y4_deg_6", self.__meta_CL)
         
         self.__meta_CD = NumericalMathFunction()
-        study.fillObject("meta_CD", self.__meta_CD)
+        study.fillObject("MetaModel_y5_deg_6", self.__meta_CD)
         
         self.__meta_CM = NumericalMathFunction()
-        study.fillObject("meta_CM", self.__meta_CM)
+        study.fillObject("MetaModel_y6_deg_6", self.__meta_CM)
         
         distribution = Distribution()
         study.fillObject("distribution", distribution)

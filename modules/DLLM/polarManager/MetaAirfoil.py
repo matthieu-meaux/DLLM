@@ -13,14 +13,14 @@ class MetaAirfoil(Airfoil):
     Provide lift, drag and moment coefficients
     Provide sensitivities of aerodynamic surrogate function w.r.t. input parameters
     """
-    def __init__(self, OC, airfoil_model, relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=0., surrogate_fcs=None):
+    def __init__(self, OC, surrogate_model, relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=0., surrogate_fcs=None):
 
         Airfoil.__init__(self, OC, Sref, Lref, relative_thickness, sweep, camber)
         if not surrogate_fcs:
-            self.__coefs = SurrogateCoefs(airfoil_model)
+            self.__coefs = SurrogateCoefs(surrogate_model)
         else:
             self.__coefs = surrogate_fcs
-        self.__airfoil_model = airfoil_model
+        self.__surrogate_model = surrogate_model
         
     def Cl(self, alpha, Mach):
         sweep=self.get_sweep()
@@ -220,4 +220,4 @@ class MetaAirfoil(Airfoil):
             sweep = self.get_sweep()
         if OC is None:
             OC = self.get_OC()
-        return MetaAirfoil(OC, self.__airfoil_model, relative_thickness=rel_thick, camber=camber, Sref=Sref, Lref=Lref, sweep=sweep, surrogate_fcs=self.__coefs)
+        return MetaAirfoil(OC, self.__surrogate_model, relative_thickness=rel_thick, camber=camber, Sref=Sref, Lref=Lref, sweep=sweep, surrogate_fcs=self.__coefs)
