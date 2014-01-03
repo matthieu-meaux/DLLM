@@ -3,6 +3,7 @@ from DLLM.DLLMGeom.wing_param import Wing_param
 from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
 from MDOTools.OC.operating_condition import OperatingCondition
 import numpy
+import sys
 
 OC=OperatingCondition('cond1',atmospheric_model='simple')
 OC.set_Mach(0.8)
@@ -33,6 +34,7 @@ wing_param.convert_to_design_variable('test_param.tip_chord',1.,2.)
 wing_param.convert_to_design_variable('test_param.root_height',1.,1.5)
 wing_param.convert_to_design_variable('test_param.break_height',0.8,1.2)
 wing_param.convert_to_design_variable('test_param.tip_height',0.2,0.5)
+wing_param.add_AoA_design_variable(-10.,3.5,10.)
 wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()

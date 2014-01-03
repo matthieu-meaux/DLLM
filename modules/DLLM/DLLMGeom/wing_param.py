@@ -41,6 +41,10 @@ class Wing_param():
         
         
     def __init_discrete_attributes(self):
+        # -- OC design variable 
+        self.__AoA                = None
+        self.__AoA_grad           = None
+        
         # -- discrete attributes
         self.__span               = None
         self.__span_grad          = None
@@ -128,6 +132,12 @@ class Wing_param():
     
     def get_thetaY(self):
         return self.__thetaY
+    
+    def get_AoA(self):
+        return self.__AoA
+    
+    def get_AoA_grad(self):
+        return self.__AoA_grad
         
     # -- Setters
     def set_geom_type(self, geom_type):
@@ -162,11 +172,25 @@ class Wing_param():
     def convert_to_parameter(self, Id, fexpr):
         self.__BC_manager.convert_to_parameter(Id, fexpr)
         
+    def add_AoA_design_variable(self, lbnd, val, ubnd):
+        self.__BC_manager.create_design_variable(self.__tag+'.AoA', lbnd, val, ubnd)
+        
+    def __update_AoA(self):
+        Id   = self.__tag+'.AoA'
+        if Id in self.get_dv_id_list():
+            pt   = self.__BC_manager.get_pt(Id)
+            deg_to_rad = pi/180.
+            self.__AoA      = pt.get_value()*deg_to_rad
+            self.__AoA_grad = pt.get_gradient()*deg_to_rad
+        
     def get_dv_array(self):
         return self.__BC_manager.get_dv_array()
     
     def get_dv_id_list(self):
         return self.__BC_manager.get_dv_id_list()
+    
+    def get_bounds_array(self):
+        return self.__BC_manager.get_bounds_array()
         
     def build_wing(self):
         self.__BC_manager.clean()
@@ -186,12 +210,19 @@ class Wing_param():
             self.__BC_manager.create_variable(self.__tag+'.break_height',0.)
             self.__BC_manager.create_variable(self.__tag+'.tip_height',0.)
             
-        for i in xrange(self.__n_sect):
-            self.__BC_manager.create_design_variable(self.__tag+'.twist'+str(i),-25.,0.,25.)
+        for i in xrange(self.__n_sect/2):
+            self.__BC_manager.create_design_variable(self.__tag+'.rtwist'+str(i),-25.,0.,25.)
+        for i in xrange(self.__n_sect/2):
+#             print self.__tag+'.twist'+str(i),self.__tag+'.twist'+str(self.__n_sect/2+i),self.__tag+'.rtwist'+str(self.__n_sect/2-1-i),self.__tag+'.rtwist'+str(i)
+            self.__BC_manager.create_parameter(self.__tag+'.twist'+str(i),self.__tag+'.rtwist'+str(self.__n_sect/2-1-i))
+            self.__BC_manager.create_parameter(self.__tag+'.twist'+str(self.__n_sect/2+i),self.__tag+'.rtwist'+str(i))
+#         for i in xrange(self.__n_sect):
+#             self.__BC_manager.create_design_variable(self.__tag+'.twist'+str(i),-25.,0.,25.)
     
     def update(self):
         self.__PCADModel.update()
         self.__ndv = self.__BC_manager.get_ndv()
+        self.__update_AoA()
         self.__check_thetaY()
         self.__build_discretization()
         self.__check_airfoils_inputs()

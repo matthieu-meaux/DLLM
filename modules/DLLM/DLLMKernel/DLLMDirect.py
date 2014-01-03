@@ -173,8 +173,13 @@ class DLLMDirect:
     
     def __compute_dplocalAoA_dpchi(self):
         twist_grad  = self.get_wing_param().get_twist_grad()
-        for i in xrange(self.__N):
-            self.__dplocalAoA_dpchi[i,:] =twist_grad[i,:] # + dAoAdksi ?? 
+        AoA_grad    = self.get_wing_param().get_AoA_grad()
+        if AoA_grad is None:
+            for i in xrange(self.__N):
+                self.__dplocalAoA_dpchi[i,:] =twist_grad[i,:] # + dAoAdksi ?? 
+        else:
+            for i in xrange(self.__N):
+                self.__dplocalAoA_dpchi[i,:] = AoA_grad[:] + twist_grad[i,:] 
             
     def __compute_dpgamma_dpchi(self):
         Mach = self.get_OC().get_Mach()
@@ -188,17 +193,22 @@ class DLLMDirect:
             self.__dpiAoAnew_dpchi[:,n] = dot(self.__dK_dchi[:,:,n],self.__gamma)
 
     def __compute_localAoA(self):
-         Thetay = self.get_wing_param().get_thetaY()
-         twist  = self.get_wing_param().get_twist()
-         AoA    = self.get_OC().get_AoA_rad()
+        Thetay = self.get_wing_param().get_thetaY()
+        twist  = self.get_wing_param().get_twist()
+        AoA    = self.get_wing_param().get_AoA()
+        if AoA is None:
+           AoA    = self.get_OC().get_AoA_rad()
+        else:
+           self.get_OC().set_AoA(AoA*180./numpy.pi)
          
-         # Why this formula ? twist increases the local airfoil angle of attack normally...
-         #self.__localAoA=alpha-iaOa-self.get_wing_geom().get_twist()
-         self.__localAoA = AoA + twist - self.__iAoA + Thetay
          
-         for i in xrange(self.__N):
-             if self.__localAoA[i] > numpy.pi/2. or self.__localAoA[i] < -numpy.pi/2.:
-                 raise Exception, "Local angle of attack out of bounds [-pi/2, pi/2]"
+        # Why this formula ? twist increases the local airfoil angle of attack normally...
+        #self.__localAoA=alpha-iaOa-self.get_wing_geom().get_twist()
+        self.__localAoA = AoA + twist - self.__iAoA + Thetay
+        
+        for i in xrange(self.__N):
+            if self.__localAoA[i] > numpy.pi/2. or self.__localAoA[i] < -numpy.pi/2.:
+                raise Exception, "Local angle of attack out of bounds [-pi/2, pi/2]"
 
     def __compute_gamma(self):
         """
