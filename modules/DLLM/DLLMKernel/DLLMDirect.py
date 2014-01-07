@@ -58,6 +58,9 @@ class DLLMDirect:
     def get_dplocalAoA_dpiAoA(self):
         return self.__dplocalAoA_dpiAoA
     
+    def get_dplocalAoA_dpAoA(self):
+        return self.__dplocalAoA_dpAoA
+    
     def get_dplocalAoA_dpchi(self):
         return self.__dplocalAoA_dpchi
     
@@ -98,7 +101,7 @@ class DLLMDirect:
     def run(self):
         self.__NRPb.solve()
         self.set_computed(True)
-        self.__write_gamma_to_file()
+        self.write_gamma_to_file()
         self.comp_dpR_dpchi()
                 
     def __init_local_variables(self):
@@ -108,11 +111,13 @@ class DLLMDirect:
         self.__dpR_dpiAoA   = None
         self.__dpR_dpchi    = None
         self.__dpR_dpthetaY = None
+        self.__dpR_dpAoA    = None
         
         # Angle of attack variables
         self.__localAoA            = zeros([self.__N])
         self.__dplocalAoA_dpiAoA   = -diag(ones([self.__N])) # This is a constant matrix
         self.__dplocalAoA_dpthetaY = diag(ones([self.__N]))  # This is a constant matrix
+        self.__dplocalAoA_dpAoA    = ones(self.__N)
         self.__dplocalAoA_dpchi    = zeros([self.__N,self.__ndv])
         
         # Induced angle of attack variables
@@ -125,6 +130,7 @@ class DLLMDirect:
         self.__gamma  = zeros(self.__N)
         self.__dpgamma_dpiAoA   = None
         self.__dpgamma_dpthetaY = None
+        self.__dpgamma_dpAoA    = None
         self.__dpgamma_dplocalAoA = zeros([self.__N,self.__N])
         self.__dpgamma_dpchi      = zeros([self.__N,self.__ndv])
                 
@@ -164,12 +170,25 @@ class DLLMDirect:
         
         return self.__dpR_dpthetaY
     
+    def comp_dpR_dpAoA(self):
+        self.__compute_dpgamma_dpAoA()
+        self.__dpR_dpAoA = -dot(self.__K,self.__dpgamma_dpAoA)
+        
+        return self.__dpR_dpAoA
+    
+    def __compute_dpgamma_dpAoA(self):
+        Mach = self.get_OC().get_Mach()
+        for i in xrange(self.__N):
+            self.__dpgamma_dplocalAoA[i,i]  = self.get_airfoils()[i].dpgamma_dpAoA(self.__localAoA[i],Mach)
+            
+        self.__dpgamma_dpAoA = dot(self.__dpgamma_dplocalAoA,self.__dplocalAoA_dpAoA)
+        
     def __compute_dpgamma_dpthetaY(self):
-         Mach = self.get_OC().get_Mach()
-         for i in xrange(self.__N):
-             self.__dpgamma_dplocalAoA[i,i]  = self.get_airfoils()[i].dpgamma_dpAoA(self.__localAoA[i],Mach)
-             
-         self.__dpgamma_dpthetaY = dot(self.__dpgamma_dplocalAoA,self.__dplocalAoA_dpthetaY)
+        Mach = self.get_OC().get_Mach()
+        for i in xrange(self.__N):
+            self.__dpgamma_dplocalAoA[i,i]  = self.get_airfoils()[i].dpgamma_dpAoA(self.__localAoA[i],Mach)
+            
+        self.__dpgamma_dpthetaY = dot(self.__dpgamma_dplocalAoA,self.__dplocalAoA_dpthetaY)
     
     def __compute_dplocalAoA_dpchi(self):
         twist_grad  = self.get_wing_param().get_twist_grad()
@@ -237,7 +256,7 @@ class DLLMDirect:
         """
         self.__dpiAoAnew_dpiAoA = dot(self.__K,self.__dpgamma_dpiAoA)
         
-    def __write_gamma_to_file(self):
+    def write_gamma_to_file(self):
         '''
         Writes the circulation repartition in a file
         '''

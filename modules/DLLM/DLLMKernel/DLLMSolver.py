@@ -57,6 +57,18 @@ class DLLMSolver:
     def get_Sref_grad(self):
         return self.__Sref_grad
     
+    def get_DLLMMesh(self):
+        return self.__DLLMMesh
+    
+    def get_DLLMDirect(self):
+        return self.__DLLMDirect
+    
+    def get_DLLMPost(self):
+        return self.__DLLMPost
+    
+    def get_DLLMAdjoint(self):
+        return self.__DLLMAdjoint
+    
     #-- DLLMMesh accessors
     def get_K(self):
         return self.__DLLMMesh.get_K()
@@ -83,7 +95,7 @@ class DLLMSolver:
     def get_R(self):
         return self.__DLLMDirect.get_R()
     
-    def get_dpR_dpiAoA(self):
+    def get_dpR_dpW(self):
         return self.__DLLMDirect.get_dpR_dpiAoA()
     
     def get_dpR_dpchi(self):
@@ -91,6 +103,9 @@ class DLLMSolver:
     
     def get_dplocalAoA_dpiAoA(self):
         return self.__DLLMDirect.get_dplocalAoA_dpiAoA()
+    
+    def get_dplocalAoA_dpAoA(self):
+        return self.__DLLMDirect.get_dplocalAoA_dpAoA()
     
     def get_dplocalAoA_dpchi(self):
         return self.__DLLMDirect.get_dplocalAoA_dpchi()
@@ -117,7 +132,7 @@ class DLLMSolver:
     def get_F_list(self):
         return self.__DLLMPost.get_F_list()
     
-    def get_dpF_list_dpiAoA(self):
+    def get_dpF_list_dpW(self):
         return self.__DLLMPost.get_dpF_list_dpiAoA()
     
     def get_dpF_list_dpchi(self):

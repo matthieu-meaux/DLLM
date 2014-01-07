@@ -42,8 +42,8 @@ class DLLMAdjoint:
     def get_R(self):
         return self.__LLW.get_R()
     
-    def get_dpR_dpiAoA(self):
-        return self.__LLW.get_dpR_dpiAoA()
+    def get_dpR_dpW(self):
+        return self.__LLW.get_dpR_dpW()
     
     def get_dpR_dpchi(self):
         return self.__LLW.get_dpR_dpchi()
@@ -52,8 +52,8 @@ class DLLMAdjoint:
     def get_F_list_names(self):
         return self.__LLW.get_F_list_names()
     
-    def get_dpF_list_dpiAoA(self):
-        return self.__LLW.get_dpF_list_dpiAoA()
+    def get_dpF_list_dpW(self):
+        return self.__LLW.get_dpF_list_dpW()
     
     def get_dpF_list_dpchi(self):
         return self.__LLW.get_dpF_list_dpchi()
@@ -67,10 +67,10 @@ class DLLMAdjoint:
         self.__dF_list_dchi       = []
         
         R        = self.get_R()
-        dpRdpW   = self.get_dpR_dpiAoA()
+        dpRdpW   = self.get_dpR_dpW()
         dpRdpchi = self.get_dpR_dpchi()
         
-        dpFdpW_list   = self.get_dpF_list_dpiAoA()
+        dpFdpW_list   = self.get_dpF_list_dpW()
         dpFdpchi_list = self.get_dpF_list_dpchi()
         
         for i, F_name in enumerate(F_list_names):

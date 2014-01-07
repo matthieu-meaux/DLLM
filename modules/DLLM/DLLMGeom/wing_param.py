@@ -410,7 +410,7 @@ class Wing_param():
                     self.__chords_grad[i,:] = (self.__tip_chord_grad[:] - self.__break_chord_grad[:])*coeff  \
                                             + (self.__tip_chord - self.__break_chord)*dcoeff \
                                             + self.__break_chord_grad[:]
-                    
+                                                
     def __build_rel_thicks(self):
         N = self.__n_sect
         n = N/2
@@ -451,6 +451,7 @@ class Wing_param():
                 self.__rel_thicks[i]        = ((self.__tip_height - self.__root_height)*r + self.__root_height) / self.__chords[i]
                 self.__rel_thicks_grad[i,:] = ( ((self.__tip_height_grad[:] - self.__root_height_grad[:])*r + self.__root_height_grad[:])*self.__chords[i] \
                                             - ((self.__tip_height - self.__root_height)*r + self.__root_height) * self.__chords_grad[i,:] ) / (self.__chords[i])**2
+                    
 
     def __build_XYZ(self):
         N = self.__n_sect

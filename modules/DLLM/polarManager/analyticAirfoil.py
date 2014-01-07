@@ -118,6 +118,39 @@ class AnalyticAirfoil(Airfoil):
         dCdf = self.__dCd_friction_dchi(alpha, Mach)
         dCd  = dCdw + dCdf
         return dCd
+    
+    #-- Cdp related methods
+    def Cdp(self,alpha,Mach=0.0):
+        Cdw = self.__Cd_wave(alpha, Mach)
+        Cd  = Cdw
+        return Cd
+    
+    def CdpAlpha(self,alpha,Mach):
+        dCdw = self.__dCd_wave_dAoA(alpha, Mach)
+        dCd = dCdw
+        return dCd
+    
+    def dCdp_dchi(self, alpha, Mach):
+        dCdw = self.__dCd_wave_dchi(alpha, Mach)
+        dCd  = dCdw
+        return dCd
+    
+    #-- Cdf related methods
+    def Cdf(self,alpha,Mach=0.0):
+        Cdf = self.__Cd_friction(alpha, Mach)
+        Cd  = Cdf
+        return Cd
+    
+    def CdfAlpha(self,alpha,Mach):
+        dCdf = self.__dCd_friction_dAoA(alpha, Mach)
+        dCd = dCdf
+        return dCd
+    
+    def dCdf_dchi(self, alpha, Mach):
+        dCdf = self.__dCd_friction_dchi(alpha, Mach)
+        dCd  = dCdf
+        return dCd
+    
         
     def __Cd_wave(self, alpha, Mach):
         sweep  = self.get_sweep()
@@ -174,21 +207,24 @@ class AnalyticAirfoil(Airfoil):
         return dCdw
     
     def __Cd_friction(self, alpha, Mach):
-        # Re= V_corr*Lref_corr/nu=Mach*cos(sweep)*c*Lref/cos(sweep)/nu = Mach*c*Lref/cos(sweep)
+        # Re= V_corr*Lref/nu=Mach*cos(sweep)*c*Lref/nu = Mach*cos(sweep)*c*Lref/nu
         OC = self.get_OC()
+        sweep  = self.get_sweep()
         c  = OC.get_c()
         nu = OC.get_nu()
         L  = self.get_Lref()
-        Re = Mach*c*L/nu
-        if Re < 1.e-6:
+        Re = Mach*cos(sweep)*c*L/nu
+        thick_coeff=5./2
+        if Re < 1.e-12:
             # Prevent division by 0. Drag is null at zero Re number anyway
             Cdf = 0.
         elif Re < 1.e5:
             # Laminar flow
-            Cdf=1.328/sqrt(Re)
+            Cdf=1.328/sqrt(Re)*thick_coeff
         else:
             # Turbulent flow
-            Cdf=0.074*Re**(-0.2)
+            Cdf=0.074*Re**(-0.2)*thick_coeff
+            
         return Cdf
     
     def __dCd_friction_dAoA(self, alpha, Mach):
@@ -196,21 +232,24 @@ class AnalyticAirfoil(Airfoil):
     
     def __dCd_friction_dchi(self, alpha, Mach):
         OC  = self.get_OC()
+        sweep  = self.get_sweep()
+        dsweep = self.get_sweep_grad()
         c   = OC.get_c()
         nu  = OC.get_nu()
         L   = self.get_Lref()
         dL  = self.get_Lref_grad()
-        Re  = Mach*c*L/nu
-        dRe = Mach*c*dL/nu
+        Re  = Mach*cos(sweep)*c*L/nu
+        dRe = Mach*cos(sweep)*c*dL/nu-Mach*sin(sweep)*c*L/nu*dsweep
+        thick_coeff=5./2
         if Re < 1.e-6:
             # Prevent division by 0. Drag is null at zero Re number anyway
             dCdf = 0.
         elif Re < 1.e5:
             # Laminar flow
-            dCdf=-0.664/(Re**1.5)*dRe
+            dCdf=-0.664/(Re**1.5)*dRe*thick_coeff
         else:
             # Turbulent flow
-            dCdf=-0.0148*Re**(-1.2)*dRe
+            dCdf=-0.0148*Re**(-1.2)*dRe*thick_coeff
         return dCdf
     
     #-- Cm related methods
