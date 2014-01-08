@@ -214,7 +214,8 @@ class AnalyticAirfoil(Airfoil):
         nu = OC.get_nu()
         L  = self.get_Lref()
         Re = Mach*cos(sweep)*c*L/nu
-        thick_coeff=5./2
+        toc         = self.get_rel_thick()
+        thick_coeff = 1.+2.1*toc # a rough guess since 1.21 for 10% relative thickness
         if Re < 1.e-12:
             # Prevent division by 0. Drag is null at zero Re number anyway
             Cdf = 0.
@@ -240,16 +241,20 @@ class AnalyticAirfoil(Airfoil):
         dL  = self.get_Lref_grad()
         Re  = Mach*cos(sweep)*c*L/nu
         dRe = Mach*cos(sweep)*c*dL/nu-Mach*sin(sweep)*c*L/nu*dsweep
-        thick_coeff=5./2
+        toc    = self.get_rel_thick()
+        dtoc   = self.get_rel_thick_grad()
+        thick_coeff = 1.+2.1*toc
+        dthick_coeff = 2.1*dtoc
+        
         if Re < 1.e-6:
             # Prevent division by 0. Drag is null at zero Re number anyway
             dCdf = 0.
         elif Re < 1.e5:
             # Laminar flow
-            dCdf=-0.664/(Re**1.5)*dRe*thick_coeff
+            dCdf=-0.664/(Re**1.5)*dRe*thick_coeff+1.328/sqrt(Re)*dthick_coeff
         else:
             # Turbulent flow
-            dCdf=-0.0148*Re**(-1.2)*dRe*thick_coeff
+            dCdf=-0.0148*Re**(-1.2)*dRe*thick_coeff+0.074*Re**(-0.2)*dthick_coeff
         return dCdf
     
     #-- Cm related methods
