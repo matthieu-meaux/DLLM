@@ -37,23 +37,32 @@ class MetaAirfoil(Airfoil):
         sweep_corr = np.cos(self.get_sweep())**2
         
         return dCl_dAoA*sweep_corr
-        
+    
     def Cd(self, alpha, Mach):
+        Cdf = self.__Cd_friction(alpha, Mach)
+        Cdp = self.Cdp(alpha, Mach)
+        
+        return Cdf + Cdp
+    
+    def Cdp(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal= Mach*np.cos(sweep)
         Cd = self.__coefs.meta_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)  
-        #sweep_corr = np.cos(self.get_sweep())**2
         
-        #return Cd*sweep_corr
         return Cd
     
-    def CdAlpha(self, alpha, Mach):
+    def CdpAlpha(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal= Mach*np.cos(sweep)
-        dCd_dAoA = self.__coefs.grad_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[2]
-        #sweep_corr = np.cos(self.get_sweep())**2
+        dCdp_dAoA = self.__coefs.grad_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[2]
         
-        return dCd_dAoA#*sweep_corr
+        return dCdp_dAoA
+        
+    def CdAlpha(self, alpha, Mach):
+        dCdp_dAoA = self.CdpAlpha(alpha, Mach) 
+        dCdf_AoA = self.__dCd_friction_dAoA(alpha, Mach)
+        
+        return dCdp_dAoA+dCdf_AoA
         
     def Cm(self, alpha, Mach):
         sweep=self.get_sweep()
@@ -82,22 +91,84 @@ class MetaAirfoil(Airfoil):
         return (dCl_dthick*dthick_dchi + dCl_dMach*dMach_dchi)*sweep_corr + Cl*dsweep_corr
         
     def dCd_dchi(self, alpha, Mach):
+        dCdf_dchi = self.__dCd_friction_dchi(alpha, Mach)
+        dCdp_dchi = self.dCdp_dchi(alpha, Mach)
+        
+        return dCdf_dchi + dCdp_dchi
+        
+    def dCdp_dchi(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal = Mach*np.cos(sweep)
         Cd = self.__coefs.meta_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)
         
-        #sweep_corr = np.cos(self.get_sweep())**2
         dsweep=self.get_sweep_grad()
-        #dsweep_corr = -2.*np.sin(sweep)*np.cos(sweep)*dsweep
         
-        dCd_dthick = self.gradCd(alpha, Mach)[0]
+        dCdp_dthick = self.gradCd(alpha, Mach)[0]
         dthick_dchi = self.get_rel_thick_grad()
         
-        dCd_dMach = self.gradCd(alpha, Mach)[3]
+        dCdp_dMach = self.gradCd(alpha, Mach)[3]
         dMach_dchi = -Mach*np.sin(sweep)*dsweep
         
-        #return (dCd_dthick*dthick_dchi + dCd_dMach*dMach_dchi)*sweep_corr + Cd*dsweep_corr
-        return (dCd_dthick*dthick_dchi + dCd_dMach*dMach_dchi)
+        return (dCdp_dthick*dthick_dchi + dCdp_dMach*dMach_dchi)
+    
+    def Cdf(self, alpha, Mach):
+        return self.__Cd_friction(alpha, Mach)
+        
+    def __Cd_friction(self, alpha, Mach):
+        # Re= V_corr*Lref_corr/nu=Mach*cos(sweep)*c*Lref/cos(sweep)/nu = Mach*c*Lref/cos(sweep)
+        OC = self.get_OC()
+        sweep  = self.get_sweep()
+        c  = OC.get_c()
+        nu = OC.get_nu()
+        L  = self.get_Lref()
+        Re = Mach*np.cos(sweep)*c*L/nu
+        toc         = self.get_rel_thick()
+        thick_coeff = 1.+2.1*toc # a rough guess since 1.21 for 10% relative thickness
+        if Re < 1.e-12:
+            # Prevent division by 0. Drag is null at zero Re number anyway
+            Cdf = 0.
+        elif Re < 1.e5:
+            # Laminar flow
+            Cdf=1.328/sqrt(Re)*thick_coeff
+        else:
+            # Turbulent flow
+            Cdf=0.074*Re**(-0.2)*thick_coeff
+            
+        return Cdf
+    
+    def CdfAlpha(self, alpha, Mach):
+        return self.__dCd_friction_dAoA(alpha, Mach)
+    
+    def __dCd_friction_dAoA(self, alpha, Mach):
+        return 0.
+    
+    def  dCdf_dchi(self, alpha, Mach):
+        return self. __dCd_friction_dchi(alpha, Mach)
+    
+    def __dCd_friction_dchi(self, alpha, Mach):
+        OC  = self.get_OC()
+        sweep  = self.get_sweep()
+        dsweep = self.get_sweep_grad()
+        c   = OC.get_c()
+        nu  = OC.get_nu()
+        L   = self.get_Lref()
+        dL  = self.get_Lref_grad()
+        Re  = Mach*np.cos(sweep)*c*L/nu
+        dRe = Mach*np.cos(sweep)*c*dL/nu-Mach*np.sin(sweep)*c*L/nu*dsweep
+        toc    = self.get_rel_thick()
+        dtoc   = self.get_rel_thick_grad()
+        thick_coeff = 1.+2.1*toc
+        dthick_coeff = 2.1*dtoc
+        if Re < 1.e-6:
+            # Prevent division by 0. Drag is null at zero Re number anyway
+            dCdf = 0.
+        elif Re < 1.e5:
+            # Laminar flow
+            dCdf=-0.664/(Re**1.5)*dRe*thick_coeff+1.328/sqrt(Re)*dthick_coeff
+        else:
+            # Turbulent flow
+            dCdf=-0.0148*Re**(-1.2)*dRe*thick_coeff+0.074*Re**(-0.2)*dthick_coeff
+        return dCdf
         
     def gradCl(self, alpha, Mach):
         sweep=self.get_sweep()

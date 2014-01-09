@@ -23,13 +23,13 @@ class SurrogateCoefs:
         study.load()
         
         self.__meta_CL = NumericalMathFunction()
-        study.fillObject("MetaModel_y4_deg_6", self.__meta_CL)
+        study.fillObject("MetaModel_y4_deg_5", self.__meta_CL)
         
         self.__meta_CD = NumericalMathFunction()
-        study.fillObject("MetaModel_y5_deg_6", self.__meta_CD)
+        study.fillObject("MetaModel_y5_deg_5", self.__meta_CD)
         
         self.__meta_CM = NumericalMathFunction()
-        study.fillObject("MetaModel_y6_deg_6", self.__meta_CM)
+        study.fillObject("MetaModel_y6_deg_5", self.__meta_CM)
         
         distribution = Distribution()
         study.fillObject("distribution", distribution)
