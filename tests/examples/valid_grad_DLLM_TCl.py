@@ -59,13 +59,12 @@ def df(x):
     DLLM.set_target_Cl(0.5)
     DLLM.run_direct()
     DLLM.run_post()
-    #DLLM.run_post()
     DLLM.run_adjoint()
     func_grad=numpy.array(DLLM.get_dF_list_dchi())
     return func_grad
 
-val_grad=FDValidGrad(2,f,df,fd_step=1.e-7)
-ok,df_fd,df=val_grad.compare(x0,treshold=1.e-5,return_all=True)
+val_grad=FDValidGrad(2,f,df,fd_step=1.e-6)
+ok,df_fd,df=val_grad.compare(x0,treshold=1.e-3,return_all=True)
 
 for j in xrange(len(df[:,0])):
     fid=open('gradient_file'+str(j)+'.dat','w')

@@ -425,9 +425,9 @@ class DLLMPost:
         dCd=zeros(self.__ndv)
         for i in range(self.__N):
             af=airfoils[i]
-            AoA=localAoA[i]
-            Cdloc=af.Cl(AoA,Mach)*sin(iAoA[i])+af.Cd(AoA,Mach)
-            dCdloc=af.CdfAlpha(AoA,Mach)*dlAoAdchi[i] +af.dCdf_dchi(AoA,Mach)
+            lAoA=localAoA[i]
+            Cdloc=af.Cdf(lAoA,Mach)
+            dCdloc=af.CdfAlpha(lAoA,Mach)*dlAoAdchi[i] +af.dCdf_dchi(lAoA,Mach)
             Cd+=Cdloc*af.get_Sref()
             dCd+=dCdloc*af.get_Sref()+Cdloc*af.get_Sref_grad()
         dCddchi = (dCd*self.get_Sref()- Cd*self.get_Sref_grad())/(self.get_Sref()**2) 

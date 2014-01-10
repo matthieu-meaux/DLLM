@@ -192,8 +192,8 @@ class TestWingParam(unittest.TestCase):
             func_grad=wing_param.get_twist_grad()
             return func_grad
         
-        val_grad1=FDValidGrad(2,f1,df1,fd_step=1.e-3)
-        ok1,df_fd1,df1=val_grad1.compare(x0,treshold=1.e-2,return_all=True)
+        val_grad1=FDValidGrad(2,f1,df1,fd_step=1.e-9)
+        ok1,df_fd1,df1=val_grad1.compare(x0,treshold=1.e-6,return_all=True)
         assert(ok1)
         
     def test_Wing_param_valid_grad_chords(self):
@@ -209,8 +209,8 @@ class TestWingParam(unittest.TestCase):
             func_grad=wing_param.get_chords_grad()
             return func_grad
         
-        val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-3)
-        ok2,df_fd2,df2=val_grad2.compare(x0,treshold=1.e-2,return_all=True)
+        val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-9)
+        ok2,df_fd2,df2=val_grad2.compare(x0,treshold=1.e-6,return_all=True)
         assert(ok2)
         
     def test_Wing_param_valid_grad_rel_thicks(self):
@@ -226,8 +226,8 @@ class TestWingParam(unittest.TestCase):
             func_grad=wing_param.get_rel_thicks_grad()
             return func_grad
         
-        val_grad3=FDValidGrad(2,f3,df3,fd_step=1.e-3)
-        ok3,df_fd3,df3=val_grad3.compare(x0,treshold=1.e-2,return_all=True)
+        val_grad3=FDValidGrad(2,f3,df3,fd_step=1.e-9)
+        ok3,df_fd3,df3=val_grad3.compare(x0,treshold=1.e-6,return_all=True)
         assert(ok3)
         
     def test_Wing_param_valid_grad_eta(self):
@@ -243,8 +243,8 @@ class TestWingParam(unittest.TestCase):
             func_grad=wing_param.get_eta_grad()
             return func_grad
         
-        val_grad4=FDValidGrad(2,f4,df4,fd_step=1.e-3)
-        ok4,df_fd4,df4=val_grad4.compare(x0,treshold=1.e-2,return_all=True)
+        val_grad4=FDValidGrad(2,f4,df4,fd_step=1.e-9)
+        ok4,df_fd4,df4=val_grad4.compare(x0,treshold=1.e-6,return_all=True)
         assert(ok4)
         
     def test_Wing_param_valid_grad_XYZ(self):
@@ -260,8 +260,8 @@ class TestWingParam(unittest.TestCase):
             func_grad=wing_param.get_XYZ_grad()
             return func_grad
         
-        val_grad5=FDValidGrad(2,f5,df5,fd_step=1.e-3)
-        ok5,df_fd5,df5=val_grad5.compare(x0,treshold=1.e-2,return_all=True)
+        val_grad5=FDValidGrad(2,f5,df5,fd_step=1.e-6)
+        ok5,df_fd5,df5=val_grad5.compare(x0,treshold=1.e-6,return_all=True)
         assert(ok5)
         
 if __name__ == '__main__':

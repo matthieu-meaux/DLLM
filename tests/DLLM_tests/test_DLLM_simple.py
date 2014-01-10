@@ -102,8 +102,8 @@ class TestDLLMSimple(unittest.TestCase):
             func_grad=DLLM.comp_dpR_dpiAoA(x)
             return func_grad
         
-        val_grad1=FDValidGrad(2,f1,df1,fd_step=1.e-3)
-        ok1,df_fd1,df1=val_grad1.compare(iAoA0,treshold=1.e-2,return_all=True)
+        val_grad1=FDValidGrad(2,f1,df1,fd_step=1.e-6)
+        ok1,df_fd1,df1=val_grad1.compare(iAoA0,treshold=1.e-3,return_all=True)
         assert(ok1)
         
     def test_DLLM_valid_dpR_dpchi(self):
@@ -126,7 +126,7 @@ class TestDLLMSimple(unittest.TestCase):
             func_grad=DLLM.comp_dpR_dpchi()
             return func_grad
         
-        val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-3)
+        val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-6)
         ok2,df_fd2,df2=val_grad2.compare(x0,treshold=1.e-2,return_all=True)
         assert(ok2)
         
@@ -147,8 +147,8 @@ class TestDLLMSimple(unittest.TestCase):
             func_grad=DLLM.comp_dpR_dpthetaY()
             return func_grad
         
-        val_grad3=FDValidGrad(2,f3,df3,fd_step=1.e-3)
-        ok3,df_fd3,df3=val_grad3.compare(thetaY0,treshold=1.e-2,return_all=True)
+        val_grad3=FDValidGrad(2,f3,df3,fd_step=1.e-6)
+        ok3,df_fd3,df3=val_grad3.compare(thetaY0,treshold=1.e-3,return_all=True)
         assert(ok3)
         
     def test_DLLM_valid_dpF_list_dpiAoA(self):
@@ -171,8 +171,8 @@ class TestDLLMSimple(unittest.TestCase):
             func_grad=DLLM.get_dpF_list_dpiAoA()
             return func_grad
         
-        val_grad4=FDValidGrad(2,f4,df4,fd_step=1.e-3)
-        ok4,df_fd4,df4=val_grad4.compare(iAoA0,treshold=1.e-2,return_all=True)
+        val_grad4=FDValidGrad(2,f4,df4,fd_step=1.e-6)
+        ok4,df_fd4,df4=val_grad4.compare(iAoA0,treshold=1.e-3,return_all=True)
         assert(ok4)
         
     def test_DLLM_valid_dpF_list_dpchi(self):
@@ -200,8 +200,8 @@ class TestDLLMSimple(unittest.TestCase):
             func_grad=DLLM.get_dpF_list_dpchi()
             return func_grad
         
-        val_grad5=FDValidGrad(2,f5,df5,fd_step=1.e-3)
-        ok5,df_fd5,df5=val_grad5.compare(x0,treshold=1.e-2,return_all=True)
+        val_grad5=FDValidGrad(2,f5,df5,fd_step=1.e-6)
+        ok5,df_fd5,df5=val_grad5.compare(x0,treshold=1.e-3,return_all=True)
         assert(ok5)
         
     def test_DLLM_valid_dF_list_dchi(self):
@@ -224,8 +224,8 @@ class TestDLLMSimple(unittest.TestCase):
             func_grad=array(DLLM.get_dF_list_dchi())
             return func_grad
 
-        val_grad6=FDValidGrad(2,f6,df6,fd_step=1.e-3)
-        ok6,df_fd6,df6=val_grad6.compare(x0,treshold=1.e-2,return_all=True)
+        val_grad6=FDValidGrad(2,f6,df6,fd_step=1.e-6)
+        ok6,df_fd6,df6=val_grad6.compare(x0,treshold=1.e-3,return_all=True)
         assert(ok6)
                 
 if __name__ == '__main__':

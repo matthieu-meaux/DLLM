@@ -13,7 +13,7 @@ OC.set_P0(101325.)
 OC.set_humidity(0.)
 OC.compute_atmosphere()
 
-wing_param=Wing_param('test_param',geom_type='Broken',n_sect=40)
+wing_param=Wing_param('test_param',geom_type='Broken',n_sect=4)
 wing_param.build_wing()
 wing_param.set_value('test_param.span',34.1)
 wing_param.set_value('test_param.sweep',34.)
@@ -44,6 +44,7 @@ print 'dv array shape',x0.shape
 print 'dv_array=',x0
 
 DLLM = DLLMSolver(wing_param,OC)
+DLLM.set_stop_residual(1.e-15)
 DLLM.run_direct()
 iAoA=DLLM.get_iAoA()
 
@@ -60,8 +61,8 @@ def df(x):
     func_grad=DLLM.comp_dpR_dpchi()
     return func_grad
 
-val_grad=FDValidGrad(2,f,df,fd_step=1.e-3)
-ok,df_fd,df=val_grad.compare(x0,treshold=1.e-2,return_all=True)
+val_grad=FDValidGrad(2,f,df,fd_step=1.e-6)
+ok,df_fd,df=val_grad.compare(x0,treshold=1.e-3,return_all=True)
 
 
 print '\n****************************************************'

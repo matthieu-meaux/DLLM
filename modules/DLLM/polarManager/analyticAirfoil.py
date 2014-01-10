@@ -239,7 +239,7 @@ class AnalyticAirfoil(Airfoil):
         nu  = OC.get_nu()
         L   = self.get_Lref()
         dL  = self.get_Lref_grad()
-        Re  = Mach*cos(sweep)*c*L/nu
+        Re = Mach*cos(sweep)*c*L/nu
         dRe = Mach*cos(sweep)*c*dL/nu-Mach*sin(sweep)*c*L/nu*dsweep
         toc    = self.get_rel_thick()
         dtoc   = self.get_rel_thick_grad()
