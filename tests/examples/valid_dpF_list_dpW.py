@@ -59,7 +59,7 @@ def df(x):
     func_grad=DLLM.get_dpF_list_dpW()
     return func_grad
 
-val_grad=FDValidGrad(2,f,df,fd_step=1.e-9)
+val_grad=FDValidGrad(2,f,df,fd_step=1.e-8)
 ok,df_fd,df=val_grad.compare(iAoA0,treshold=1.e-6,return_all=True)
 
 

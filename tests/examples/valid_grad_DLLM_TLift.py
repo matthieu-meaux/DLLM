@@ -14,7 +14,7 @@ OC.set_P0(101325.)
 OC.set_humidity(0.)
 OC.compute_atmosphere()
 
-wing_param=Wing_param('test_param',geom_type='Broken',n_sect=40)
+wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
 wing_param.build_wing()
 wing_param.set_value('test_param.span',34.1)
 wing_param.set_value('test_param.sweep',34.)
@@ -44,12 +44,14 @@ x0=wing_param.get_dv_array()
 print 'dv array shape',x0.shape
 print 'dv_array=',x0
 
+F_list_names = ['Drag','Drag_Pressure','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdf', 'LoD']
+
 def f(x):
     wing_param.update_from_x_list(x)
     DLLM = DLLMTargetLift(wing_param,OC)
     DLLM.set_target_Lift(769200.)
     DLLM.run_direct()
-    DLLM.run_post()
+    DLLM.run_post(F_list_names=F_list_names)
     func=DLLM.get_F_list()
     return func
 
@@ -58,14 +60,13 @@ def df(x):
     DLLM = DLLMTargetLift(wing_param,OC)
     DLLM.set_target_Lift(769200.)
     DLLM.run_direct()
-    DLLM.run_post()
-    #DLLM.run_post()
+    DLLM.run_post(F_list_names=F_list_names)
     DLLM.run_adjoint()
     func_grad=numpy.array(DLLM.get_dF_list_dchi())
     return func_grad
 
-val_grad=FDValidGrad(2,f,df,fd_step=1.e-6)
-ok,df_fd,df=val_grad.compare(x0,treshold=1.e-3,return_all=True)
+val_grad=FDValidGrad(2,f,df,fd_step=1.e-8)
+ok,df_fd,df=val_grad.compare(x0,treshold=1.e-6,split_out=True,return_all=True)
 
 for j in xrange(len(df[:,0])):
     fid=open('gradient_file'+str(j)+'.dat','w')
@@ -75,7 +76,7 @@ for j in xrange(len(df[:,0])):
 
 print '\n****************************************************'
 if ok:
-    print 'Gradients are valid.'
+    print 'DLLMTargetLift gradients are valid.'
 else:
-    print 'Gradients are not valid!'
+    print 'DLLMTargetLift gradients are not valid!'
 print '****************************************************'

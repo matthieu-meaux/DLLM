@@ -13,7 +13,7 @@ OC.set_P0(101325.)
 OC.set_humidity(0.)
 OC.compute_atmosphere()
 
-wing_param=Wing_param('test_param',geom_type='Broken',n_sect=8)
+wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
 wing_param.build_wing()
 wing_param.set_value('test_param.span',34.1)
 wing_param.set_value('test_param.sweep',34.)
@@ -47,6 +47,7 @@ DLLM = DLLMSolver(wing_param,OC)
 DLLM.run_direct()
 iAoA=DLLM.get_iAoA()
 
+# Split validation in 2 steps since the norm depends on the function value scale...
 def f(x):
     wing_param.update_from_x_list(x)
     DLLM.set_wing_param(wing_param)
@@ -65,9 +66,8 @@ def df(x):
     func_grad=DLLM.get_dpF_list_dpchi()
     return func_grad
 
-val_grad=FDValidGrad(2,f,df,fd_step=1.e-9)
-ok,df_fd,df=val_grad.compare(x0,treshold=1.e-6,return_all=True)
-
+val_grad=FDValidGrad(2,f,df,fd_step=1.e-8)
+ok,df_fd,df=val_grad.compare(x0,treshold=1.e-6,split_out=True,return_all=True)
 
 print '\n****************************************************'
 if ok:

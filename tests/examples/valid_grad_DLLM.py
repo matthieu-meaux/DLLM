@@ -14,7 +14,7 @@ OC.set_P0(101325.)
 OC.set_humidity(0.)
 OC.compute_atmosphere()
 
-wing_param=Wing_param('test_param',geom_type='Broken',n_sect=40)
+wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
 wing_param.build_wing()
 wing_param.set_value('test_param.span',34.1)
 wing_param.set_value('test_param.sweep',34.)
@@ -62,8 +62,8 @@ def df(x):
     func_grad=numpy.array(DLLM.get_dF_list_dchi())
     return func_grad
 
-val_grad=FDValidGrad(2,f,df,fd_step=1.e-6)
-ok,df_fd,df=val_grad.compare(x0,treshold=1.e-3,return_all=True)
+val_grad=FDValidGrad(2,f,df,fd_step=1.e-8)
+ok,df_fd,df=val_grad.compare(x0,treshold=1.e-6,split_out=True,return_all=True)
 
 for j in xrange(len(df[:,0])):
     fid=open('gradient_file'+str(j)+'.dat','w')
@@ -73,7 +73,7 @@ for j in xrange(len(df[:,0])):
 
 print '\n****************************************************'
 if ok:
-    print 'Gradients are valid.'
+    print 'DLLM gradients are valid.'
 else:
-    print 'Gradients are not valid!'
+    print 'DLLM gradients are not valid!'
 print '****************************************************'

@@ -63,8 +63,8 @@ def df(x):
     func_grad=numpy.array(DLLM.get_dF_list_dchi())
     return func_grad
 
-val_grad=FDValidGrad(2,f,df,fd_step=1.e-6)
-ok,df_fd,df=val_grad.compare(x0,treshold=1.e-3,return_all=True)
+val_grad=FDValidGrad(2,f,df,fd_step=1.e-8)
+ok,df_fd,df=val_grad.compare(x0,treshold=1.e-6, split_out=True,return_all=True)
 
 for j in xrange(len(df[:,0])):
     fid=open('gradient_file'+str(j)+'.dat','w')
