@@ -16,7 +16,7 @@ OC.compute_atmosphere()
 wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
 wing_param.build_wing()
 wing_param.set_value('test_param.span',34.1)
-wing_param.set_value('test_param.sweep',12.) #32.
+wing_param.set_value('test_param.sweep',32.) #32.
 wing_param.set_value('test_param.break_percent',33.)
 wing_param.set_value('test_param.root_chord',5.4)#6.1
 wing_param.set_value('test_param.break_chord',4.6)#4.6

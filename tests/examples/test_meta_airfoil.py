@@ -4,8 +4,8 @@ from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
 from MDOTools.OC.operating_condition import OperatingCondition
 
 OC=OperatingCondition('cond1',atmospheric_model='simple')
-OC.set_Mach(0.3)
-OC.set_AoA(6.0)
+OC.set_Mach(0.8)
+OC.set_AoA(3.5)
 OC.set_altitude(10000.)
 OC.set_T0_deg(15.)
 OC.set_P0(101325.)
@@ -15,7 +15,7 @@ OC.compute_atmosphere()
 wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
 wing_param.build_wing()
 wing_param.set_value('test_param.span',34.1)  #34.1
-wing_param.set_value('test_param.sweep',14.)
+wing_param.set_value('test_param.sweep',34.)
 wing_param.set_value('test_param.break_percent',23.) #33.
 wing_param.set_value('test_param.root_chord',5.4)  #6.1
 wing_param.set_value('test_param.break_chord',4.6)

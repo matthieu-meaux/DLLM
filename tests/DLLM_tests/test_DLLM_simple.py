@@ -147,7 +147,7 @@ class TestDLLMSimple(unittest.TestCase):
             func_grad=DLLM.comp_dpR_dpthetaY()
             return func_grad
         
-        val_grad3=FDValidGrad(2,f3,df3,fd_step=1.e-5)
+        val_grad3=FDValidGrad(2,f3,df3,fd_step=1.e-8)
         ok3,df_fd3,df3=val_grad3.compare(thetaY0,treshold=1.e-6,return_all=True)
         assert(ok3)
         
