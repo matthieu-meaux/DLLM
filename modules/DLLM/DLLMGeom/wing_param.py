@@ -211,7 +211,7 @@ class Wing_param():
             self.__BC_manager.create_variable(self.__tag+'.tip_height',0.)
             
         for i in xrange(self.__n_sect/2):
-            self.__BC_manager.create_design_variable(self.__tag+'.rtwist'+str(i),-25.,0.,25.)
+            self.__BC_manager.create_design_variable(self.__tag+'.rtwist'+str(i),-10.,0.,10.)
         for i in xrange(self.__n_sect/2):
 #             print self.__tag+'.twist'+str(i),self.__tag+'.twist'+str(self.__n_sect/2+i),self.__tag+'.rtwist'+str(self.__n_sect/2-1-i),self.__tag+'.rtwist'+str(i)
             self.__BC_manager.create_parameter(self.__tag+'.twist'+str(i),self.__tag+'.rtwist'+str(self.__n_sect/2-1-i))

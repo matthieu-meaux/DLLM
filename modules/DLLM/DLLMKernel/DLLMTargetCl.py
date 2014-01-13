@@ -50,6 +50,9 @@ class DLLMTargetCl(DLLMSolver):
     def set_max_iterations(self, max_it):
         self.__NRPb.set_max_iterations(max_it)
         
+    def set_method(self, method):
+        self.__NRPb.set_method(method)
+        
     #-- Residual Related method
     def comp_R_TCl(self, W):
         DLLMDirect = self.get_DLLMDirect()

@@ -190,6 +190,9 @@ class DLLMSolver:
     def set_max_iterations(self, max_it):
         self.__DLLMDirect.set_max_iterations(max_it)
         
+    def set_method(self, method):
+        self.__DLLMDirect.set_method(method)
+        
     def set_gamma_file_name(self, gamma_f_name):
         self.__DLLMDirect.set_gamma_file_name(gamma_f_name)
         
