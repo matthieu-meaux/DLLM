@@ -1,9 +1,8 @@
 from OpenDACE.ValidGrad.FDValidGrad import FDValidGrad
 from DLLM.DLLMGeom.wing_param import Wing_param
-from DLLM.DLLMKernel.DLLMTargetLift import DLLMTargetLift
+from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
 from MDOTools.OC.operating_condition import OperatingCondition
 import numpy
-import sys
 
 OC=OperatingCondition('cond1',atmospheric_model='simple')
 OC.set_Mach(0.8)
@@ -34,49 +33,37 @@ wing_param.convert_to_design_variable('test_param.tip_chord',1.,2.)
 wing_param.convert_to_design_variable('test_param.root_height',1.,1.5)
 wing_param.convert_to_design_variable('test_param.break_height',0.8,1.2)
 wing_param.convert_to_design_variable('test_param.tip_height',0.2,0.5)
-wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
+wing_param.build_meta_airfoil(OC, '../MetaModelFixed.xml', relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()
 
 print wing_param
 
-x0=wing_param.get_dv_array()
-print 'dv array shape',x0.shape
-print 'dv_array=',x0
+thetaY0=wing_param.get_thetaY()
+print 'thetaY0 shape',thetaY0.shape
+print 'thetaY0=',thetaY0
 
-F_list_names = ['Drag','Drag_Pressure','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdf', 'LoD']
+DLLM = DLLMSolver(wing_param,OC)
+DLLM.run_direct()
+iAoA=DLLM.get_iAoA()
 
 def f(x):
-    wing_param.update_from_x_list(x)
-    DLLM = DLLMTargetLift(wing_param,OC)
-    DLLM.set_target_Lift(769200.)
-    DLLM.run_direct()
-    DLLM.run_post(F_list_names=F_list_names)
-    func=DLLM.get_F_list()
+    wing_param.set_thetaY(x)
+    func=DLLM.comp_R(iAoA)
     return func
 
 def df(x):
-    wing_param.update_from_x_list(x)
-    DLLM = DLLMTargetLift(wing_param,OC)
-    DLLM.set_target_Lift(769200.)
-    DLLM.run_direct()
-    DLLM.run_post(F_list_names=F_list_names)
-    DLLM.run_adjoint()
-    func_grad=numpy.array(DLLM.get_dF_list_dchi())
+    wing_param.set_thetaY(x)
+    func_grad=DLLM.comp_dpR_dpthetaY()
     return func_grad
 
-val_grad=FDValidGrad(2,f,df,fd_step=1.e-8)
-ok,df_fd,df=val_grad.compare(x0,treshold=1.e-6,split_out=True,return_all=True)
+val_grad=FDValidGrad(2,f,df,fd_step=1.e-9)
+ok,df_fd,df=val_grad.compare(thetaY0,treshold=1.e-6,return_all=True)
 
-for j in xrange(len(df[:,0])):
-    fid=open('gradient_file'+str(j)+'.dat','w')
-    for i in xrange(len(x0)):
-        fid.write(str(i)+' '+str(df_fd[j,i])+' '+str(df[j,i])+'\n')
-    fid.close()
 
 print '\n****************************************************'
 if ok:
-    print 'DLLMTargetLift gradients are valid.'
+    print 'dpR_dpthetaY is valid.'
 else:
-    print 'DLLMTargetLift gradients are not valid!'
+    print '!!!! dpR_dpthetaY is NOT valid !!!!'
 print '****************************************************'

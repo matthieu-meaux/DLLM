@@ -49,7 +49,7 @@ def f(x):
     wing_param.update_from_x_list(x)
     DLLM = DLLMSolver(wing_param,OC)
     DLLM.run_direct()
-    DLLM.run_post()  # F_list_names=['Cdf']
+    DLLM.run_post()  
     func=DLLM.get_F_list()
     return func
 
@@ -57,7 +57,7 @@ def df(x):
     wing_param.update_from_x_list(x)
     DLLM = DLLMSolver(wing_param,OC)
     DLLM.run_direct()
-    DLLM.run_post() # F_list_names=['Cdf']
+    DLLM.run_post() 
     DLLM.run_adjoint()
     func_grad=numpy.array(DLLM.get_dF_list_dchi())
     return func_grad

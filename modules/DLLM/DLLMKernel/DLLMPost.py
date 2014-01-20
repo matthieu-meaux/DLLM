@@ -85,21 +85,22 @@ class DLLMPost:
     
     #-- Setters 
     def set_F_list_names(self, F_list_names):
-        if F_list_names is None:
-            #func_list = ['Lift', 'Drag', 'Moment', 'Cl', 'Cd', 'Cm']
-            F_list_names = ['Lift','Drag','Drag_Pressure','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdf', 'LoD']
+        self.__F_list_names    = F_list_names
+
+    #-- Run method
+    def __init_run(self):
         N=self.get_N()
         ndv=self.get_ndv()
-        self.__F_list_names    = F_list_names
-        self.__F_list_dim      = len(F_list_names)
+        if self.__F_list_names is None:
+            self.__F_list_names = ['Lift','Drag','Drag_Pressure','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdf', 'LoD']
+        self.__F_list_dim      = len(self.__F_list_names)
         self.__F_list          = zeros(self.__F_list_dim)
         self.__dpF_list_dpAoA  = zeros(self.__F_list_dim)
         self.__dpF_list_dpiAoA = zeros((self.__F_list_dim, N))
         self.__dpF_list_dpchi  = zeros((self.__F_list_dim, ndv))
         
-    #-- Run method
     def run(self, F_list_names=None):
-        self.set_F_list_names(F_list_names)
+        self.__init_run()
         for i,F_name in enumerate(self.__F_list_names):
             if   F_name == 'Cl':
                 val       = self.__Cl()

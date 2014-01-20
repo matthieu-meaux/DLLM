@@ -5,12 +5,14 @@
 
 # - Local imports -
 import sys
+import string
 from padge.PCADEngine.Base.PCADModel import PCADModel
 from DLLM.polarManager.analyticAirfoil import AnalyticAirfoil
 from DLLM.polarManager.airfoilPolar import AirfoilPolar
 from DLLM.polarManager.MetaAirfoil import MetaAirfoil
 from numpy import zeros, array
 from numpy import pi, sqrt, cos,sin
+from copy import deepcopy
 
 class Wing_param():
     
@@ -89,6 +91,7 @@ class Wing_param():
         self.__eta_grad           = None
         
     def __init_airfoils_attributes(self):
+        self.__airfoil_type    = None
         self.__ref_airfoil     = None   # reference airfoil, only used if the same airfoil is put for all sections
         self.__airfoils        = None   # Airfoil list for each section
         self.__linked_airfoils = None   # Airfoil scaled to the the planform
@@ -219,6 +222,94 @@ class Wing_param():
 #         for i in xrange(self.__n_sect):
 #             self.__BC_manager.create_design_variable(self.__tag+'.twist'+str(i),-25.,0.,25.)
     
+    def config_from_dict(self, OC, config_dict):
+        self.build_wing()
+        self.__config_airfoils(OC, config_dict)
+        self.__config_desc(config_dict)
+        self.update()
+        
+    def __config_airfoils(self, OC, config_dict):
+        in_keys_list=config_dict.keys()
+        
+        airfoil_type_key=self.__tag+'.airfoil.type'
+        if airfoil_type_key in in_keys_list:
+            airfoil_type=config_dict[airfoil_type_key]
+        else:
+            airfoil_type=simple
+        
+        if airfoil_type == 'simple':
+            AoA0_key=self.__tag+'.airfoil.AoA0'
+            if AoA0_key in in_keys_list:
+                AoA0=config_dict[AoA0_key]
+            else:
+                AoA0=0.
+            
+            Cm0_key=self.__tag+'.airfoil.Cm0'
+            if Cm0_key in in_keys_list:
+                Cm0=config_dict[Cm0_key]
+            else:
+                Cm0=0.
+        
+            self.build_linear_airfoil(OC, AoA0=AoA0, Cm0=Cm0, set_as_ref=True)
+            
+        elif airfoil_type == 'meta':
+            surrogate_model_key=self.__tag+'.airfoil.surrogate_model'
+            if surrogate_model_key in in_keys_list:
+                surrogate_model = config_dict[surrogate_model_key]
+            else:
+                surrogate_model = None
+                
+            self.build_meta_airfoil(OC, surrogate_model, set_as_ref=True)
+            
+        self.build_airfoils_from_ref()
+        
+    def __config_desc(self, config_dict):
+        in_keys_list=sorted(config_dict.keys())
+        existing_keys=deepcopy(self.__BC_manager.get_list_id())
+        
+        # Convert pre-defined parameters
+        for existing_id in existing_keys:
+            ex_words=existing_id.split('.')
+            name=ex_words[-1]
+            Id_in=self.__tag+'.desc.'+name
+            Id=self.__tag+'.'+name
+            if Id_in+'.type' in in_keys_list:
+                type=config_dict[Id_in+'.type']
+                if   type == 'DesignVariable':
+                    bounds = config_dict[Id_in+'.bounds']
+                    value  = config_dict[Id_in+'.value']
+                    self.set_value(Id,value)
+                    self.convert_to_design_variable(Id,bounds[0],bounds[1])
+                elif type == 'Variable':
+                    value  = config_dict[Id_in+'.value']
+                    self.set_value(Id,value)
+                    self.convert_to_variable(Id)
+                elif type == 'Parameter':
+                    fexpr = config_dict[Id_in+'.fexpr']
+                    self.convert_to_parameter(Id,fexpr)
+        
+        # Add user defined DesignVariable, Variable and Parameter           
+        for in_key in in_keys_list:
+            words=in_key.split('.')
+            if len(words) >=4:
+                test=string.join(words[:-2],'.')
+                if test==self.__tag+'.desc':
+                    name=words[-2]
+                    Id=self.__tag+'.'+name
+                    Id_in=self.__tag+'.desc.'+name
+                    type=config_dict[Id_in+'.type']
+                    if Id not in existing_keys:
+                        if   type == 'DesignVariable':
+                            bounds = config_dict[Id_in+'.bounds']
+                            value  = config_dict[Id_in+'.value']
+                            self.__BC_manager.create_design_variable(Id,bounds[0],value,bounds[1])
+                        elif type == 'Variable':
+                            value  = config_dict[Id_in+'.value']
+                            self.__BC_manager.create_variable(Id,value)
+                        elif type == 'Parameter':
+                            fexpr = config_dict[Id_in+'.fexpr']
+                            self.__BC_manager.create_parameter(Id,fexpr)
+        
     def update(self):
         self.__PCADModel.update()
         self.__ndv = self.__BC_manager.get_ndv()
@@ -235,9 +326,10 @@ class Wing_param():
    
     def __repr__(self):
         info_string ='\n*** Wing param information ***'
-        info_string+='\n  geom_type : '+str(self.__geom_type)
-        info_string+='\n  n_sect    : '+str(self.__n_sect)
-        info_string+='\n  ndv       : '+str(self.__ndv)
+        info_string+='\n  geom_type    : '+str(self.__geom_type)
+        info_string+='\n  n_sect       : '+str(self.__n_sect)
+        info_string+='\n  ndv          : '+str(self.__ndv)
+        info_string+='\n  airfoil_type : '+str(self.__airfoil_type)
         info_string+='\n  --    parameters information section    --\n'
         for Id in self.__BC_manager.get_list_id():
             pt=self.__BC_manager.get_pt(Id)
@@ -249,6 +341,9 @@ class Wing_param():
                 value   = pt.get_value()
                 bounds=pt.get_bounds()
                 info_string+="%30s"%Id+"%20s"%BC_Type+" %24.16e"%value+" %24s"%str(bounds)+"\n"
+            if BC_Type == 'Parameter':
+                expr  = pt.get_expr()
+                info_string+="%30s"%Id+"%20s"%BC_Type+" %24s"%expr+"\n"
         info_string+='  -- end of parameters information section --\n'
         return info_string
     
@@ -501,20 +596,22 @@ class Wing_param():
             self.__airfoils = airfoils
             
     def build_linear_airfoil(self, OC, AoA0=0., Cm0=0., Sref=1., Lref=1., rel_thick=0., sweep=0., set_as_ref=True):
+        self.__airfoil_type = 'simple'
         degToRad = pi/180.
         airfoil  = AnalyticAirfoil(OC, AoA0=degToRad*AoA0, Cm0=Cm0, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep)
         if set_as_ref:
             self.set_ref_aifoil(airfoil)
         return airfoil
     
-    def build_polar_airoil(self, OC, database, Sref=1., Lref=1., interpolator='2DSpline', set_as_ref=True):
-        # Why relative thickness usage ? The extraction from a polar should give us more freedom.
-        airfoil = AirfoilPolar(OC, database,rel_thick=0.15, interpolator=interpolator, Sref=Sref, Lref=Lref)
-        if set_as_ref:
-            self.set_ref_aifoil(airfoil)
-        return airfoil
+#     def build_polar_airoil(self, OC, database, Sref=1., Lref=1., interpolator='2DSpline', set_as_ref=True):
+#         # Why relative thickness usage ? The extraction from a polar should give us more freedom.
+#         airfoil = AirfoilPolar(OC, database,rel_thick=0.15, interpolator=interpolator, Sref=Sref, Lref=Lref)
+#         if set_as_ref:
+#             self.set_ref_aifoil(airfoil)
+#         return airfoil
         
     def build_meta_airfoil(self, OC, surrogate_model, relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True):
+        self.__airfoil_type = 'meta'
         airfoil = MetaAirfoil(OC, surrogate_model, relative_thickness=relative_thickness, camber=camber, Sref=Sref, Lref=Lref, sweep=sweep)
         if set_as_ref:
             self.set_ref_aifoil(airfoil)

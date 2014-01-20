@@ -168,6 +168,9 @@ class DLLMSolver:
         self.__DLLMMesh.recompute()
         self.__reinit_modules()
         
+    def set_F_list_names(self, F_list_names):
+        self.__DLLMPost.set_F_list_names(F_list_names)
+        
     def set_Lref(self, Lref):
         self.__Lref = Lref
         
