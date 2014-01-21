@@ -288,7 +288,8 @@ class Wing_param():
                     fexpr = config_dict[Id_in+'.fexpr']
                     self.convert_to_parameter(Id,fexpr)
         
-        # Add user defined DesignVariable, Variable and Parameter           
+        # Add user defined DesignVariable, Variable and Parameter
+        added_list=[]        
         for in_key in in_keys_list:
             words=in_key.split('.')
             if len(words) >=4:
@@ -298,7 +299,7 @@ class Wing_param():
                     Id=self.__tag+'.'+name
                     Id_in=self.__tag+'.desc.'+name
                     type=config_dict[Id_in+'.type']
-                    if Id not in existing_keys:
+                    if Id not in existing_keys and Id not in added_list:
                         if   type == 'DesignVariable':
                             bounds = config_dict[Id_in+'.bounds']
                             value  = config_dict[Id_in+'.value']
@@ -309,6 +310,7 @@ class Wing_param():
                         elif type == 'Parameter':
                             fexpr = config_dict[Id_in+'.fexpr']
                             self.__BC_manager.create_parameter(Id,fexpr)
+                        added_list.append(Id)
         
     def update(self):
         self.__PCADModel.update()

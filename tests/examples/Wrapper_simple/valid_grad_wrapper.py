@@ -35,7 +35,7 @@ config_dict['cond1.param.desc.tip_chord.value']=1.5
 config_dict['cond1.param.desc.tip_chord.bounds']=(1.,2.)
 config_dict['cond1.param.desc.root_height.type']='DesignVariable'
 config_dict['cond1.param.desc.root_height.value']=1.28
-config_dict['cond1.param.desc.root_height.bounds']=(1.,5.)
+config_dict['cond1.param.desc.root_height.bounds']=(1.,1.5)
 config_dict['cond1.param.desc.break_height.type']='DesignVariable'
 config_dict['cond1.param.desc.break_height.value']=0.97
 config_dict['cond1.param.desc.break_height.bounds']=(0.8,1.2)
@@ -57,6 +57,7 @@ config_dict['cond1.DLLM.gamma_file_name']='gamma.dat'
 
 DLLMcond1=DLLMWrapper('cond1')
 DLLMcond1.configure(config_dict)
+DLLMcond1.set_out_format('numpy')
 DLLMcond1.set_grad_format('numpy')
 
 x0=DLLMcond1.get_x0()

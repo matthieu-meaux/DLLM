@@ -29,6 +29,7 @@ class DLLMWrapper():
         
         self.__config_dict  = None
         
+        self.__out_format   = 'list'
         self.__grad_format  = 'list'
         
     #-- Accessors
@@ -41,20 +42,36 @@ class DLLMWrapper():
     def get_DLLM_solver(self):
         return self.__DLLM_solver
     
+    def get_tags_x0_and_bounds(self):
+        tags=self.__wing_param.get_dv_id_list()
+        x0=self.__wing_param.get_dv_array()
+        bounds=self.__wing_param.get_bounds_array()
+        return tags,x0,bounds
+    
     def get_x0_and_bounds(self):
         x0=self.__wing_param.get_dv_array()
         bounds=self.__wing_param.get_bounds_array()
         return x0,bounds
     
     def get_x0(self):
-        x0=self.__wing_param.get_dv_array()
-        return x0
+        return self.get_x()
+    
+    def get_x(self):
+        x=self.__wing_param.get_dv_array()
+        return x
     
     #-- Setters
+    def set_out_format(self, format):
+        WARNING_MSG=self.WARNING_MSG+'set_out_format: '
+        if format not in self.POS_GRAD_FMT:
+            print WARNING_MSG+'format = '+str(format)+' not in '+str(self.POS_GRAD_FMT)+'. Set to default out format = list'
+            format='list'
+        self.__out_format = format
+    
     def set_grad_format(self, format):
         WARNING_MSG=self.WARNING_MSG+'set_grad_format: '
         if format not in self.POS_GRAD_FMT:
-            print WARNING_MSG+'format = '+str(format)+' not in '+str(self.POS_GRAD_FMT)+'. Set to default format = list'
+            print WARNING_MSG+'format = '+str(format)+' not in '+str(self.POS_GRAD_FMT)+'. Set to default grad format = list'
             format='list'
         self.__grad_format = format
     
@@ -88,6 +105,8 @@ class DLLMWrapper():
         self.__DLLM_solver.run_direct()
         self.__DLLM_solver.run_post()
         F_list = self.__DLLM_solver.get_F_list()
+        if self.__out_format == 'list':
+            F_list=F_list.tolist()
         return F_list
     
     def analysis_grad(self):
@@ -107,6 +126,8 @@ class DLLMWrapper():
         self.__DLLM_solver.run_adjoint()
         F_list = self.__DLLM_solver.get_F_list()
         F_list_grad=self.__DLLM_solver.get_dF_list_dchi()
+        if self.__out_format == 'list':
+            F_list=F_list.tolist()
         if self.__grad_format == 'numpy':
             F_list_grad=numpy.array(F_list_grad)
         return F_list,F_list_grad
