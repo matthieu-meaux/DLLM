@@ -35,18 +35,49 @@ class DLLMMP():
         self.__grad_format    = 'list'
         
     #-- Accessors
-        
+    def get_tags_x0_and_bounds(self):
+        tags=[]
+        Wrap0=self.__wrapper_list[0]
+        wrap_tags,x0,bounds=Wrap0.get_tags_x0_and_bounds()
+        for tag in wrap_tags:
+            words=tag.split('.')
+            next_index=self.__check_tag(words)
+            new_tag=string.join(words[next_index+1:],'.')
+            tags.append(new_tag)
+        return tags,x0,bounds
+    
+    def get_x0_and_bounds(self):
+        tags,x0,bounds=self.get_tags_x0_and_bounds()
+        return x0,bounds
+    
+    def get_x0(self):
+        return self.get_x()
+    
+    def get_x(self):
+        tags,x0,bounds=self.get_tags_x0_and_bounds()
+        return x0
+    
+    def get_F_list_names(self):
+        MP_F_list_names=[]
+        for i in xrange(self.__nb_cond):
+            cond_name = self.__cond_name+str(i+1)
+            F_list_names=self.__wrapper_list[i].get_F_list_names()
+            print 'MP F_list_names',F_list_names
+            for name in F_list_names:
+                MP_F_list_names.append(cond_name+'_'+name)
+        return MP_F_list_names
+                
     #-- Setters
     def set_out_format(self, format):
         WARNING_MSG=self.WARNING_MSG+'set_out_format: '
-        if format not in self.POS_GRAD_FMT:
+        if format not in self.POS_FMT:
             print WARNING_MSG+'format = '+str(format)+' not in '+str(self.POS_FMT)+'. Set to default out format = list'
             format='list'
         self.__out_format = format
     
     def set_grad_format(self, format):
         WARNING_MSG=self.WARNING_MSG+'set_grad_format: '
-        if format not in self.POS_GRAD_FMT:
+        if format not in self.POS_FMT:
             print WARNING_MSG+'format = '+str(format)+' not in '+str(self.POS_FMT)+'. Set to default grad format = list'
             format='list'
         self.__grad_format = format

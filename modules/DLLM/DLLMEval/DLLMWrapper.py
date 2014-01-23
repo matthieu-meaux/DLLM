@@ -60,6 +60,9 @@ class DLLMWrapper():
         x=self.__wing_param.get_dv_array()
         return x
     
+    def get_F_list_names(self):
+        return self.__DLLM_solver.get_F_list_names()
+        
     #-- Setters
     def set_out_format(self, format):
         WARNING_MSG=self.WARNING_MSG+'set_out_format: '

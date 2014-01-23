@@ -8,12 +8,15 @@ from numpy import zeros, dot
 from numpy import sin,cos
 
 class DLLMPost:
+    
+    DEF_F_LIST_NAMES=['Lift','Drag','Drag_Pressure','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdf', 'LoD','Sref']
+    
     def __init__(self, LLW):
         """
         Post-Processing module compatible with adjoint for DLLM
         """
         self.__LLW = LLW
-        self.__F_list_names = None
+        self.__F_list_names = self.DEF_F_LIST_NAMES
         self.__F_list_dim   = 0
         self.__F_list       = None
         self.__dpF_list_dpiAoA = None
@@ -91,8 +94,6 @@ class DLLMPost:
     def __init_run(self):
         N=self.get_N()
         ndv=self.get_ndv()
-        if self.__F_list_names is None:
-            self.__F_list_names = ['Lift','Drag','Drag_Pressure','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdf', 'LoD','Sref']
         self.__F_list_dim      = len(self.__F_list_names)
         self.__F_list          = zeros(self.__F_list_dim)
         self.__dpF_list_dpAoA  = zeros(self.__F_list_dim)
