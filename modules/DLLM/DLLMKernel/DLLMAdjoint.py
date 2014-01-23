@@ -74,16 +74,16 @@ class DLLMAdjoint:
         dpFdpchi_list = self.get_dpF_list_dpchi()
         
         for i, F_name in enumerate(F_list_names):
-           print 'Run adjoint problem for func = '+str(F_name)
-           dpFdpW   = dpFdpW_list[i]
-           dpFdpchi = dpFdpchi_list[i]
-           
-           AdjPb = AdjointProblem(R, dpRdpW, dpRdpchi, dpFdpW, dpFdpchi)
-           AdjPb.solve()
-           
-           self.__adj_list.append(AdjPb.get_adjoint_state())
-           self.__adj_conv_corr_list.append(AdjPb.get_convergence_correction())
-           self.__dF_list_dchi.append(AdjPb.get_dFdchi())
-           
-           print '  - Convergence adjoint correction for '+str(F_name)+' = '+str(self.__adj_conv_corr_list[i])
+            print 'Run adjoint problem for func = '+str(F_name)
+            dpFdpW   = dpFdpW_list[i]
+            dpFdpchi = dpFdpchi_list[i]
+            
+            AdjPb = AdjointProblem(R, dpRdpW, dpRdpchi, dpFdpW, dpFdpchi)
+            AdjPb.solve()
+            
+            self.__adj_list.append(AdjPb.get_adjoint_state())
+            self.__adj_conv_corr_list.append(AdjPb.get_convergence_correction())
+            self.__dF_list_dchi.append(AdjPb.get_dFdchi())
+            
+            print '  - Convergence adjoint correction for '+str(F_name)+' = '+str(self.__adj_conv_corr_list[i])
            

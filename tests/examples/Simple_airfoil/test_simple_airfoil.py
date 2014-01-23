@@ -39,9 +39,7 @@ wing_param.update()
 print wing_param
 
 DLLM = DLLMSolver(wing_param,OC)
-DLLM.set_method('scipy')
 DLLM.run_direct()
 DLLM.run_post()
 DLLM.run_adjoint()
 
-print DLLM.get_iAoA()

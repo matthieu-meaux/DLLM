@@ -235,7 +235,7 @@ class Wing_param():
         if airfoil_type_key in in_keys_list:
             airfoil_type=config_dict[airfoil_type_key]
         else:
-            airfoil_type=simple
+            airfoil_type='simple'
         
         if airfoil_type == 'simple':
             AoA0_key=self.__tag+'.airfoil.AoA0'

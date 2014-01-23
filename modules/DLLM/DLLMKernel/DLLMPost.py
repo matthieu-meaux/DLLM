@@ -92,7 +92,7 @@ class DLLMPost:
         N=self.get_N()
         ndv=self.get_ndv()
         if self.__F_list_names is None:
-            self.__F_list_names = ['Lift','Drag','Drag_Pressure','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdf', 'LoD']
+            self.__F_list_names = ['Lift','Drag','Drag_Pressure','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdf', 'LoD','Sref']
         self.__F_list_dim      = len(self.__F_list_names)
         self.__F_list          = zeros(self.__F_list_dim)
         self.__dpF_list_dpAoA  = zeros(self.__F_list_dim)
@@ -100,6 +100,7 @@ class DLLMPost:
         self.__dpF_list_dpchi  = zeros((self.__F_list_dim, ndv))
         
     def run(self, F_list_names=None):
+        N=self.get_N()
         self.__init_run()
         for i,F_name in enumerate(self.__F_list_names):
             if   F_name == 'Cl':
@@ -150,6 +151,11 @@ class DLLMPost:
                 dpFdpiAoA = self.__dpLoD_dpiAoA()
                 dpFdpchi  = self.dpLoD_dpchi()
                 dpFdpAoA  = self.dpLoD_dpAoA()
+            elif F_name == 'Sref':
+                val       = self.get_Sref()
+                dpFdpiAoA = zeros(N)
+                dpFdpchi  = self.get_Sref_grad()
+                dpFdpAoA  = 0.
             else:
                 val = None
             self.__F_list[i]            = val

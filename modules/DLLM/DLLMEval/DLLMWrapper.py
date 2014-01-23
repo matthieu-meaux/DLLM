@@ -15,7 +15,7 @@ class DLLMWrapper():
     ERROR_MSG = 'ERROR in DLLMWrapper.'
     WARNING_MSG = 'WARNING in DLLMWrapper.'
     POS_SOLVER = ['Solver','TargetCl','TargetLift']
-    POS_GRAD_FMT = ['list','numpy']
+    POS_FMT = ['list','numpy']
 
     def __init__(self, tag):
         """
@@ -63,15 +63,15 @@ class DLLMWrapper():
     #-- Setters
     def set_out_format(self, format):
         WARNING_MSG=self.WARNING_MSG+'set_out_format: '
-        if format not in self.POS_GRAD_FMT:
-            print WARNING_MSG+'format = '+str(format)+' not in '+str(self.POS_GRAD_FMT)+'. Set to default out format = list'
+        if format not in self.POS_FMT:
+            print WARNING_MSG+'format = '+str(format)+' not in '+str(self.POS_FMT)+'. Set to default out format = list'
             format='list'
         self.__out_format = format
     
     def set_grad_format(self, format):
         WARNING_MSG=self.WARNING_MSG+'set_grad_format: '
-        if format not in self.POS_GRAD_FMT:
-            print WARNING_MSG+'format = '+str(format)+' not in '+str(self.POS_GRAD_FMT)+'. Set to default grad format = list'
+        if format not in self.POS_FMT:
+            print WARNING_MSG+'format = '+str(format)+' not in '+str(self.POS_FMT)+'. Set to default grad format = list'
             format='list'
         self.__grad_format = format
     
