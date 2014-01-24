@@ -34,6 +34,8 @@ class DLLMMP():
         self.__out_format     = 'list'
         self.__grad_format    = 'list'
         
+        self.__AoA_id_list    = None
+        
     #-- Accessors
     def get_tags_x0_and_bounds(self):
         tags=[]
@@ -195,16 +197,24 @@ class DLLMMP():
         for i in xrange(self.__nb_cond):
             cond_name = self.__cond_name+str(i+1)
             self.__wrapper_list.append(DLLMWrapper(self.__tag+'.'+cond_name))
-            self.__wrapper_list[i].configure(self.__list_config_dict[i])
+            if self.__AoA_id_list is not None:
+                AoA_id = self.__AoA_id_list[i]
+                self.__wrapper_list[i].set_AoA_id(AoA_id)
             self.__wrapper_list[i].set_out_format('list')
             self.__wrapper_list[i].set_grad_format('list')
+            self.__wrapper_list[i].configure(self.__list_config_dict[i])
+
             
     def __init_configure(self):
+        config_keys=sorted(self.__config_dict.keys())
         self.__nb_cond     = self.__config_dict[self.__tag+'.nb_conditions']
         self.__cond_name   = self.__config_dict[self.__tag+'.condition_name']
+        if self.__tag+'.AoA_id_list' in config_keys:
+            self.__AoA_id_list = self.__config_dict[self.__tag+'.AoA_id_list']
         print '*** Multi-conditions information ***'
         print '  Number of conditions = ',self.__nb_cond
         print '  Base condition name  = ',self.__cond_name
+        print '  AoA_id list          = ',str(self.__AoA_id_list)
         print '***                              ***'
         
         self.__list_config_dict=[]
@@ -216,7 +226,7 @@ class DLLMMP():
             self.__list_config_dict.append({})
     
     def __set_list_config_dict(self):
-        config_keys=self.__config_dict.keys()
+        config_keys=sorted(self.__config_dict.keys())
         
         for i in xrange(self.__nb_cond):
             cond_name = self.__cond_name+str(i+1)

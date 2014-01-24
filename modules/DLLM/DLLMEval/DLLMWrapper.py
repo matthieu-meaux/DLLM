@@ -32,6 +32,8 @@ class DLLMWrapper():
         self.__out_format   = 'list'
         self.__grad_format  = 'list'
         
+        self.__AoA_id       = 'AoA'
+        
     #-- Accessors
     def get_OC(self):
         return self.__OC
@@ -64,6 +66,9 @@ class DLLMWrapper():
         return self.__DLLM_solver.get_F_list_names()
         
     #-- Setters
+    def set_AoA_id(self, AoA_id):
+        self.__AoA_id = AoA_id
+        
     def set_out_format(self, format):
         WARNING_MSG=self.WARNING_MSG+'set_out_format: '
         if format not in self.POS_FMT:
@@ -156,6 +161,7 @@ class DLLMWrapper():
             n_sect = 20
             
         self.__wing_param = Wing_param(self.__tag+'.param',geom_type=geom_type,n_sect=n_sect)
+        self.__wing_param.set_AoA_id(self.__AoA_id)
         self.__wing_param.config_from_dict(self.__OC, self.__config_dict)
         
     def __config_DLLM(self):

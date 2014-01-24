@@ -1,11 +1,11 @@
 from DLLM.DLLMEval.DLLMMP import DLLMMP
-from OpenDACE.ValidGrad.FDValidGrad import FDValidGrad
 import os
 from glob import glob
 
 config_dict={}
 config_dict['Case.nb_conditions']=3
 config_dict['Case.condition_name']='cond'
+config_dict['Case.AoA_id_list']=['AoA1','AoA2','AoA3']
 # cond1 Operating condition information
 config_dict['Case.cond1.OC.Mach']=0.8
 config_dict['Case.cond1.OC.AoA']=3.5
@@ -60,9 +60,20 @@ config_dict['Case.DLLM.method']='inhouse'
 config_dict['Case.DLLM.relax_factor']=0.99
 config_dict['Case.DLLM.stop_residual']=1e-9
 config_dict['Case.DLLM.max_iterations']=100
+config_dict['Case.DLLM.F_list_names']=['Lift']
 config_dict['Case.cond1.DLLM.gamma_file_name']='cond1_gamma.dat'
 config_dict['Case.cond2.DLLM.gamma_file_name']='cond2_gamma.dat'
 config_dict['Case.cond3.DLLM.gamma_file_name']='cond3_gamma.dat'
+# AoA design variable must not be used with TargetCl or TargetLift
+config_dict['Case.param.desc.AoA1.type']='DesignVariable'
+config_dict['Case.param.desc.AoA1.value']=0.
+config_dict['Case.param.desc.AoA1.bounds']=(-20.,+20.)
+config_dict['Case.param.desc.AoA2.type']='DesignVariable'
+config_dict['Case.param.desc.AoA2.value']=0.
+config_dict['Case.param.desc.AoA2.bounds']=(-20.,+20.)
+config_dict['Case.param.desc.AoA3.type']='DesignVariable'
+config_dict['Case.param.desc.AoA3.value']=0.
+config_dict['Case.param.desc.AoA3.bounds']=(-20.,+20.)
 
 list_log=glob('*.log')
 for log in list_log:
@@ -70,23 +81,27 @@ for log in list_log:
 
 MP=DLLMMP('Case')
 MP.configure(config_dict)
-MP.set_out_format('numpy')
-MP.set_grad_format('numpy')
+F_list,F_list_grad=MP.analysis_and_grad()
+for i,grad in enumerate(F_list_grad):
+    print 'cond'+str(i+1)+' Lift grad = ',grad
 
-x0=MP.get_x0()
 
-val_grad=FDValidGrad(2,MP.run,MP.run_grad,fd_step=1.e-8)
-ok,df_fd,df=val_grad.compare(x0,treshold=1.e-6,split_out=True,return_all=True)
+# # Parameterisation configuration
 
-# for j in xrange(len(df[:,0])):
-#     fid=open('gradient_file'+str(j)+'.dat','w')
-#     for i in xrange(len(x0)):
-#         fid.write(str(i)+' '+str(df_fd[j,i])+' '+str(df[j,i])+'\n')
-#     fid.close()
+# 
+# # DLLM configuration
+# config_dict['cond1.DLLM.type']='Solver'
+# config_dict['cond1.DLLM.method']='inhouse'
+# config_dict['cond1.DLLM.relax_factor']=0.99
+# config_dict['cond1.DLLM.stop_residual']=1e-9
+# config_dict['cond1.DLLM.max_iterations']=100
+# config_dict['cond1.DLLM.gamma_file_name']='gamma.dat'
+# #config_dict['cond1.DLLM.F_list_names']=['Lift','Drag','Drag_Pressure','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdf', 'LoD']
+# config_dict['cond1.DLLM.F_list_names']=['Lift','Drag','Drag_Pressure','Drag_Friction','LoD']
+# #config_dict['cond1.DLLM.target_Cl']=0.5
+# #config_dict['cond1.DLLM.target_Lift']=769200.
+# 
+# DLLMcond1=DLLMWrapper('cond1')
+# DLLMcond1.configure(config_dict)
+# DLLMcond1.analysis_and_grad()
 
-print '\n****************************************************'
-if ok:
-    print 'DLLMMP gradients are valid.'
-else:
-    print 'DLLMMP gradients are not valid!'
-print '****************************************************'

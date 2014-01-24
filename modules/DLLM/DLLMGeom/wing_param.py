@@ -38,6 +38,8 @@ class Wing_param():
         
         self.__thetaY     = None
         
+        self.__AoA_id     = 'AoA'
+        
         self.__init_discrete_attributes()
         self.__init_airfoils_attributes()
         
@@ -143,6 +145,9 @@ class Wing_param():
         return self.__AoA_grad
         
     # -- Setters
+    def set_AoA_id(self, AoA_id):
+        self.__AoA_id = AoA_id
+        
     def set_geom_type(self, geom_type):
         """
         @param wing_geometry_type : Rectangular or Elliptic planforms
@@ -176,10 +181,10 @@ class Wing_param():
         self.__BC_manager.convert_to_parameter(Id, fexpr)
         
     def add_AoA_design_variable(self, lbnd, val, ubnd):
-        self.__BC_manager.create_design_variable(self.__tag+'.AoA', lbnd, val, ubnd)
+        self.__BC_manager.create_design_variable(self.__tag+'.'+self.__AoA_id, lbnd, val, ubnd)
         
     def __update_AoA(self):
-        Id   = self.__tag+'.AoA'
+        Id   = self.__tag+'.'+self.__AoA_id
         if Id in self.get_dv_id_list():
             pt   = self.__BC_manager.get_pt(Id)
             deg_to_rad = pi/180.

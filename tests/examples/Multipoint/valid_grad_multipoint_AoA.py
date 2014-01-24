@@ -6,6 +6,7 @@ from glob import glob
 config_dict={}
 config_dict['Case.nb_conditions']=3
 config_dict['Case.condition_name']='cond'
+config_dict['Case.AoA_id_list']=['AoA1','AoA2','AoA3']
 # cond1 Operating condition information
 config_dict['Case.cond1.OC.Mach']=0.8
 config_dict['Case.cond1.OC.AoA']=3.5
@@ -54,6 +55,16 @@ config_dict['Case.param.desc.break_height.bounds']=(0.8,1.2)
 config_dict['Case.param.desc.tip_height.type']='DesignVariable'
 config_dict['Case.param.desc.tip_height.value']=0.33
 config_dict['Case.param.desc.tip_height.bounds']=(0.2,0.5)
+# AoA design variable must not be used with TargetCl or TargetLift
+config_dict['Case.param.desc.AoA1.type']='DesignVariable'
+config_dict['Case.param.desc.AoA1.value']=0.
+config_dict['Case.param.desc.AoA1.bounds']=(-20.,+20.)
+config_dict['Case.param.desc.AoA2.type']='DesignVariable'
+config_dict['Case.param.desc.AoA2.value']=0.
+config_dict['Case.param.desc.AoA2.bounds']=(-20.,+20.)
+config_dict['Case.param.desc.AoA3.type']='DesignVariable'
+config_dict['Case.param.desc.AoA3.value']=0.
+config_dict['Case.param.desc.AoA3.bounds']=(-20.,+20.)
 
 config_dict['Case.DLLM.type']='Solver'
 config_dict['Case.DLLM.method']='inhouse'
