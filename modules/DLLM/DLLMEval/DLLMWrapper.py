@@ -10,6 +10,7 @@ from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
 from DLLM.DLLMKernel.DLLMTargetCl import DLLMTargetCl
 from DLLM.DLLMKernel.DLLMTargetLift import DLLMTargetLift
 import numpy
+import cPickle
 
 class DLLMWrapper():
     ERROR_MSG = 'ERROR in DLLMWrapper.'
@@ -33,6 +34,9 @@ class DLLMWrapper():
         self.__grad_format  = 'list'
         
         self.__AoA_id       = 'AoA'
+        
+        self.__F_list       = None
+        self.__F_list_grad  = None
         
     #-- Accessors
     def get_OC(self):
@@ -64,6 +68,15 @@ class DLLMWrapper():
     
     def get_F_list_names(self):
         return self.__DLLM_solver.get_F_list_names()
+    
+    def get_F_list(self):
+        return self.__F_list
+    
+    def get_F_list_grad(self):
+        return self.__F_list_grad
+    
+    def get_F_list_and_grad(self):
+        return self.__F_list, self.__F_list_grad
         
     #-- Setters
     def set_AoA_id(self, AoA_id):
@@ -115,6 +128,7 @@ class DLLMWrapper():
         F_list = self.__DLLM_solver.get_F_list()
         if self.__out_format == 'list':
             F_list=F_list.tolist()
+        self.__F_list = F_list
         return F_list
     
     def analysis_grad(self):
@@ -125,6 +139,7 @@ class DLLMWrapper():
         F_list_grad=self.__DLLM_solver.get_dF_list_dchi()
         if self.__grad_format == 'numpy':
             F_list_grad=numpy.array(F_list_grad)
+        self.__F_list_grad = F_list_grad
         return F_list_grad
     
     def analysis_and_grad(self):
@@ -138,7 +153,22 @@ class DLLMWrapper():
             F_list=F_list.tolist()
         if self.__grad_format == 'numpy':
             F_list_grad=numpy.array(F_list_grad)
+        self.__F_list = F_list
+        self.__F_list_grad = F_list_grad
         return F_list,F_list_grad
+    
+    def export_results(self):
+        fid=open(self.__tag+'.res.dat','w')
+        res=[self.__F_list,self.__F_list_grad]
+        cPickle.dump(res, fid)
+        fid.close()
+        
+    def import_results(self):
+        fid=open(self.__tag+'.res.dat','r')
+        res=cPickle.load(fid)
+        fid.close()
+        self.__F_list=res[0]
+        self.__F_list_grad=res[1]
         
     #-- Private methods
     def __config_OC(self):

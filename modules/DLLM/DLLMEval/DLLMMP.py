@@ -7,9 +7,11 @@
 from DLLM.DLLMGeom.wing_param import Wing_param
 from DLLM.DLLMEval.DLLMWrapper import DLLMWrapper
 from copy import deepcopy
+import multiprocessing 
 import numpy
 import string
 import sys
+import os
 
 class DLLMMP():
     ERROR_MSG = 'ERROR in DLLMMP.'
@@ -92,106 +94,191 @@ class DLLMMP():
         self.__configure_wrapper_list()
         
     def run(self, x):
-        std_sys=sys.stdout
-        MP_F_List=[]
+        process_list=[]
+        # Launch all sub-processes 
         for i in xrange(self.__nb_cond):
-            cond_name = self.__cond_name+str(i+1)
-            sys.stdout = open(cond_name+'.log','a')
-            F_list=self.__wrapper_list[i].run(x)
-            sys.stdout.close()
-            for val in F_list:
-                MP_F_List.append(val)
+            process_list.append(multiprocessing.Process(target=self.__wrap_run, args=(i,x)))
+            process_list[-1].start()
+        # wait for all processes
+        for i in xrange(self.__nb_cond):
+            process_list[i].join()
+        # import results
+        self.__import_results()
+        # Gather information
+        MP_F_list=self.__build_MP_F_list()
+        return MP_F_list
+    
+    def __wrap_run(self, i, x):
+        std_sys=sys.stdout
+        cond_name = self.__cond_name+str(i+1)
+        sys.stdout = open(cond_name+'.log','a')
+        print 'PID=',os.getpid()
+        self.__wrapper_list[i].run(x)
+        self.__wrapper_list[i].export_results()
+        sys.stdout.close()
         sys.stdout=std_sys
-        if self.__out_format == 'numpy':
-            MP_F_List=numpy.array(MP_F_List)
-        return MP_F_List
     
     def run_grad(self, x):
-        std_sys=sys.stdout
-        MP_F_List_grad=[]
+        process_list=[]
+        # Launch all sub-processes 
         for i in xrange(self.__nb_cond):
-            cond_name = self.__cond_name+str(i+1)
-            sys.stdout = open(cond_name+'.log','a')
-            F_list_grad=self.__wrapper_list[i].run_grad(x)
-            sys.stdout.close()
-            for grad in F_list_grad:
-                MP_F_List_grad.append(grad)
+            process_list.append(multiprocessing.Process(target=self.__wrap_run_grad, args=(i,x)))
+            process_list[-1].start()
+        # wait for all processes
+        for i in xrange(self.__nb_cond):
+            process_list[i].join()
+        # import results
+        self.__import_results()
+        # Gather information
+        MP_F_list_grad=self.__build_MP_F_list_grad()
+        return MP_F_list_grad
+    
+    def __wrap_run_grad(self, i, x):
+        std_sys=sys.stdout
+        cond_name = self.__cond_name+str(i+1)
+        sys.stdout = open(cond_name+'.log','a')
+        print 'PID=',os.getpid()
+        self.__wrapper_list[i].run_grad(x)
+        self.__wrapper_list[i].export_results()
+        sys.stdout.close()
         sys.stdout=std_sys
-        if self.__grad_format == 'numpy':
-            MP_F_List_grad=numpy.array(MP_F_List_grad)
-        return MP_F_List_grad
     
     def run_and_grad(self, x):
-        std_sys=sys.stdout
-        MP_F_List=[]
-        MP_F_List_grad=[]
+        process_list=[]
+        # Launch all sub-processes 
         for i in xrange(self.__nb_cond):
-            cond_name = self.__cond_name+str(i+1)
-            sys.stdout = open(cond_name+'.log','a')
-            F_list,F_list_grad=self.__wrapper_list[i].run_and_grad(x)
-            sys.stdout.close()
-            for val in F_list:
-                MP_F_List.append(val)
-            for grad in F_list_grad:
-                MP_F_List_grad.append(grad)
+            process_list.append(multiprocessing.Process(target=self.__wrap_run_and_grad, args=(i,x)))
+            process_list[-1].start()
+        # wait for all processes
+        for i in xrange(self.__nb_cond):
+            process_list[i].join()
+        # import results
+        self.__import_results()
+        # Gather information
+        MP_F_list,MP_F_list_grad=self.__build_MP_F_list_and_grad()
+        return MP_F_list, MP_F_list_grad
+    
+    def __wrap_run_and_grad(self, i, x):
+        std_sys=sys.stdout
+        cond_name = self.__cond_name+str(i+1)
+        sys.stdout = open(cond_name+'.log','a')
+        print 'PID=',os.getpid()
+        self.__wrapper_list[i].run_and_grad(x)
+        self.__wrapper_list[i].export_results()
+        sys.stdout.close()
         sys.stdout=std_sys
-        if self.__out_format == 'numpy':
-            MP_F_List=numpy.array(MP_F_List)
-        if self.__grad_format == 'numpy':
-            MP_F_List_grad=numpy.array(MP_F_List_grad)
-        return MP_F_List, MP_F_List_grad
-        
+
     def analysis(self):
-        std_sys=sys.stdout
-        MP_F_List=[]
+        process_list=[]
+        # Launch all sub-processes 
         for i in xrange(self.__nb_cond):
-            cond_name = self.__cond_name+str(i+1)
-            sys.stdout = open(cond_name+'.log','a')
-            F_list=self.__wrapper_list[i].analysis()
-            sys.stdout.close()
-            for val in F_list:
-                MP_F_List.append(val)
+            process_list.append(multiprocessing.Process(target=self.__wrap_analysis, args=(i,)))
+            process_list[-1].start()
+        # wait for all processes
+        for i in xrange(self.__nb_cond):
+            process_list[i].join()
+        # import results
+        self.__import_results()
+        # Gather information
+        MP_F_list=self.__build_MP_F_list()
+        return MP_F_list
+    
+    def __wrap_analysis(self, i):
+        std_sys=sys.stdout
+        cond_name = self.__cond_name+str(i+1)
+        sys.stdout = open(cond_name+'.log','a')
+        print 'PID=',os.getpid()
+        self.__wrapper_list[i].analysis()
+        self.__wrapper_list[i].export_results()
+        sys.stdout.close()
         sys.stdout=std_sys
-        if self.__out_format == 'numpy':
-            MP_F_List=numpy.array(MP_F_List)
-        return MP_F_List
     
     def analysis_grad(self):
-        std_sys=sys.stdout
-        MP_F_List_grad=[]
+        process_list=[]
+        # Launch all sub-processes 
         for i in xrange(self.__nb_cond):
-            cond_name = self.__cond_name+str(i+1)
-            sys.stdout = open(cond_name+'.log','a')
-            F_list_grad=self.__wrapper_list[i].analysis_grad()
-            sys.stdout.close()
-            for grad in F_list_grad:
-                MP_F_List_grad.append(grad)
+            process_list.append(multiprocessing.Process(target=self.__wrap_analysis_grad, args=(i,)))
+            process_list[-1].start()
+        # wait for all processes
+        for i in xrange(self.__nb_cond):
+            process_list[i].join()
+        # import results
+        self.__import_results()
+        # Gather information
+        MP_F_list_grad=self.__build_MP_F_list_grad()
+        return MP_F_list_grad
+    
+    def __wrap_analysis_grad(self, i):
+        std_sys=sys.stdout
+        cond_name = self.__cond_name+str(i+1)
+        sys.stdout = open(cond_name+'.log','a')
+        print 'PID=',os.getpid()
+        self.__wrapper_list[i].analysis_grad()
+        self.__wrapper_list[i].export_results()
+        sys.stdout.close()
         sys.stdout=std_sys
-        if self.__grad_format == 'numpy':
-            MP_F_List_grad=numpy.array(MP_F_List_grad)
-        return MP_F_List_grad
     
     def analysis_and_grad(self):
-        std_sys=sys.stdout
-        MP_F_List=[]
-        MP_F_List_grad=[]
+        process_list=[]
+        # Launch all sub-processes 
         for i in xrange(self.__nb_cond):
-            cond_name = self.__cond_name+str(i+1)
-            sys.stdout = open(cond_name+'.log','a')
-            F_list,F_list_grad=self.__wrapper_list[i].analysis_and_grad()
-            sys.stdout.close()
-            for val in F_list:
-                MP_F_List.append(val)
-            for grad in F_list_grad:
-                MP_F_List_grad.append(grad)
-        sys.stdout=std_sys
-        if self.__out_format == 'numpy':
-            MP_F_List=numpy.array(MP_F_List)
-        if self.__grad_format == 'numpy':
-            MP_F_List_grad=numpy.array(MP_F_List_grad)
-        return MP_F_List, MP_F_List_grad
+            process_list.append(multiprocessing.Process(target=self.__wrap_analysis_and_grad, args=(i,)))
+            process_list[-1].start()
+        # wait for all processes
+        for i in xrange(self.__nb_cond):
+            process_list[i].join()
+        # import results
+        self.__import_results()
+        # Gather information
+        MP_F_list,MP_F_list_grad=self.__build_MP_F_list_and_grad()
+        return MP_F_list, MP_F_list_grad
     
+    def __wrap_analysis_and_grad(self, i):
+        std_sys=sys.stdout
+        cond_name = self.__cond_name+str(i+1)
+        sys.stdout = open(cond_name+'.log','a')
+        print 'PID=',os.getpid()
+        self.__wrapper_list[i].analysis_and_grad()
+        self.__wrapper_list[i].export_results()
+        sys.stdout.close()
+        sys.stdout=std_sys
+        
     #-- Private methods
+    def __import_results(self):
+        for i in xrange(self.__nb_cond):
+            self.__wrapper_list[i].import_results()
+            
+    def __build_MP_F_list(self):
+        MP_F_list=[]
+        for i in xrange(self.__nb_cond):
+            F_list=self.__wrapper_list[i].get_F_list()
+            MP_F_list+=F_list
+        if self.__out_format == 'numpy':
+            MP_F_list=numpy.array(MP_F_list)
+        return MP_F_list
+    
+    def __build_MP_F_list_grad(self):
+        MP_F_list_grad=[]
+        for i in xrange(self.__nb_cond):
+            F_list_grad=self.__wrapper_list[i].get_F_list_grad()
+            MP_F_list_grad+=F_list_grad
+        if self.__grad_format == 'numpy':
+            MP_F_list_grad=numpy.array(MP_F_list_grad)
+        return MP_F_list_grad
+    
+    def __build_MP_F_list_and_grad(self):
+        MP_F_list=[]
+        MP_F_list_grad=[]
+        for i in xrange(self.__nb_cond):
+            F_list,F_list_grad=self.__wrapper_list[i].get_F_list_and_grad()
+            MP_F_list+=F_list
+            MP_F_list_grad+=F_list_grad
+        if self.__out_format == 'numpy':
+            MP_F_list=numpy.array(MP_F_list)
+        if self.__grad_format == 'numpy':
+            MP_F_list_grad=numpy.array(MP_F_list_grad)
+        return MP_F_list,MP_F_list_grad
+    
     def __configure_wrapper_list(self):
         self.__wrapper_list=[]
         for i in xrange(self.__nb_cond):
