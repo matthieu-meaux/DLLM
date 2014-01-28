@@ -16,6 +16,8 @@ class DLLMPost:
         Post-Processing module compatible with adjoint for DLLM
         """
         self.__LLW = LLW
+        self.__F_list_names_calc = self.DEF_F_LIST_NAMES
+        self.__F_list_calc       = None
         self.__F_list_names = self.DEF_F_LIST_NAMES
         self.__F_list_dim   = 0
         self.__F_list       = None
@@ -94,6 +96,9 @@ class DLLMPost:
     def __init_run(self):
         N=self.get_N()
         ndv=self.get_ndv()
+        self.__F_list_calc_dim = len(self.__F_list_names_calc)
+        self.__F_list_calc     = zeros(self.__F_list_calc_dim)
+        self.__F_list          = zeros(self.__F_list_dim)
         self.__F_list_dim      = len(self.__F_list_names)
         self.__F_list          = zeros(self.__F_list_dim)
         self.__dpF_list_dpAoA  = zeros(self.__F_list_dim)
@@ -103,6 +108,37 @@ class DLLMPost:
     def run(self, F_list_names=None):
         N=self.get_N()
         self.__init_run()
+        
+        # Default analysis
+        for i,F_name in enumerate(self.__F_list_names_calc):
+            if   F_name == 'Cl':
+                val       = self.__Cl()
+            elif F_name == 'Cd':
+                val       = self.__Cd()
+            elif F_name == 'Cdp':
+                val       = self.__Cdp()
+            elif F_name == 'Cdf':
+                val       = self.__Cdf()
+#            Moments calculation are bugged for now
+#             elif func == 'Cm':
+#                 val = self.__Cm()
+            elif F_name == 'Lift':
+                val       = self.__Lift()
+            elif F_name == 'Drag':
+                val       = self.__Drag()
+            elif F_name == 'Drag_Pressure':
+                val       = self.__Drag_Pressure()
+            elif F_name == 'Drag_Friction':
+                val       = self.__Drag_Friction()
+            elif F_name == 'LoD':
+                val       = self.__LoD()
+            elif F_name == 'Sref':
+                val       = self.get_Sref()
+            else:
+                val = None
+            self.__F_list_calc[i]        = val
+
+        # Adjoint analysis
         for i,F_name in enumerate(self.__F_list_names):
             if   F_name == 'Cl':
                 val       = self.__Cl()
@@ -181,11 +217,12 @@ class DLLMPost:
         N=self.get_N()
         Mach     = self.get_OC().get_Mach()
         localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
         airfoils = self.get_airfoils()
         Cl=0.0
         for i in xrange(N):
             af = airfoils[i]
-            Cl+=af.Cl(localAoA[i],Mach)*af.get_Sref()
+            Cl+=af.Cl(localAoA[i],Mach)*cos(iAoA[i])*af.get_Sref()
         Cl/=self.get_Sref()
         return Cl
     
@@ -193,12 +230,15 @@ class DLLMPost:
         N=self.get_N()
         Mach     = self.get_OC().get_Mach()
         localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
         dplocalAoA_dpiAoA = self.get_dplocalAoA_dpiAoA()
         airfoils = self.get_airfoils()
         dCl_diAoA=zeros(N)
         for i in range(N):
             af = airfoils[i]
-            dCl_diAoA+=af.ClAlpha(localAoA[i],Mach=Mach)*af.get_Sref()*dplocalAoA_dpiAoA[i]
+            dCl_diAoA[i]-=af.Cl(localAoA[i],Mach)*sin(iAoA[i])*af.get_Sref()
+            dCl_diAoA+=af.ClAlpha(localAoA[i],Mach=Mach)*cos(iAoA[i])*dplocalAoA_dpiAoA[i]*af.get_Sref()
+           
         dCl_diAoA/=self.get_Sref()
         
         return dCl_diAoA
@@ -207,12 +247,13 @@ class DLLMPost:
         N=self.get_N()
         Mach     = self.get_OC().get_Mach()
         localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
         dplocalAoA_dpAoA = self.get_dplocalAoA_dpAoA()
         airfoils = self.get_airfoils()
         dCl_dAoA=0.
         for i in range(N):
             af = airfoils[i]
-            dCl_dAoA+=af.ClAlpha(localAoA[i],Mach=Mach)*af.get_Sref()*dplocalAoA_dpAoA[i]
+            dCl_dAoA+=af.ClAlpha(localAoA[i],Mach=Mach)*cos(iAoA[i])*af.get_Sref()*dplocalAoA_dpAoA[i]
         dCl_dAoA/=self.get_Sref()
         
         return dCl_dAoA
@@ -221,6 +262,7 @@ class DLLMPost:
         N=self.get_N()
         ndv=self.get_ndv()
         Mach     = self.get_OC().get_Mach()
+        iAoA     = self.get_iAoA()
         localAoA = self.get_localAoA()
         airfoils = self.get_airfoils()
         dlAoAdchi=self.get_dplocalAoA_dpchi()
@@ -229,8 +271,8 @@ class DLLMPost:
         dCl=zeros(ndv)
         for i in xrange(N):
             af=airfoils[i]
-            Cl+=af.Cl(localAoA[i],Mach)*af.get_Sref()
-            dCl+=af.ClAlpha(localAoA[i],Mach)*af.get_Sref()*dlAoAdchi[i,:] + af.dCl_dchi(localAoA[i],Mach)*af.get_Sref() + af.Cl(localAoA[i],Mach)*af.get_Sref_grad()
+            Cl+=af.Cl(localAoA[i],Mach)*cos(iAoA[i])*af.get_Sref()
+            dCl+=cos(iAoA[i])*(af.ClAlpha(localAoA[i],Mach)*af.get_Sref()*dlAoAdchi[i,:] + af.dCl_dchi(localAoA[i],Mach)*af.get_Sref() + af.Cl(localAoA[i],Mach)*af.get_Sref_grad())
             
         dCldchi = (dCl*self.get_Sref() - Cl*self.get_Sref_grad())/(self.get_Sref()**2)        
         return dCldchi
@@ -682,9 +724,9 @@ class DLLMPost:
         print '\n*** aerodynamic functions and coefficients ***'
         print '  Sref  = ',self.get_Sref()
         print '  Lref  = ',self.get_Lref()
-        for i, func in enumerate(self.__F_list_names):
+        for i, func in enumerate(self.__F_list_names_calc):
             if func in ['Lift', 'Drag']:
                 unit = '(N)'
             else:
                 unit = ''
-            print '  '+self.__F_list_names[i]+'\t=\t'+str(self.__F_list[i])+' '+unit 
+            print '  '+self.__F_list_names_calc[i]+'\t=\t'+str(self.__F_list_calc[i])+' '+unit 
