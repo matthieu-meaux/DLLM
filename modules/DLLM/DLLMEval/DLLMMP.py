@@ -342,8 +342,3 @@ class DLLMMP():
             return self.__check_tag(list, new_index)
         
         
-        
-            
-        
-        
-        

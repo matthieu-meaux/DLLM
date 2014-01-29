@@ -9,7 +9,8 @@ from numpy import sin,cos
 
 class DLLMPost:
     
-    DEF_F_LIST_NAMES=['Lift','Drag','Drag_Pressure','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdf', 'LoD','Sref']
+    DEF_F_LIST_NAMES=['Lift','Drag','Drag_Pressure','Drag_Induced','Drag_Wave','Drag_Friction','Cl', 'Cd', 'Cdp','Cdi', 'Cdw', 'Cdf', 'LoD','Sref']
+    ERROR_MSG='ERROR in DLLMPost.'
     
     def __init__(self, LLW):
         """
@@ -106,6 +107,7 @@ class DLLMPost:
         self.__dpF_list_dpchi  = zeros((self.__F_list_dim, ndv))
         
     def run(self, F_list_names=None):
+        ERROR_MSG=self.ERROR_MSG+'run: '
         N=self.get_N()
         self.__init_run()
         
@@ -117,6 +119,10 @@ class DLLMPost:
                 val       = self.__Cd()
             elif F_name == 'Cdp':
                 val       = self.__Cdp()
+            elif F_name == 'Cdi':
+                val       = self.__Cdi()
+            elif F_name == 'Cdw':
+                val       = self.__Cdw()
             elif F_name == 'Cdf':
                 val       = self.__Cdf()
 #            Moments calculation are bugged for now
@@ -128,6 +134,10 @@ class DLLMPost:
                 val       = self.__Drag()
             elif F_name == 'Drag_Pressure':
                 val       = self.__Drag_Pressure()
+            elif F_name == 'Drag_Induced':
+                val       = self.__Drag_Induced()
+            elif F_name == 'Drag_Wave':
+                val       = self.__Drag_Wave()
             elif F_name == 'Drag_Friction':
                 val       = self.__Drag_Friction()
             elif F_name == 'LoD':
@@ -135,7 +145,7 @@ class DLLMPost:
             elif F_name == 'Sref':
                 val       = self.get_Sref()
             else:
-                val = None
+                raise Exception,ERROR_MSG+' unknown function '+str(F_name)
             self.__F_list_calc[i]        = val
 
         # Adjoint analysis
@@ -150,6 +160,16 @@ class DLLMPost:
                 dpFdpiAoA = self.__dpCd_dpiAoA()
                 dpFdpchi  = self.dpCd_dpchi()
                 dpFdpAoA  = self.dpCd_dpAoA()
+            elif F_name == 'Cdi':
+                val       = self.__Cdi()
+                dpFdpiAoA = self.__dpCdi_dpiAoA()
+                dpFdpchi  = self.dpCdi_dpchi()
+                dpFdpAoA  = self.dpCdi_dpAoA()
+            elif F_name == 'Cdw':
+                val       = self.__Cdw()
+                dpFdpiAoA = self.__dpCdw_dpiAoA()
+                dpFdpchi  = self.dpCdw_dpchi()
+                dpFdpAoA  = self.dpCdw_dpAoA()
             elif F_name == 'Cdp':
                 val       = self.__Cdp()
                 dpFdpiAoA = self.__dpCdp_dpiAoA()
@@ -178,6 +198,16 @@ class DLLMPost:
                 dpFdpiAoA = self.__dpDrag_Pressure_dpiAoA()
                 dpFdpchi  = self.dpDrag_Pressure_dpchi()
                 dpFdpAoA  = self.dpDrag_Pressure_dpAoA()
+            elif F_name == 'Drag_Induced':
+                val       = self.__Drag_Induced()
+                dpFdpiAoA = self.__dpDrag_Induced_dpiAoA()
+                dpFdpchi  = self.dpDrag_Induced_dpchi()
+                dpFdpAoA  = self.dpDrag_Induced_dpAoA()
+            elif F_name == 'Drag_Wave':
+                val       = self.__Drag_Wave()
+                dpFdpiAoA = self.__dpDrag_Wave_dpiAoA()
+                dpFdpchi  = self.dpDrag_Wave_dpchi()
+                dpFdpAoA  = self.dpDrag_Wave_dpAoA()
             elif F_name == 'Drag_Friction':
                 val       = self.__Drag_Friction()
                 dpFdpiAoA = self.__dpDrag_Friction_dpiAoA()
@@ -194,7 +224,7 @@ class DLLMPost:
                 dpFdpchi  = self.get_Sref_grad()
                 dpFdpAoA  = 0.
             else:
-                val = None
+                raise Exception,ERROR_MSG+' unknown function '+str(F_name)
             self.__F_list[i]            = val
             self.__dpF_list_dpiAoA[i,:] = dpFdpiAoA[:]
             self.__dpF_list_dpchi[i,:]  = dpFdpchi[:]
@@ -429,6 +459,157 @@ class DLLMPost:
             AoA=localAoA[i]
             Cdloc=af.Cl(AoA,Mach)*sin(iAoA[i])+af.Cdp(AoA,Mach)
             dCdloc=(af.ClAlpha(AoA,Mach)*sin(iAoA[i])+af.CdpAlpha(AoA,Mach))*dlAoAdchi[i] + af.dCl_dchi(AoA,Mach)*sin(iAoA[i])+af.dCdp_dchi(AoA,Mach)
+            Cd+=Cdloc*af.get_Sref()
+            dCd+=dCdloc*af.get_Sref()+Cdloc*af.get_Sref_grad()
+        dCddchi = (dCd*self.get_Sref()- Cd*self.get_Sref_grad())/(self.get_Sref()**2) 
+         
+        return dCddchi
+    
+    #-- Cdi related methods
+    def __Cdi(self):
+        N=self.get_N()
+        Mach     = self.get_OC().get_Mach()
+        airfoils = self.get_airfoils()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        Cd=0.0 
+        for i in xrange(N):
+            af      = airfoils[i]
+            AoA     = localAoA[i]
+            Cdloc=af.Cl(AoA,Mach)*sin(iAoA[i])
+            Cd+=Cdloc*af.get_Sref()
+        Cd/=self.get_Sref()
+        
+        return Cd
+    
+    def __dpCdi_dpiAoA(self):
+        N=self.get_N()
+        Mach     = self.get_OC().get_Mach()
+        airfoils = self.get_airfoils()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        dplocalAoA_dpiAoA = self.get_dplocalAoA_dpiAoA()
+        
+        dCd_dAoA=zeros(N)
+        for i in range(N):#Dependance by induced angles
+            af=airfoils[i]
+            AoA=localAoA[i]
+            dCd_dAoA[i]=af.ClAlpha(AoA,Mach)*sin(iAoA[i])*af.get_Sref()
+ 
+        dCd_diAoA=dot(dCd_dAoA,dplocalAoA_dpiAoA)
+        
+        for i in range(N):#Dependance by projection of Cl : the induced drag.
+            af=airfoils[i]
+            dCd_diAoA[i]+=af.Cl(localAoA[i],Mach)*af.get_Sref()*cos(iAoA[i])
+        dCd_diAoA/=self.get_Sref()
+        
+        return dCd_diAoA
+    
+    def dpCdi_dpAoA(self):
+        N=self.get_N()
+        Mach     = self.get_OC().get_Mach()
+        airfoils = self.get_airfoils()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        dplocalAoA_dpAoA = self.get_dplocalAoA_dpAoA()
+        
+        dCd_dAoA=0.
+        for i in range(N):#Dependance by induced angles
+            af=airfoils[i]
+            lAoA=localAoA[i]
+            dCd_dAoA+=af.ClAlpha(lAoA,Mach)*sin(iAoA[i])*af.get_Sref()*dplocalAoA_dpAoA[i]
+        dCd_dAoA/=self.get_Sref()
+        
+        return dCd_dAoA
+    
+    def dpCdi_dpchi(self):
+        N=self.get_N()
+        ndv=self.get_ndv()
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        airfoils = self.get_airfoils()
+        dlAoAdchi=self.get_dplocalAoA_dpchi()
+ 
+        Cd=0.0 
+        dCd=zeros(ndv)
+        for i in range(N):
+            af=airfoils[i]
+            AoA=localAoA[i]
+            Cdloc=af.Cl(AoA,Mach)*sin(iAoA[i])
+            dCdloc=af.ClAlpha(AoA,Mach)*sin(iAoA[i])*dlAoAdchi[i] + af.dCl_dchi(AoA,Mach)*sin(iAoA[i])
+            Cd+=Cdloc*af.get_Sref()
+            dCd+=dCdloc*af.get_Sref()+Cdloc*af.get_Sref_grad()
+        dCddchi = (dCd*self.get_Sref()- Cd*self.get_Sref_grad())/(self.get_Sref()**2) 
+         
+        return dCddchi
+    
+    #-- Cdw related methods
+    def __Cdw(self):
+        N=self.get_N()
+        Mach     = self.get_OC().get_Mach()
+        airfoils = self.get_airfoils()
+        localAoA = self.get_localAoA()
+        Cd=0.0 
+        for i in xrange(N):
+            af      = airfoils[i]
+            AoA     = localAoA[i]
+            Cdloc=af.Cdp(AoA,Mach)
+            Cd+=Cdloc*af.get_Sref()
+        Cd/=self.get_Sref()
+        
+        return Cd
+    
+    def __dpCdw_dpiAoA(self):
+        N=self.get_N()
+        Mach     = self.get_OC().get_Mach()
+        airfoils = self.get_airfoils()
+        localAoA = self.get_localAoA()
+        dplocalAoA_dpiAoA = self.get_dplocalAoA_dpiAoA()
+        
+        dCd_dAoA=zeros(N)
+        for i in range(N):#Dependance by induced angles
+            af=airfoils[i]
+            AoA=localAoA[i]
+            dCd_dAoA[i]=af.CdpAlpha(AoA,Mach)*af.get_Sref()
+ 
+        dCd_diAoA=dot(dCd_dAoA,dplocalAoA_dpiAoA)
+        dCd_diAoA/=self.get_Sref()
+        
+        return dCd_diAoA
+    
+    def dpCdw_dpAoA(self):
+        N=self.get_N()
+        Mach     = self.get_OC().get_Mach()
+        airfoils = self.get_airfoils()
+        localAoA = self.get_localAoA()
+        dplocalAoA_dpAoA = self.get_dplocalAoA_dpAoA()
+        
+        dCd_dAoA=0.
+        for i in range(N):#Dependance by induced angles
+            af=airfoils[i]
+            lAoA=localAoA[i]
+            dCd_dAoA+=af.CdpAlpha(lAoA,Mach)*af.get_Sref()*dplocalAoA_dpAoA[i]
+        dCd_dAoA/=self.get_Sref()
+        
+        return dCd_dAoA
+    
+    def dpCdw_dpchi(self):
+        N=self.get_N()
+        ndv=self.get_ndv()
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        airfoils = self.get_airfoils()
+        dlAoAdchi=self.get_dplocalAoA_dpchi()
+ 
+        Cd=0.0 
+        dCd=zeros(ndv)
+        for i in range(N):
+            af=airfoils[i]
+            AoA=localAoA[i]
+            Cdloc=af.Cdp(AoA,Mach)
+            dCdloc=af.CdpAlpha(AoA,Mach)*dlAoAdchi[i] + af.dCdp_dchi(AoA,Mach)
             Cd+=Cdloc*af.get_Sref()
             dCd+=dCdloc*af.get_Sref()+Cdloc*af.get_Sref_grad()
         dCddchi = (dCd*self.get_Sref()- Cd*self.get_Sref_grad())/(self.get_Sref()**2) 
@@ -684,6 +865,68 @@ class DLLMPost:
         Sref_grad=self.get_Sref_grad()
         Cd=self.__Cdf()
         dpCd_dpchi = self.dpCdf_dpchi()
+        dpDrag_dpchi = Pdyn*Sref*dpCd_dpchi+Pdyn*Sref_grad*Cd
+        return dpDrag_dpchi
+    
+    #-- Induced Drag related methods
+    def __Drag_Induced(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        Cd = self.__Cdi()
+        Drag = Pdyn*Sref*Cd
+        return Drag
+    
+    def dpDrag_Induced_dpAoA(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        dCd_dAoA=self.dpCdi_dpAoA()
+        dDrag_dAoA = Pdyn*Sref*dCd_dAoA
+        return dDrag_dAoA
+    
+    def __dpDrag_Induced_dpiAoA(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        dCd_diAoA = self.__dpCdi_dpiAoA()
+        dDrag_diAoA = Pdyn*Sref*dCd_diAoA
+        return dDrag_diAoA
+    
+    def dpDrag_Induced_dpchi(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        Sref_grad=self.get_Sref_grad()
+        Cd=self.__Cdi()
+        dpCd_dpchi = self.dpCdi_dpchi()
+        dpDrag_dpchi = Pdyn*Sref*dpCd_dpchi+Pdyn*Sref_grad*Cd
+        return dpDrag_dpchi
+    
+    #-- Wave Drag related methods
+    def __Drag_Wave(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        Cd = self.__Cdw()
+        Drag = Pdyn*Sref*Cd
+        return Drag
+    
+    def dpDrag_Wave_dpAoA(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        dCd_dAoA=self.dpCdw_dpAoA()
+        dDrag_dAoA = Pdyn*Sref*dCd_dAoA
+        return dDrag_dAoA
+    
+    def __dpDrag_Wave_dpiAoA(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        dCd_diAoA = self.__dpCdw_dpiAoA()
+        dDrag_diAoA = Pdyn*Sref*dCd_diAoA
+        return dDrag_diAoA
+    
+    def dpDrag_Wave_dpchi(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        Sref_grad=self.get_Sref_grad()
+        Cd=self.__Cdw()
+        dpCd_dpchi = self.dpCdw_dpchi()
         dpDrag_dpchi = Pdyn*Sref*dpCd_dpchi+Pdyn*Sref_grad*Cd
         return dpDrag_dpchi
     

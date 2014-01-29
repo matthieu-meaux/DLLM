@@ -44,7 +44,7 @@ x0=wing_param.get_dv_array()
 print 'dv array shape',x0.shape
 print 'dv_array=',x0
 
-F_list_names = ['Drag','Drag_Pressure','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdf', 'LoD']
+F_list_names = ['Drag','Drag_Pressure','Drag_Induced','Drag_Wave','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdi', 'Cdw', 'Cdf', 'LoD']
 
 def f(x):
     wing_param.update_from_x_list(x)
