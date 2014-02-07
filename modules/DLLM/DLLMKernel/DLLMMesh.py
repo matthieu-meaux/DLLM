@@ -32,62 +32,15 @@ class DLLMMesh:
     def get_dK_dchi(self):
         return self.__dK_dchi
     
-    #-- Setters
-    def set_Sref(self, Sref):
-        self.__LLW.set_Sref(Sref)
-        
-    def set_Lref(self, Lref):
-        self.__LLW.set_Lref(Lref)
-        
-    def set_Sref_grad(self, Sref_grad):
-        self.__LLW.set_Sref_grad(Sref_grad)
-        
-    def set_Lref_grad(self, Lref_grad):
-        self.__LLW.set_Lref_grad(Lref_grad)
-    
     #-- Methods
     def recompute(self):
         self.__N   = self.get_wing_param().get_n_sect()
-        
-        # compute Lref and Sref from LLW attributes
-        self.__set_Lref_Sref()
         
         # Set computational geometry
         self.__K       = None 
         self.__dK_dchi = None
         self.__setGeom()
-        
-    def getAspectRatio(self):
-        '''
-        Computes the aspect ratio wingspan²/S
-        '''
-        wingspan = self.get_wing_param().get_wing_span()
-        Sref     = self.get_wing_param().get_Sref()
-        return wingspan**2/Sref
-        
-    #-- Private methods
-    def __set_Lref_Sref(self):
-        """
-        Compute Lref and Sref from airfoils information
-        """
-        Lref=0.
-        Sref=0.
-        Lref_grad=zeros(self.__ndv)
-        Sref_grad=zeros(self.__ndv)
-        
-        for airfoil in self.get_airfoils():
-            Sref+=airfoil.get_Sref()
-            Lref+=airfoil.get_Lref()
-            Sref_grad+=airfoil.get_Sref_grad()
-            Lref_grad+=airfoil.get_Lref_grad()
-        Lref/=self.__N
-        Lref_grad/=self.__N
-        
-        self.set_Sref(Sref)
-        self.set_Lref(Lref)
-        self.set_Sref_grad(Sref_grad)
-        self.set_Lref_grad(Lref_grad)
-        
+         
     def __setGeom(self):
         '''
         Sets the geometry of the wing, builds the liftinf line metric matrix

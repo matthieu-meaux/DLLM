@@ -92,6 +92,27 @@ class Wing_param():
         self.__eta                = None
         self.__eta_grad           = None
         
+        self.__Lref               = None
+        self.__Lref_grad          = None
+        
+        self.__Sref               = None
+        self.__Sref_grad          = None
+        
+        self.__root_ToC           = None
+        self.__root_ToC_grad      = None
+        
+        self.__break_ToC          = None
+        self.__break_ToC_grad     = None
+        
+        self.__tip_ToC            = None
+        self.__tip_ToC_grad       = None
+        
+        self.__AR                 = None
+        self.__AR_grad            = None
+        
+        self.__fuel               = None
+        self.__fuel_grad          = None
+        
     def __init_airfoils_attributes(self):
         self.__airfoil_type    = None
         self.__ref_airfoil     = None   # reference airfoil, only used if the same airfoil is put for all sections
@@ -143,6 +164,60 @@ class Wing_param():
     
     def get_AoA_grad(self):
         return self.__AoA_grad
+    
+    def get_span(self):
+        return self.__span
+    
+    def get_span_grad(self):
+        return self.__span_grad
+    
+    def get_sweep(self):
+        return self.__sweep
+    
+    def get_sweep_grad(self):
+        return self.__sweep_grad
+    
+    def get_Lref(self):
+        return self.__Lref
+    
+    def get_Lref_grad(self):
+        return self.__Lref_grad
+    
+    def get_Sref(self):
+        return self.__Sref
+    
+    def get_Sref_grad(self):
+        return self.__Sref_grad
+    
+    def get_root_ToC(self):
+        return self.__root_ToC
+    
+    def get_root_ToC_grad(self):
+        return self.__root_ToC_grad
+    
+    def get_break_ToC(self):
+        return self.__break_ToC
+    
+    def get_break_ToC_grad(self):
+        return self.__break_ToC_grad
+    
+    def get_tip_ToC(self):
+        return self.__tip_ToC
+    
+    def get_tip_ToC_grad(self):
+        return self.__tip_ToC_grad
+    
+    def get_AR(self):
+        return self.__AR
+    
+    def get_AR_grad(self):
+        return self.__AR_grad
+    
+    def get_fuel(self):
+        return self.__fuel
+    
+    def get_fuel_grad(self):
+        return self.__fuel_grad
         
     # -- Setters
     def set_AoA_id(self, AoA_id):
@@ -325,6 +400,7 @@ class Wing_param():
         self.__build_discretization()
         self.__check_airfoils_inputs()
         self.__link_airfoils_to_geom()
+        self.__compute_Sref_Lref_ToC_AR_fuel()
         
     def update_from_x_list(self,x):
         #print 'update wing_param with x=',x
@@ -654,6 +730,46 @@ class Wing_param():
         SLoc      = self.__span * LLoc / float(self.__n_sect)
         SLoc_grad = (self.__span_grad * LLoc + self.__span * LLoc_grad) / float(self.__n_sect)
         return LLoc, LLoc_grad, SLoc, SLoc_grad
+    
+    def __compute_Sref_Lref_ToC_AR_fuel(self):
+        """
+        Compute Lref and Sref from airfoils information, ToC and AR
+        """
+        N = self.__n_sect
+        
+        self.__Sref = 0.
+        self.__Lref = 0.
+        self.__fuel = 0.
+        self.__Sref_grad = zeros(self.__ndv)
+        self.__Lref_grad = zeros(self.__ndv)
+        self.__fuel_grad = zeros(self.__ndv)
+
+        for i,af in enumerate(self.__linked_airfoils):
+            self.__Sref+=af.get_Sref()
+            self.__Lref+=af.get_Lref()
+            self.__fuel+=self.__rel_thicks[i]*self.__chords[i]*af.get_Sref()*0.25
+            self.__Sref_grad+=af.get_Sref_grad()
+            self.__Lref_grad+=af.get_Lref_grad()
+            self.__fuel_grad+=self.__rel_thicks_grad[i]*self.__chords[i]*af.get_Sref()*0.25\
+                            + self.__rel_thicks[i]*self.__chords_grad[i]*af.get_Sref()*0.25\
+                            + self.__rel_thicks[i]*self.__chords[i]*af.get_Sref_grad()*0.25\
+            
+        self.__Lref/=N
+        self.__Lref_grad/=N
+        
+        self.__root_ToC = self.__root_height/self.__root_chord
+        self.__root_ToC_grad = (self.__root_height_grad*self.__root_chord - self.__root_height*self.__root_chord_grad)/self.__root_chord**2
+        
+        if self.__break_chord is not None:
+            self.__break_ToC = self.__break_height/self.__break_chord
+            self.__break_ToC_grad = (self.__break_height_grad*self.__break_chord-self.__break_height*self.__break_chord_grad)/self.__break_chord**2
+            
+        if self.__tip_chord is not None:
+            self.__tip_ToC = self.__tip_height/self.__tip_chord
+            self.__tip_ToC_grad = (self.__tip_height_grad*self.__tip_chord-self.__tip_height*self.__tip_chord_grad)/self.__tip_chord**2
+            
+        self.__AR = self.__span**2/self.__Sref
+        self.__AR_grad = (2.*self.__span*self.__span_grad*self.__Sref - self.__span**2*self.__Sref_grad) / self.__Sref**2
     
     def __check_airfoils_inputs(self):
         ERROR_MSG=self.ERROR_MSG+'__check_airfoils_inputs: '+str(self.__tag)+': '

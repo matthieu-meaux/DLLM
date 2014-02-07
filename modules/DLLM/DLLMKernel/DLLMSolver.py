@@ -46,16 +46,16 @@ class DLLMSolver:
         return self.__OC
     
     def get_Lref(self):
-        return self.__Lref
+        return self.__wing_param.get_Lref()
     
     def get_Lref_grad(self):
-        return self.__Lref_grad
+        return self.__wing_param.get_Lref_grad()
     
     def get_Sref(self):
-        return self.__Sref
+        return self.__wing_param.get_Sref()
     
     def get_Sref_grad(self):
-        return self.__Sref_grad
+        return self.__wing_param.get_Sref_grad()
     
     def get_DLLMMesh(self):
         return self.__DLLMMesh
@@ -171,18 +171,6 @@ class DLLMSolver:
     def set_F_list_names(self, F_list_names):
         self.__DLLMPost.set_F_list_names(F_list_names)
         
-    def set_Lref(self, Lref):
-        self.__Lref = Lref
-        
-    def set_Lref_grad(self, Lref_grad):
-        self.__Lref_grad = Lref_grad
-        
-    def set_Sref(self, Sref):
-        self.__Sref = Sref
-        
-    def set_Sref_grad(self, Sref_grad):
-        self.__Sref_grad = Sref_grad
-    
     #-- DLLMDirect setters
     def set_relax_factor(self, relax_factor):
         self.__DLLMDirect.set_relax_factor(relax_factor)
