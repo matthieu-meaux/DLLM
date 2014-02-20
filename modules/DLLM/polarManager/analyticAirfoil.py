@@ -93,11 +93,14 @@ class AnalyticAirfoil(Airfoil):
         return dcorr
     
     def __thick_corr(self):
-        thick_corr = 1. + self.THICKNESS_CORRECTION*self.get_rel_thick()
+        sweep=self.get_sweep()
+        thick_corr = 1. + self.THICKNESS_CORRECTION*self.get_rel_thick()/cos(sweep)
         return thick_corr
     
     def __dthick_corr_dchi(self):
-        dthick_corr = self.THICKNESS_CORRECTION*self.get_rel_thick_grad()
+        sweep=self.get_sweep()
+        dsweep=self.get_sweep_grad()
+        dthick_corr = self.THICKNESS_CORRECTION*(self.get_rel_thick_grad()*cos(sweep)+self.get_rel_thick()*sin(sweep)*dsweep)/cos(sweep)**2
         return dthick_corr
     
     #-- Cd related methods
@@ -214,7 +217,7 @@ class AnalyticAirfoil(Airfoil):
         nu = OC.get_nu()
         L  = self.get_Lref()
         Re = Mach*cos(sweep)*c*L/nu
-        toc         = self.get_rel_thick()
+        toc         = self.get_rel_thick()/cos(sweep)
         thick_coeff = 1.+2.1*toc # a rough guess since 1.21 for 10% relative thickness
         if Re < 1.e-12:
             # Prevent division by 0. Drag is null at zero Re number anyway
@@ -239,10 +242,13 @@ class AnalyticAirfoil(Airfoil):
         nu  = OC.get_nu()
         L   = self.get_Lref()
         dL  = self.get_Lref_grad()
+        
         Re = Mach*cos(sweep)*c*L/nu
         dRe = Mach*cos(sweep)*c*dL/nu-Mach*sin(sweep)*c*L/nu*dsweep
-        toc    = self.get_rel_thick()
-        dtoc   = self.get_rel_thick_grad()
+        
+        toc    = self.get_rel_thick()/cos(sweep)
+        dtoc   = (self.get_rel_thick_grad()*cos(sweep)+self.get_rel_thick()*sin(sweep)*dsweep)/cos(sweep)**2
+        
         thick_coeff = 1.+2.1*toc
         dthick_coeff = 2.1*dtoc
         

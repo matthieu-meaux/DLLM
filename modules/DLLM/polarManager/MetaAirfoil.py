@@ -25,7 +25,8 @@ class MetaAirfoil(Airfoil):
     def Cl(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal = Mach*np.cos(sweep)
-        Cl = self.__coefs.meta_Cl(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)
+        ToC=self.get_rel_thick()/np.cos(sweep)*100.
+        Cl = self.__coefs.meta_Cl(ToC, self.get_camber(), alpha, Mach_normal)
         sweep_corr = np.cos(self.get_sweep())
         
         return Cl*sweep_corr
@@ -33,7 +34,8 @@ class MetaAirfoil(Airfoil):
     def ClAlpha(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal= Mach*np.cos(sweep)
-        dCl_dAoA = self.__coefs.grad_Cl(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[2]
+        ToC=self.get_rel_thick()/np.cos(sweep)*100.
+        dCl_dAoA = self.__coefs.grad_Cl(ToC, self.get_camber(), alpha, Mach_normal)[2]
         sweep_corr = np.cos(self.get_sweep())
         
         return dCl_dAoA*sweep_corr
@@ -48,7 +50,8 @@ class MetaAirfoil(Airfoil):
         
         sweep=self.get_sweep()
         Mach_normal= Mach*np.cos(sweep)
-        Cd = self.__coefs.meta_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)  
+        ToC=self.get_rel_thick()/np.cos(sweep)*100.
+        Cd = self.__coefs.meta_Cd(ToC, self.get_camber(), alpha, Mach_normal)  
         
         Cds = self.Cd_spurious(alpha, Mach)
         
@@ -68,7 +71,8 @@ class MetaAirfoil(Airfoil):
             
             sweep=self.get_sweep()
             Mach_normal= Mach*np.cos(sweep)
-            dCdp_dAoA = self.__coefs.grad_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[2] - Cdsalpha
+            ToC=self.get_rel_thick()/np.cos(sweep)*100.
+            dCdp_dAoA = self.__coefs.grad_Cd(ToC, self.get_camber(), alpha, Mach_normal)[2] - Cdsalpha
         
         return dCdp_dAoA
         
@@ -81,28 +85,30 @@ class MetaAirfoil(Airfoil):
     def Cm(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal= Mach*np.cos(sweep)
-        Cm = self.__coefs.meta_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)  
-        sweep_corr = np.cos(self.get_sweep())
+        ToC=self.get_rel_thick()/np.cos(sweep)*100.
+        Cm = self.__coefs.meta_Cd(ToC, self.get_camber(), alpha, Mach_normal)  
+        sweep_corr = np.cos(self.get_sweep())**2
         
         return Cm*sweep_corr
     
     def dCl_dchi(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal = Mach*np.cos(sweep)
-        Cl = self.__coefs.meta_Cl(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)
+        ToC=self.get_rel_thick()/np.cos(sweep)*100.
+        Cl = self.__coefs.meta_Cl(ToC, self.get_camber(), alpha, Mach_normal)
         
         dsweep=self.get_sweep_grad()
         sweep_corr = np.cos(self.get_sweep())
         dsweep_corr = -np.sin(sweep)*dsweep
         
-        dCl_dthick = self.gradCl(alpha, Mach)[0]
-        dthick_dchi = self.get_rel_thick_grad()
+        dCl_dToC= self.gradCl(alpha, Mach)[0]
+        dToC_dchi = 100.*(self.get_rel_thick_grad()*np.cos(sweep)+self.get_rel_thick()*np.sin(sweep))/np.cos(sweep)**2
         
         dCl_dMach = self.gradCl(alpha, Mach)[3]
         dMach_dchi = -Mach*np.sin(sweep)*dsweep
         
     
-        return (dCl_dthick*dthick_dchi + dCl_dMach*dMach_dchi)*sweep_corr + Cl*dsweep_corr
+        return (dCl_dToC*dToC_dchi + dCl_dMach*dMach_dchi)*sweep_corr + Cl*dsweep_corr
         
     def dCd_dchi(self, alpha, Mach):
         dCdf_dchi = self.__dCd_friction_dchi(alpha, Mach)
@@ -117,19 +123,20 @@ class MetaAirfoil(Airfoil):
         if Cdp != 0:
             sweep=self.get_sweep()
             Mach_normal = Mach*np.cos(sweep)
-            Cd = self.__coefs.meta_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)
+            ToC=self.get_rel_thick()/np.cos(sweep)*100.
+            Cd = self.__coefs.meta_Cd(ToC, self.get_camber(), alpha, Mach_normal)
             
             dsweep=self.get_sweep_grad()
             
-            dCdp_dthick = self.gradCd(alpha, Mach)[0]
-            dthick_dchi = self.get_rel_thick_grad()
+            dCdp_dToC = self.gradCd(alpha, Mach)[0]
+            dToC_dchi = 100.*(self.get_rel_thick_grad()*np.cos(sweep)+self.get_rel_thick()*np.sin(sweep))/np.cos(sweep)**2
             
             dCdp_dMach = self.gradCd(alpha, Mach)[3]
             dMach_dchi = -Mach*np.sin(sweep)*dsweep
             
             dCdsdchi = self.dCds_dchi(alpha, Mach)
             
-            dCdpdchi = dCdp_dthick*dthick_dchi + dCdp_dMach*dMach_dchi - dCdsdchi
+            dCdpdchi = dCdp_dToC*dToC_dchi + dCdp_dMach*dMach_dchi - dCdsdchi
         
         else:
             dCdpdchi = 0.
@@ -147,7 +154,7 @@ class MetaAirfoil(Airfoil):
         nu = OC.get_nu()
         L  = self.get_Lref()
         Re = Mach*np.cos(sweep)*c*L/nu
-        toc         = self.get_rel_thick()
+        toc         = self.get_rel_thick()/np.cos(sweep)
         thick_coeff = 1.+2.1*toc # a rough guess since 1.21 for 10% relative thickness
         if Re < 1.e-12:
             # Prevent division by 0. Drag is null at zero Re number anyway
@@ -179,14 +186,16 @@ class MetaAirfoil(Airfoil):
         L   = self.get_Lref()
         dL  = self.get_Lref_grad()
         
-        Re  = Mach*np.cos(sweep)*c*L/nu
+        Re = Mach*np.cos(sweep)*c*L/nu
         dRe = Mach*np.cos(sweep)*c*dL/nu-Mach*np.sin(sweep)*c*L/nu*dsweep
         
-        toc    = self.get_rel_thick()
-        dtoc   = self.get_rel_thick_grad()
+        toc    = self.get_rel_thick()/np.cos(sweep)
+        dtoc   = (self.get_rel_thick_grad()*np.cos(sweep)+self.get_rel_thick()*np.sin(sweep)*dsweep)/np.cos(sweep)**2
+        
         thick_coeff = 1.+2.1*toc
         dthick_coeff = 2.1*dtoc
-        if Re < 1.e-12:
+        
+        if Re < 1.e-6:
             # Prevent division by 0. Drag is null at zero Re number anyway
             dCdf = 0.
         elif Re < 1.e5:
@@ -200,7 +209,8 @@ class MetaAirfoil(Airfoil):
     def Cd_spurious(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal = Mach*np.cos(sweep)
-        Cl = self.__coefs.meta_Cl(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)
+        ToC=self.get_rel_thick()/np.cos(sweep)*100.
+        Cl = self.__coefs.meta_Cl(ToC, self.get_camber(), alpha, Mach_normal)
         
         k, coef = self.k_coef()
         Cl0 = self.Cl0()
@@ -211,9 +221,10 @@ class MetaAirfoil(Airfoil):
     def CdsAlpha(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal = Mach*np.cos(sweep)
+        ToC=self.get_rel_thick()/np.cos(sweep)*100.
         
-        Cl = self.__coefs.meta_Cl(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)
-        Cl_alpha = self.__coefs.grad_Cl(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[2]
+        Cl = self.__coefs.meta_Cl(ToC, self.get_camber(), alpha, Mach_normal)
+        Cl_alpha = self.__coefs.grad_Cl(ToC, self.get_camber(), alpha, Mach_normal)[2]
         
         k, coef = self.k_coef()
         Cl0 = self.Cl0()
@@ -225,18 +236,19 @@ class MetaAirfoil(Airfoil):
     def dCds_dchi(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal = Mach*np.cos(sweep)
+        ToC=self.get_rel_thick()/np.cos(sweep)*100.
         
-        Cl = self.__coefs.meta_Cl(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)
+        Cl = self.__coefs.meta_Cl(ToC, self.get_camber(), alpha, Mach_normal)
         #dCldchi = self.dCl_dchi(alpha, Mach)
         
-        dCl_dthick = self.gradCl(alpha, Mach)[0]
-        dthick_dchi = self.get_rel_thick_grad()
+        dCl_dToC = self.gradCl(alpha, Mach)[0]
+        dToC_dchi = 100.*(self.get_rel_thick_grad()*np.cos(sweep)+self.get_rel_thick()*np.sin(sweep))/np.cos(sweep)**2
         
         dCl_dMach = self.gradCl(alpha, Mach)[3]
         dsweep = self.get_sweep_grad()
         dMach_dchi = -Mach*np.sin(sweep)*dsweep
         
-        dCldchi = dCl_dthick*dthick_dchi + dCl_dMach*dMach_dchi
+        dCldchi = dCl_dToC*dToC_dchi + dCl_dMach*dMach_dchi
         
         k, coef = self.k_coef()
         dk_dchi, d_coef_dchi = self.d_k_coef_dchi()
@@ -270,110 +282,110 @@ class MetaAirfoil(Airfoil):
     def gradCl(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal= Mach*np.cos(sweep)
-        gradCl = self.__coefs.grad_Cl(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)
-        gradCl[0] = gradCl[0]*100.
+        ToC=self.get_rel_thick()/np.cos(sweep)*100.
+        gradCl = self.__coefs.grad_Cl(ToC, self.get_camber(), alpha, Mach_normal)
         return gradCl
         
     def gradCd(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal= Mach*np.cos(sweep)
-        gradCd = self.__coefs.grad_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)
-        gradCd[0] = gradCd[0]*100.
+        ToC=self.get_rel_thick()/np.cos(sweep)*100.
+        gradCd = self.__coefs.grad_Cd(ToC, self.get_camber(), alpha, Mach_normal)
         return gradCd
         
     def gradCm(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal= Mach*np.cos(sweep)
-        gradCm = self.__coefs.grad_Cm(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)
-        gradCm[0] = gradCm[0]*100.
+        ToC=self.get_rel_thick()/np.cos(sweep)*100.
+        gradCm = self.__coefs.grad_Cm(ToC, self.get_camber(), alpha, Mach_normal)
         return gradCm
     
-    def dCl_dthickness(self):
-        sweep=self.get_sweep()
-        Mach_normal= Mach*np.cos(sweep)
-        dCl_dthic = self.__coefs.grad_Cl(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[0]*100.
+#     def dCl_dthickness(self):
+#         sweep=self.get_sweep()
+#         Mach_normal= Mach*np.cos(sweep)
+#         dCl_dthic = self.__coefs.grad_Cl(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[0]*100.
+#         
+#         return dCl_dthic*sweep_corr
+#         
+#     def dCl_dcamber(self):
+#         sweep=self.get_sweep()
+#         Mach_normal= Mach*np.cos(sweep)
+#         dCl_dcamb = self.__coefs.grad_Cl(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[1]
+#         sweep_corr = np.cos(self.get_sweep())**2
+#         
+#         return dCl_dcamb*sweep_corr
+#         
+#     def dCl_dMach(self):
+#         sweep=self.get_sweep()
+#         Mach_normal= Mach*np.cos(sweep)
+#         dCl_dM = self.__coefs.grad_Cl(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[3]
+#         sweep_corr = np.cos(self.get_sweep())**2
+#         
+#         return dCl_dM*sweep_corr
+#         
+#     def dCd_dthickness(self):
+#         sweep=self.get_sweep()
+#         Mach_normal= Mach*np.cos(sweep)
+#         dCd_dthic = self.__coefs.grad_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[0]
+#         sweep_corr = np.cos(self.get_sweep())**2
+#         
+#         return dCd_dthic*sweep_corr
+#         
+#     def dCd_dcamber(self):
+#         sweep=self.get_sweep()
+#         Mach_normal= Mach*np.cos(sweep)
+#         dCd_dcamb = self.__coefs.grad_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[1]
+#         sweep_corr = np.cos(self.get_sweep())**2
+#         
+#         return dCd_dcamb*sweep_corr
+#         
+#     def dCd_dalpha(self):
+#         sweep=self.get_sweep()
+#         Mach_normal= Mach*np.cos(sweep)
+#         dCd_dAoA = self.__coefs.grad_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[2]
+#         sweep_corr = np.cos(self.get_sweep())**2
+#         
+#         return dCd_dAoA*sweep_corr
+#         
+#     def dCd_dMach(self):
+#         sweep=self.get_sweep()
+#         Mach_normal= Mach*np.cos(sweep)
+#         dCd_dM = self.__coefs.grad_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[3]
+#         sweep_corr = np.cos(self.get_sweep())**2
+#         
+#         return dCd_dM*sweep_corr
         
-        return dCl_dthic*sweep_corr
-        
-    def dCl_dcamber(self):
-        sweep=self.get_sweep()
-        Mach_normal= Mach*np.cos(sweep)
-        dCl_dcamb = self.__coefs.grad_Cl(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[1]
-        sweep_corr = np.cos(self.get_sweep())**2
-        
-        return dCl_dcamb*sweep_corr
-        
-    def dCl_dMach(self):
-        sweep=self.get_sweep()
-        Mach_normal= Mach*np.cos(sweep)
-        dCl_dM = self.__coefs.grad_Cl(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[3]
-        sweep_corr = np.cos(self.get_sweep())**2
-        
-        return dCl_dM*sweep_corr
-        
-    def dCd_dthickness(self):
-        sweep=self.get_sweep()
-        Mach_normal= Mach*np.cos(sweep)
-        dCd_dthic = self.__coefs.grad_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[0]
-        sweep_corr = np.cos(self.get_sweep())**2
-        
-        return dCd_dthic*sweep_corr
-        
-    def dCd_dcamber(self):
-        sweep=self.get_sweep()
-        Mach_normal= Mach*np.cos(sweep)
-        dCd_dcamb = self.__coefs.grad_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[1]
-        sweep_corr = np.cos(self.get_sweep())**2
-        
-        return dCd_dcamb*sweep_corr
-        
-    def dCd_dalpha(self):
-        sweep=self.get_sweep()
-        Mach_normal= Mach*np.cos(sweep)
-        dCd_dAoA = self.__coefs.grad_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[2]
-        sweep_corr = np.cos(self.get_sweep())**2
-        
-        return dCd_dAoA*sweep_corr
-        
-    def dCd_dMach(self):
-        sweep=self.get_sweep()
-        Mach_normal= Mach*np.cos(sweep)
-        dCd_dM = self.__coefs.grad_Cd(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[3]
-        sweep_corr = np.cos(self.get_sweep())**2
-        
-        return dCd_dM*sweep_corr
-        
-    def dCm_dthickness(self):
-        sweep=self.get_sweep()
-        Mach_normal= Mach*np.cos(sweep)
-        dCm_dthic = self.__coefs.grad_Cm(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[0]
-        sweep_corr = np.cos(self.get_sweep())**2
-        
-        return dCm_dthic*sweep_corr
-        
-    def dCm_dcamber(self):
-        sweep=self.get_sweep()
-        Mach_normal= Mach*np.cos(sweep)
-        dCm_dcamb = self.__coefs.grad_Cm(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[1]
-        sweep_corr = np.cos(self.get_sweep())**2
-        
-        return dCm_dcamb*sweep_corr
-        
-    def dCm_dalpha(self):
-        sweep=self.get_sweep()
-        Mach_normal= Mach*np.cos(sweep)
-        dCm_dAoA = self.__coefs.grad_Cm(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[2]
-        sweep_corr = np.cos(self.get_sweep())**2
-        
-        return dCm_dAoA*sweep_corr
-        
-    def dCm_dMach(self):
-        sweep=self.get_sweep()
-        Mach_normal= Mach*np.cos(sweep)
-        dCm_dM = self.__coefs.grad_Cm(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[3]
-        sweep_corr = np.cos(self.get_sweep())**2
-        
-        return dCm_dM*sweep_corr
+#     def dCm_dthickness(self):
+#         sweep=self.get_sweep()
+#         Mach_normal= Mach*np.cos(sweep)
+#         dCm_dthic = self.__coefs.grad_Cm(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[0]
+#         sweep_corr = np.cos(self.get_sweep())**2
+#         
+#         return dCm_dthic*sweep_corr
+#         
+#     def dCm_dcamber(self):
+#         sweep=self.get_sweep()
+#         Mach_normal= Mach*np.cos(sweep)
+#         dCm_dcamb = self.__coefs.grad_Cm(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[1]
+#         sweep_corr = np.cos(self.get_sweep())**2
+#         
+#         return dCm_dcamb*sweep_corr
+#         
+#     def dCm_dalpha(self):
+#         sweep=self.get_sweep()
+#         Mach_normal= Mach*np.cos(sweep)
+#         dCm_dAoA = self.__coefs.grad_Cm(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[2]
+#         sweep_corr = np.cos(self.get_sweep())**2
+#         
+#         return dCm_dAoA*sweep_corr
+#         
+#     def dCm_dMach(self):
+#         sweep=self.get_sweep()
+#         Mach_normal= Mach*np.cos(sweep)
+#         dCm_dM = self.__coefs.grad_Cm(self.get_rel_thick()*100., self.get_camber(), alpha, Mach_normal)[3]
+#         sweep_corr = np.cos(self.get_sweep())**2
+#         
+#         return dCm_dM*sweep_corr
         
     def get_scaled_copy(self, OC=None, Sref=None,Lref=None, rel_thick=None, camber=None, sweep=None):
         if Sref is None:
