@@ -42,7 +42,7 @@ class AnalyticAirfoil(Airfoil):
         Mach_normal= Mach*cos(sweep)
         prandlt_corr=self.__Prandtl_corr(Mach_normal)
         thick_corr=self.__thick_corr()
-        sweep_corr=cos(sweep)**2
+        sweep_corr=cos(sweep)
         
         Clalpha=self.CLALPHA_BASE*prandlt_corr*thick_corr*sweep_corr
         return Clalpha
@@ -55,13 +55,13 @@ class AnalyticAirfoil(Airfoil):
         Mach_normal= Mach*cos(sweep)
         prandlt_corr=self.__Prandtl_corr(Mach_normal)
         thick_corr=self.__thick_corr()
-        sweep_corr=cos(sweep)**2
+        sweep_corr=cos(sweep)
         
         dsweep=self.get_sweep_grad()
         dprandlt_corr_dMn  = self.__dPrandtl_corr_dMach(Mach_normal)
         dprandlt_corr      = -dprandlt_corr_dMn*Mach*sin(sweep)*dsweep
         dthick_corr        = self.__dthick_corr_dchi()
-        dsweep_corr        = -2.*sin(sweep)*cos(sweep)*dsweep
+        dsweep_corr        = -sin(sweep)*dsweep
 
         dClalpha_dchi = self.CLALPHA_BASE*dprandlt_corr*thick_corr*sweep_corr \
                       + self.CLALPHA_BASE*prandlt_corr*dthick_corr*sweep_corr \

@@ -77,7 +77,7 @@ class Airfoil(DifferentiatedAeroShape):
         sweep=self.get_sweep()
         L=self.get_Lref()
         Cl=self.Cl(alpha,Mach=Mach)
-        gamma =  0.5*L*Cl/cos(sweep)
+        gamma =  0.5*L*Cl*cos(sweep)
         return gamma
     
     def dCl_dchi(self,alpha,Mach=0.0):
@@ -93,7 +93,7 @@ class Airfoil(DifferentiatedAeroShape):
         sweep=self.get_sweep()
         L=self.get_Lref()
         dCl_dAoA=self.ClAlpha(alpha,Mach)
-        dpgamma_dpAoA = 0.5*L*dCl_dAoA/cos(sweep)
+        dpgamma_dpAoA = 0.5*L*dCl_dAoA*cos(sweep)
         return dpgamma_dpAoA
     
     def dpgamma_dpchi(self, alpha, Mach):
@@ -103,7 +103,7 @@ class Airfoil(DifferentiatedAeroShape):
         dCl=self.dCl_dchi(alpha,Mach)
         sweep=self.get_sweep()
         dsweep=self.get_sweep_grad()
-        dpgamma_dpchi =  0.5*dL*Cl/cos(sweep) + 0.5*L*dCl/cos(sweep) + 0.5*L*Cl*sin(sweep)*dsweep/(cos(sweep))**2
+        dpgamma_dpchi =  0.5*dL*Cl*cos(sweep) + 0.5*L*dCl*cos(sweep) - 0.5*L*Cl*sin(sweep)*dsweep
         return dpgamma_dpchi
     
     def get_scaled_copy(self,Sref, Lref, rel_thick=0.0, sweep=0.):

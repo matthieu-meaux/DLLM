@@ -747,12 +747,12 @@ class Wing_param():
         for i,af in enumerate(self.__linked_airfoils):
             self.__Sref+=af.get_Sref()
             self.__Lref+=af.get_Lref()
-            self.__fuel+=self.__rel_thicks[i]*self.__chords[i]*af.get_Sref()*0.25
+            self.__fuel+=self.__rel_thicks[i]*self.__chords[i]*af.get_Sref()*0.5
             self.__Sref_grad+=af.get_Sref_grad()
             self.__Lref_grad+=af.get_Lref_grad()
-            self.__fuel_grad+=self.__rel_thicks_grad[i]*self.__chords[i]*af.get_Sref()*0.25\
-                            + self.__rel_thicks[i]*self.__chords_grad[i]*af.get_Sref()*0.25\
-                            + self.__rel_thicks[i]*self.__chords[i]*af.get_Sref_grad()*0.25\
+            self.__fuel_grad+=self.__rel_thicks_grad[i]*self.__chords[i]*af.get_Sref()*0.5\
+                            + self.__rel_thicks[i]*self.__chords_grad[i]*af.get_Sref()*0.5\
+                            + self.__rel_thicks[i]*self.__chords[i]*af.get_Sref_grad()*0.5\
             
         self.__Lref/=N
         self.__Lref_grad/=N
