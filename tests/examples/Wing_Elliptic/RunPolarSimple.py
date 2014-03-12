@@ -10,15 +10,16 @@ OC=OperatingCondition('cond1',atmospheric_model='simple')
 #OC.set_Mach(0.6)
 #OC.set_AoA(3.5)
 AoA_list = [float(xx) for xx in range(0, 10)]
+AoA_list = [9.]
 #Mach_list = [float(xx)/10. for xx in range(3, 9)]
-Mach_list = [0.3]#,0.6,0.8]
+Mach_list = [0.2]#,0.6,0.8]
 
 OC.set_altitude(3000.)
 OC.set_T0_deg(15.)
 OC.set_P0(101325.)
 OC.set_humidity(0.)
 
-wing_param=Wing_param('test_param',geom_type='Elliptic',n_sect=20)
+wing_param=Wing_param('test_param',geom_type='Elliptic',n_sect=300)
 wing_param.build_wing()
 wing_param.set_value('test_param.span',40.)
 wing_param.set_value('test_param.root_chord',4.)

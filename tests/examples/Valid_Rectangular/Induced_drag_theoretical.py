@@ -10,7 +10,7 @@ OC.set_T0_deg(15.)
 OC.set_P0(101325.)
 OC.set_humidity(0.)
 
-wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
+wing_param=Wing_param('test_param',geom_type='Broken',n_sect=50)
 wing_param.build_wing()
 wing_param.set_value('test_param.span',30.)
 #wing_param.set_value('test_param.sweep',34.)
@@ -49,7 +49,7 @@ print "Cla=",Cla
 
 
 list_file = ['SimpleRect_3.00E-01.dat','SimpleRect_6.00E-01.dat','SimpleRect_8.00E-01.dat']
-list_file = ['SimpleRect_3.00E-01.dat']
+list_file = ['SimpleRect_2.00E-01.dat']
 e=0.70
 AR = wing_param.get_AR()
 print 'AR=',AR

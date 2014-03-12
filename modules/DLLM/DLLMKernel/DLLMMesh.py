@@ -59,7 +59,8 @@ class DLLMMesh:
         DdGammaDy_DGamma[0:self.__N,:]   = diag(ones([self.__N]))
         DdGammaDy_DGamma[self.__N,:]     = 0.0
         DdGammaDy_DGamma[1:self.__N+1,:]-= diag(ones([self.__N]))
-        
+        #DdGammaDy_DGamma[0,0]=1.
+        #DdGammaDy_DGamma[-1,-1]=-1.
         self.__K = - dot(Kmetric,DdGammaDy_DGamma)
         
         eta_grad = self.get_wing_param().get_eta_grad()[1,:,:]

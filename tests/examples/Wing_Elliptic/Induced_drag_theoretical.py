@@ -10,7 +10,9 @@ OC.set_T0_deg(15.)
 OC.set_P0(101325.)
 OC.set_humidity(0.)
 
-wing_param=Wing_param('test_param',geom_type='Elliptic',n_sect=20)
+nsect=50
+
+wing_param=Wing_param('test_param',geom_type='Elliptic',n_sect=nsect)
 wing_param.build_wing()
 wing_param.set_value('test_param.span',40.)
 wing_param.set_value('test_param.root_chord',4.)
@@ -26,7 +28,7 @@ Cla=airfoils[0].ClAlpha(0.0,0.3)
 print "Cla=",Cla
 
 #list_file = ['SimpleRect_3.00E-01.dat','SimpleRect_6.00E-01.dat','SimpleRect_8.00E-01.dat']
-list_file = ['Elliptic_3.00E-01.dat']
+list_file = ['Elliptic_2.00E-01.dat']
 e=0.70
 AR = wing_param.get_AR()
 print 'AR=',AR
@@ -57,6 +59,6 @@ for i,file_name in enumerate(list_file):
     fid.close()
 
 fid=open('theory_iAoA.dat','w')
-for i in xrange(20):
+for i in xrange(nsect):
     fid.write(str(i)+'\t'+str(-Cl/(numpy.pi*AR))+'\t'+str(-Cl/(numpy.pi*e*AR))+'\n')
 fid.close()
