@@ -61,9 +61,6 @@ config_dict['Case.DLLM.relax_factor']=0.99
 config_dict['Case.DLLM.stop_residual']=1e-9
 config_dict['Case.DLLM.max_iterations']=100
 config_dict['Case.DLLM.F_list_names']=['Lift']
-config_dict['Case.cond1.DLLM.gamma_file_name']='cond1_gamma.dat'
-config_dict['Case.cond2.DLLM.gamma_file_name']='cond2_gamma.dat'
-config_dict['Case.cond3.DLLM.gamma_file_name']='cond3_gamma.dat'
 # AoA design variable must not be used with TargetCl or TargetLift
 config_dict['Case.param.desc.AoA1.type']='DesignVariable'
 config_dict['Case.param.desc.AoA1.value']=0.

@@ -39,7 +39,7 @@ wing_param.update()
 
 print wing_param
 
-DLLM = DLLMSolver(wing_param,OC)
+DLLM = DLLMSolver('Meta',wing_param,OC)
 DLLM.run_direct()
 DLLM.run_post()
 

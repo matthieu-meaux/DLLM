@@ -49,12 +49,12 @@ class TestDLLMSimple(unittest.TestCase):
         test class instantiation
         """
         OC,wing_param = self.__init_wing_param()
-        DLLM = DLLMSolver(wing_param,OC)
+        DLLM = DLLMSolver('test',wing_param,OC)
         assert(DLLM is not None)
         
     def test_DLLM_run_direct(self):
         OC,wing_param = self.__init_wing_param()
-        DLLM = DLLMSolver(wing_param,OC)
+        DLLM = DLLMSolver('test',wing_param,OC)
         try:
             print ''
             DLLM.run_direct()
@@ -65,7 +65,7 @@ class TestDLLMSimple(unittest.TestCase):
         
     def test_DLLM_run_direct_post(self):
         OC,wing_param = self.__init_wing_param()
-        DLLM = DLLMSolver(wing_param,OC)
+        DLLM = DLLMSolver('test',wing_param,OC)
         try:
             print ''
             DLLM.run_direct()
@@ -77,7 +77,7 @@ class TestDLLMSimple(unittest.TestCase):
     
     def test_DLLM_run_direct_post_adjoint(self):
         OC,wing_param = self.__init_wing_param()
-        DLLM = DLLMSolver(wing_param,OC)
+        DLLM = DLLMSolver('test',wing_param,OC)
         try:
             print ''
             DLLM.run_direct()
@@ -90,7 +90,7 @@ class TestDLLMSimple(unittest.TestCase):
         
     def test_DLLM_valid_dpR_dpiAoA(self):
         OC,wing_param = self.__init_wing_param()
-        DLLM = DLLMSolver(wing_param,OC)
+        DLLM = DLLMSolver('test',wing_param,OC)
         print ''
         DLLM.run_direct()
         iAoA0=DLLM.get_iAoA()
@@ -108,7 +108,7 @@ class TestDLLMSimple(unittest.TestCase):
         
     def test_DLLM_valid_dpR_dpchi(self):
         OC,wing_param = self.__init_wing_param()
-        DLLM = DLLMSolver(wing_param,OC)
+        DLLM = DLLMSolver('test',wing_param,OC)
         print ''
         DLLM.run_direct()
         iAoA=DLLM.get_iAoA()
@@ -132,7 +132,7 @@ class TestDLLMSimple(unittest.TestCase):
         
     def test_DLLM_valid_dpR_dpthetaY(self):
         OC,wing_param = self.__init_wing_param()
-        DLLM = DLLMSolver(wing_param,OC)
+        DLLM = DLLMSolver('test',wing_param,OC)
         print ''
         DLLM.run_direct()
         iAoA=DLLM.get_iAoA()
@@ -153,7 +153,7 @@ class TestDLLMSimple(unittest.TestCase):
         
     def test_DLLM_valid_dpF_list_dpW(self):
         OC,wing_param = self.__init_wing_param()
-        DLLM = DLLMSolver(wing_param,OC)
+        DLLM = DLLMSolver('test',wing_param,OC)
         print ''
         DLLM.run_direct()
         iAoA0=DLLM.get_iAoA()
@@ -177,7 +177,7 @@ class TestDLLMSimple(unittest.TestCase):
         
     def test_DLLM_valid_dpF_list_dpchi(self):
         OC,wing_param = self.__init_wing_param()
-        DLLM = DLLMSolver(wing_param,OC)
+        DLLM = DLLMSolver('test',wing_param,OC)
         print ''
         DLLM.run_direct()
         iAoA=DLLM.get_iAoA()
@@ -209,7 +209,7 @@ class TestDLLMSimple(unittest.TestCase):
         x0=wing_param.get_dv_array()
         def f6(x):
             wing_param.update_from_x_list(x)
-            DLLM = DLLMSolver(wing_param,OC)
+            DLLM = DLLMSolver('test',wing_param,OC)
             DLLM.run_direct()
             DLLM.run_post()
             func=DLLM.get_F_list()
@@ -217,7 +217,7 @@ class TestDLLMSimple(unittest.TestCase):
         
         def df6(x):
             wing_param.update_from_x_list(x)
-            DLLM = DLLMSolver(wing_param,OC)
+            DLLM = DLLMSolver('test',wing_param,OC)
             DLLM.run_direct()
             DLLM.run_post()
             DLLM.run_adjoint()

@@ -23,6 +23,9 @@ class DLLMMesh:
     def get_airfoils(self):
         return self.__LLW.get_airfoils()
     
+    def get_tag(self):
+        return self.__LLW.get_tag()
+    
     def get_wing_param(self):
         return self.__LLW.get_wing_param()
     
@@ -43,7 +46,7 @@ class DLLMMesh:
          
     def __setGeom(self):
         '''
-        Sets the geometry of the wing, builds the liftinf line metric matrix
+        Sets the geometry of the wing, builds the lifting line metric matrix
         '''
         eta = self.get_wing_param().get_eta()[1,:]
         y   = self.get_wing_param().get_XYZ()[1,:]
@@ -57,7 +60,7 @@ class DLLMMesh:
         DdGammaDy_DGamma[self.__N,:]     = 0.0
         DdGammaDy_DGamma[1:self.__N+1,:]-= diag(ones([self.__N]))
         
-        self.__K = dot(Kmetric,DdGammaDy_DGamma)
+        self.__K = - dot(Kmetric,DdGammaDy_DGamma)
         
         eta_grad = self.get_wing_param().get_eta_grad()[1,:,:]
         y_grad   = self.get_wing_param().get_XYZ_grad()[1,:,:]
@@ -75,7 +78,7 @@ class DLLMMesh:
         
         self.__dK_dchi = zeros((self.__N,self.__N,self.__ndv))
         for n in xrange(self.__ndv):
-            self.__dK_dchi[:,:,n]=dot(dKmetric_dchi[:,:,n],DdGammaDy_DGamma)
+            self.__dK_dchi[:,:,n]=-dot(dKmetric_dchi[:,:,n],DdGammaDy_DGamma)
               
 
 #     def __setGeomWeissinger(self):

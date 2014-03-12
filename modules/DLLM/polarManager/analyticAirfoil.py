@@ -11,8 +11,10 @@ class AnalyticAirfoil(Airfoil):
     """
     An analytic airfoil based on linear theory
     """
-    THICKNESS_CORRECTION=0.7698
+    #THICKNESS_CORRECTION=0.7698
+    THICKNESS_CORRECTION=0.0
     CLALPHA_BASE=2.*pi
+    POW_COS  = 1.
     
     def __init__(self, OC, AoA0=0., Cm0=0.0, Sref=1., Lref=1., rel_thick=0.0, sweep=0.0, Ka=0.95):
         '''
@@ -39,10 +41,12 @@ class AnalyticAirfoil(Airfoil):
     
     def ClAlpha(self, alpha, Mach):
         sweep=self.get_sweep()
-        Mach_normal= Mach*cos(sweep)
+        #Mach_normal = Mach*cos(sweep)
+        Mach_normal = Mach*cos(sweep)**self.POW_COS
         prandlt_corr=self.__Prandtl_corr(Mach_normal)
         thick_corr=self.__thick_corr()
-        sweep_corr=cos(sweep)
+        #sweep_corr=cos(sweep)**2
+        sweep_corr = cos(sweep)**(2.*self.POW_COS)
         
         Clalpha=self.CLALPHA_BASE*prandlt_corr*thick_corr*sweep_corr
         return Clalpha
@@ -52,16 +56,20 @@ class AnalyticAirfoil(Airfoil):
     
     def __dClAlpha_dchi(self, alpha, Mach):
         sweep=self.get_sweep()
-        Mach_normal= Mach*cos(sweep)
+        #Mach_normal= Mach*cos(sweep)
+        Mach_normal = Mach*cos(sweep)**self.POW_COS
         prandlt_corr=self.__Prandtl_corr(Mach_normal)
         thick_corr=self.__thick_corr()
-        sweep_corr=cos(sweep)
+        #sweep_corr=cos(sweep)**2
+        sweep_corr = cos(sweep)**(2.*self.POW_COS)
         
         dsweep=self.get_sweep_grad()
         dprandlt_corr_dMn  = self.__dPrandtl_corr_dMach(Mach_normal)
-        dprandlt_corr      = -dprandlt_corr_dMn*Mach*sin(sweep)*dsweep
+        #dprandlt_corr      = -dprandlt_corr_dMn*Mach*sin(sweep)*dsweep
+        dprandlt_corr      = -self.POW_COS*dprandlt_corr_dMn*Mach*sin(sweep)*dsweep*(cos(sweep))**(self.POW_COS-1.)
         dthick_corr        = self.__dthick_corr_dchi()
-        dsweep_corr        = -sin(sweep)*dsweep
+        #dsweep_corr        = -2.*sin(sweep)*cos(sweep)*dsweep
+        dsweep_corr        = -2.*self.POW_COS*sin(sweep)*dsweep*cos(sweep)**(2.*self.POW_COS-1.)
 
         dClalpha_dchi = self.CLALPHA_BASE*dprandlt_corr*thick_corr*sweep_corr \
                       + self.CLALPHA_BASE*prandlt_corr*dthick_corr*sweep_corr \
@@ -70,6 +78,7 @@ class AnalyticAirfoil(Airfoil):
         return dClalpha_dchi
     
     def __Prandtl_corr(self,Mach):
+        return 1.
         if Mach<0.:
             raise Exception, "Mach number should be positive."
         elif Mach<0.3:
@@ -82,6 +91,7 @@ class AnalyticAirfoil(Airfoil):
         return corr
         
     def __dPrandtl_corr_dMach(self, Mach):
+        return 0.
         if Mach<0.:
             raise Exception, "Mach number should be positive."
         elif Mach<0.3:
@@ -281,4 +291,4 @@ class AnalyticAirfoil(Airfoil):
             sweep = self.get_sweep()
         if OC is None:
             OC = self.get_OC()
-        return AnalyticAirfoil(OC, self.__AoA0, self.__Cm0, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep)
+        return AnalyticAirfoil(OC, self.__AoA0, self.__Cm0, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep, Ka=self.__Ka)

@@ -205,14 +205,14 @@ class DLLMWrapper():
             type='Solver'
             
         if   type == 'Solver':
-            self.__DLLM_solver = DLLMSolver(self.__wing_param,self.__OC)          
+            self.__DLLM_solver = DLLMSolver(self.__tag,self.__wing_param,self.__OC)          
         elif type == 'TargetCl':
-            self.__DLLM_solver = DLLMTargetCl(self.__wing_param,self.__OC)
+            self.__DLLM_solver = DLLMTargetCl(self.__tag,self.__wing_param,self.__OC)
             target_Cl_key = self.__tag+'.DLLM.target_Cl'
             target_Cl = self.__config_dict[target_Cl_key]
             self.__DLLM_solver.set_target_Cl(target_Cl)
         elif type == 'TargetLift':
-            self.__DLLM_solver = DLLMTargetLift(self.__wing_param,self.__OC)
+            self.__DLLM_solver = DLLMTargetLift(self.__tag,self.__wing_param,self.__OC)
             target_Lift_key = self.__tag+'.DLLM.target_Lift'
             target_Lift = self.__config_dict[target_Lift_key]
             self.__DLLM_solver.set_target_Lift(target_Lift)

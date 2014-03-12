@@ -43,7 +43,7 @@ thetaY0=wing_param.get_thetaY()
 print 'thetaY0 shape',thetaY0.shape
 print 'thetaY0=',thetaY0
 
-DLLM = DLLMSolver(wing_param,OC)
+DLLM = DLLMSolver('Meta',wing_param,OC)
 DLLM.run_direct()
 iAoA=DLLM.get_iAoA()
 

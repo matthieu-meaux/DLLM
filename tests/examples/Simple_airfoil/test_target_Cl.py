@@ -39,7 +39,7 @@ wing_param.update()
 
 print wing_param
 
-DLLM = DLLMTargetCl(wing_param,OC)
+DLLM = DLLMTargetCl('TCl',wing_param,OC)
 #DLLM.set_method('scipy')
 DLLM.set_target_Cl(0.5)
 DLLM.run_direct()

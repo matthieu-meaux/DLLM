@@ -43,7 +43,7 @@ print wing_param
 N = wing_param.get_n_sect()
 iAoA0=numpy.zeros(N)
 
-DLLM = DLLMSolver(wing_param,OC)
+DLLM = DLLMSolver('test',wing_param,OC)
 
 NRPb = NewtonRaphsonProblem(iAoA0, DLLM.comp_R, DLLM.comp_dpR_dpiAoA)
 NRPb.set_relax_factor(0.99)

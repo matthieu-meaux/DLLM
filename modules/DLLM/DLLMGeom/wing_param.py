@@ -464,6 +464,9 @@ class Wing_param():
             grad = pt.get_gradient()
             self.__sweep      = val*deg_to_rad
             self.__sweep_grad = grad*deg_to_rad
+        else:
+            self.__sweep      = 0.
+            self.__sweep_grad = zeros(self.get_ndv())
         
         if   self.__geom_type in ['Rectangular','Elliptic']:
             Id   = self.__tag+'.root_chord'
@@ -678,10 +681,10 @@ class Wing_param():
         else:
             self.__airfoils = airfoils
             
-    def build_linear_airfoil(self, OC, AoA0=0., Cm0=0., Sref=1., Lref=1., rel_thick=0., sweep=0., set_as_ref=True):
+    def build_linear_airfoil(self, OC, AoA0=0., Cm0=0., Sref=1., Lref=1., rel_thick=0., sweep=0., Ka=0.95, set_as_ref=True):
         self.__airfoil_type = 'simple'
         degToRad = pi/180.
-        airfoil  = AnalyticAirfoil(OC, AoA0=degToRad*AoA0, Cm0=Cm0, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep)
+        airfoil  = AnalyticAirfoil(OC, AoA0=degToRad*AoA0, Cm0=Cm0, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep, Ka=Ka)
         if set_as_ref:
             self.set_ref_aifoil(airfoil)
         return airfoil

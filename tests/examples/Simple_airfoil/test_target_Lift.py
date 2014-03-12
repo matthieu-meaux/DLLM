@@ -39,7 +39,7 @@ wing_param.update()
 
 print wing_param
 
-DLLM = DLLMTargetLift(wing_param,OC)
+DLLM = DLLMTargetLift('TLift',wing_param,OC)
 DLLM.set_target_Lift(769200.)
 #DLLM.set_method('scipy')
 DLLM.run_direct()

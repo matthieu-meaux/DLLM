@@ -48,7 +48,7 @@ F_list_names = ['Drag','Drag_Pressure','Drag_Induced','Drag_Wave','Drag_Friction
 
 def f(x):
     wing_param.update_from_x_list(x)
-    DLLM = DLLMTargetLift(wing_param,OC)
+    DLLM = DLLMTargetLift('Simple',wing_param,OC)
     DLLM.set_target_Lift(769200.)
     DLLM.set_F_list_names(F_list_names)
     DLLM.run_direct()
@@ -58,7 +58,7 @@ def f(x):
 
 def df(x):
     wing_param.update_from_x_list(x)
-    DLLM = DLLMTargetLift(wing_param,OC)
+    DLLM = DLLMTargetLift('Simple',wing_param,OC)
     DLLM.set_target_Lift(769200.)
     DLLM.set_F_list_names(F_list_names)
     DLLM.run_direct()

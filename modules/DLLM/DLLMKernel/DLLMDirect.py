@@ -10,10 +10,15 @@ from numpy.linalg import norm, solve
 
 from MDOTools.Solvers.newton_raphson_problem import NewtonRaphsonProblem
 
+
+
 class DLLMDirect:
     """
     Direct solver for the lifting line wing model
     """
+    DEG_TO_RAD = numpy.pi/180.
+    RAD_TO_DEG = 180./numpy.pi
+    
     def __init__(self, LLW):
         self.__LLW          = LLW
         self.__computed     = False
@@ -27,6 +32,9 @@ class DLLMDirect:
         self.__init_Newton_Raphson()
         
     #-- Accessors
+    def get_tag(self):
+        return self.__LLW.get_tag()
+    
     def get_wing_param(self):
         return self.__LLW.get_wing_param()
     
@@ -129,7 +137,7 @@ class DLLMDirect:
         
         # Angle of attack variables
         self.__localAoA            = zeros([N])
-        self.__dplocalAoA_dpiAoA   = -diag(ones([N])) # This is a constant matrix
+        self.__dplocalAoA_dpiAoA   = diag(ones([N])) # This is a constant matrix
         self.__dplocalAoA_dpthetaY = diag(ones([N]))  # This is a constant matrix
         self.__dplocalAoA_dpAoA    = ones(N)
         self.__dplocalAoA_dpchi    = zeros([N,ndv])
@@ -172,11 +180,10 @@ class DLLMDirect:
         return self.__dpR_dpiAoA
     
     def comp_dpR_dpchi(self):
-        K=self.get_K()
         self.__compute_dplocalAoA_dpchi()
         self.__compute_dpgamma_dpchi()
         self.__compute_dpiAoAnew_dpchi()
-        self.__dpR_dpchi = -dot(K,self.__dpgamma_dpchi) - self.__dpiAoAnew_dpchi
+        self.__dpR_dpchi = -self.__dpiAoAnew_dpchi
         
         return self.__dpR_dpchi
     
@@ -230,10 +237,12 @@ class DLLMDirect:
         self.__dpgamma_dpchi = self.__dpgamma_dpchi + dot(self.__dpgamma_dplocalAoA,self.__dplocalAoA_dpchi) 
             
     def __compute_dpiAoAnew_dpchi(self):
+        K=self.get_K()
         dK_dchi=self.get_dK_dchi()
         ndv=self.get_ndv()
+        self.__dpiAoAnew_dpchi = dot(K,self.__dpgamma_dpchi)
         for n in xrange(ndv):
-            self.__dpiAoAnew_dpchi[:,n] = dot(dK_dchi[:,:,n],self.__gamma)
+            self.__dpiAoAnew_dpchi[:,n] += dot(dK_dchi[:,:,n],self.__gamma)
 
     def __compute_localAoA(self):
         N=self.get_N()
@@ -248,7 +257,7 @@ class DLLMDirect:
          
         # Why this formula ? twist increases the local airfoil angle of attack normally...
         #self.__localAoA=alpha-iaOa-self.get_wing_geom().get_twist()
-        self.__localAoA = AoA + twist - self.__iAoA + Thetay
+        self.__localAoA = AoA + twist + self.__iAoA + Thetay
         
         for i in xrange(N):
             if self.__localAoA[i] > numpy.pi/2. or self.__localAoA[i] < -numpy.pi/2.:
@@ -289,16 +298,28 @@ class DLLMDirect:
         '''
         Writes the circulation repartition in a file
         '''
+        y   = self.get_wing_param().get_XYZ()[1,:]
         if self.__gamma_f_name is None:
             gamma_f_name='gamma.dat'
         else:
             gamma_f_name=self.__gamma_f_name
+        
+        mod_gamma_f_name=self.get_tag()+'_'+gamma_f_name
             
-        fid=open(gamma_f_name,'w')
-        line="#Slice\t%24s"%"Circulation"+"\n"
+        fid=open(mod_gamma_f_name,'w')
+        line="#Slice\t%24s"%"y"+"\t%24s"%"Circulation"+"\n"
         fid.write(line)
         i=0
         for i in range(len(self.__gamma)):
-            line=str(i)+"\t%24.16e"%self.__gamma[i]+"\n"
+            line=str(i)+"\t%24.16e"%y[i]+"\t%24.16e"%self.__gamma[i]+"\n"
+            fid.write(line)
+        fid.close()
+        
+        fid=open(self.get_tag()+'_iAoA.dat','w')
+        line="#Slice\t%24s"%"y"+"\t%24s"%"iAoA"+"\t%24s"%"iAoA_deg"+"\n"
+        fid.write(line)
+        i=0
+        for i in range(len(self.__gamma)):
+            line=str(i)+"\t%24.16e"%y[i]+"\t%24.16e"%self.__iAoA[i]+"\t%24.16e"%(self.__iAoA[i]*self.RAD_TO_DEG)+"\n"
             fid.write(line)
         fid.close()

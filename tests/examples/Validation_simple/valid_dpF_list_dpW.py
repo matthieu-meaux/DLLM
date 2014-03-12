@@ -39,7 +39,7 @@ wing_param.update()
 
 print wing_param
 
-DLLM = DLLMSolver(wing_param,OC)
+DLLM = DLLMSolver('Simple',wing_param,OC)
 DLLM.run_direct()
 iAoA0=DLLM.get_iAoA()
 print 'iAoA0 shape',iAoA0.shape

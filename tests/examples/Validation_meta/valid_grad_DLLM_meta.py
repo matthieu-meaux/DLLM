@@ -46,7 +46,7 @@ print 'dv_array=',x0
 
 def f(x):
     wing_param.update_from_x_list(x)
-    DLLM = DLLMSolver(wing_param,OC)
+    DLLM = DLLMSolver('Meta',wing_param,OC)
     DLLM.run_direct()
     #DLLM.run_post(func_list=['Cl'])
     DLLM.run_post()
@@ -55,7 +55,7 @@ def f(x):
 
 def df(x):
     wing_param.update_from_x_list(x)
-    DLLM = DLLMSolver(wing_param,OC)
+    DLLM = DLLMSolver('Meta',wing_param,OC)
     DLLM.run_direct()
     #DLLM.run_post(func_list=['Cl'])
     DLLM.run_post()

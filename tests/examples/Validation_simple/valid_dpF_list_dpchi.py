@@ -43,7 +43,7 @@ x0=wing_param.get_dv_array()
 print 'dv array shape',x0.shape
 print 'dv_array=',x0
 
-DLLM = DLLMSolver(wing_param,OC)
+DLLM = DLLMSolver('Simple',wing_param,OC)
 DLLM.run_direct()
 iAoA=DLLM.get_iAoA()
 

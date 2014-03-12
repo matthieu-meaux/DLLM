@@ -12,7 +12,7 @@ from DLLM.DLLMKernel.DLLMAdjoint import DLLMAdjoint
 
 class DLLMSolver:
     ERROR_MSG='ERROR in DLLMSolver.'
-    def __init__(self, wing_param, OC):
+    def __init__(self, tag, wing_param, OC):
         '''
         Constructor for wings based on lifting line theory
         @param wing_geom : the wing geometry
@@ -20,6 +20,8 @@ class DLLMSolver:
         @param relaxFactor : relaxation factor for induced angles computation
         @param stopCriteria : the stop criteria for the iterative method for computing the wing circulation.
         '''
+        self.__tag        = tag
+        
         self.__wing_param = wing_param
         self.__OC         = OC
         
@@ -36,6 +38,9 @@ class DLLMSolver:
         self.set_OC(OC)
     
     #-- Accessors
+    def get_tag(self):
+        return self.__tag
+    
     def get_wing_param(self):
         return self.__wing_param
     

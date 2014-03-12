@@ -22,6 +22,9 @@ class DLLMAdjoint:
         self.__dF_list_dchi       = None
         
     #-- accessors
+    def get_tag(self):
+        return self.__LLW.get_tag()
+    
     def get_adjoint_list(self):
         return self.__adj_list
     
