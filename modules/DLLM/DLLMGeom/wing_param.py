@@ -6,6 +6,7 @@
 # - Local imports -
 import sys
 import string
+import numpy
 from padge.PCADEngine.Base.PCADModel import PCADModel
 from DLLM.polarManager.analyticAirfoil import AnalyticAirfoil
 from DLLM.polarManager.airfoilPolar import AirfoilPolar
@@ -18,6 +19,7 @@ class Wing_param():
     
     ERROR_MSG = 'ERROR in Wing_param.'
     POSSIBLE_GEOM_TYPES=["Rectangular","Elliptic","Broken"]
+    POS_DISTRIB=['linear','cos_law']
     
     def __init__(self, tag, geom_type='Broken', n_sect=20):
         """
@@ -28,6 +30,8 @@ class Wing_param():
         self.__n_sect     = None
         self.__PCADModel  = None
         self.__BC_manager = None
+        
+        self.__distrib_type = 'cos_law'
         
         self.set_geom_type(geom_type)
         self.set_n_sect(n_sect)
@@ -52,6 +56,9 @@ class Wing_param():
         # -- discrete attributes
         self.__span               = None
         self.__span_grad          = None
+        
+        self.__r_list_y           = None
+        self.__r_list_eta         = None
         
         self.__sweep              = None
         self.__sweep_grad         = None
@@ -82,6 +89,9 @@ class Wing_param():
         
         self.__chords             = None
         self.__chords_grad        = None
+        
+        self.__heights            = None
+        self.__heights_grad       = None
         
         self.__rel_thicks         = None
         self.__rel_thicks_grad    = None
@@ -237,6 +247,11 @@ class Wing_param():
         if n_sect%2!=0:
             raise Exception, ERROR_MSG+'The total number of elements in the wing must be even.'
         self.__n_sect = n_sect
+        
+    def set_distrib_type(self, distrib_type):
+        if not distrib_type in self.POS_DISTRIB:
+            raise Exception, "distrib_type :"+str(distrib_type)+" not in possible types : "+str(self.POS_DISTRIB)
+        self.__distrib_type = distrib_type
             
     def set_value(self, Id, val):
         pt=self.__BC_manager.get_pt(Id)
@@ -439,12 +454,11 @@ class Wing_param():
     # -- discretization methods
     def __build_discretization(self):
         self.__build_planform()
+        self.__build_r_lists()
         self.__build_chords()
-        self.__build_rel_thicks()
-        self.__build_XYZ()
-        self.__build_eta()
+        self.__build_heights_rel_thicks()
+        self.__build_XYZ_eta()
         
-
     def __build_planform(self):
         deg_to_rad = pi/180.
         
@@ -549,33 +563,48 @@ class Wing_param():
             grad = pt.get_gradient()
             self.__twist[i]        = val*deg_to_rad
             self.__twist_grad[i,:] = grad*deg_to_rad
-            
+    
+    def __build_r_lists(self):
+        N = self.__n_sect
+        
+        if self.__distrib_type == 'linear':
+            self.__r_list_eta = numpy.linspace(-0.5,0.5,N+1)
+        else:
+            theta_list = numpy.linspace(0.,numpy.pi,N+1)
+            self.__r_list_eta = -0.5+0.5*(1.-numpy.cos(theta_list))
+        
+        self.__r_list_y   = 0.5*(self.__r_list_eta[:-1]+self.__r_list_eta[1:])
+        
     def __build_chords(self):
-
         self.__chords      = zeros((self.__n_sect))
         self.__chords_grad = zeros((self.__n_sect,self.__ndv))
         
-        N = self.__n_sect
-        n = N/2
-        
+        self.__chords_eta      = zeros((self.__n_sect+1))
+        self.__chords_grad_eta = zeros((self.__n_sect+1,self.__ndv))
+               
         if   self.__geom_type == 'Elliptic':
-            for i in xrange(N):
-                r=float(i+0.5-n)/float(n)
-                self.__chords[i]        = self.__root_chord*sqrt(1.-r**2)
-                self.__chords_grad[i,:] = self.__root_chord_grad[:]*sqrt(1.-r**2)
+            for i,r in enumerate(self.__r_list_y):
+                self.__chords[i]        = self.__root_chord*sqrt(1.-(2.*r)**2)
+                self.__chords_grad[i,:] = self.__root_chord_grad[:]*sqrt(1.-(2.*r)**2)
+            for i,r in enumerate(self.__r_list_eta):
+                self.__chords_eta[i]        = self.__root_chord*sqrt(1.-(2.*r)**2)
+                self.__chords_grad_eta[i,:] = self.__root_chord_grad[:]*sqrt(1.-(2.*r)**2)
 
         elif self.__geom_type == 'Rectangular':
-            for i in xrange(N):
+            for i in xrange(self.__n_sect):
                 self.__chords[i]        = self.__root_chord
                 self.__chords_grad[i,:] = self.__root_chord_grad[:]
+            for i in xrange(self.__n_sect+1):
+                self.__chords_eta[i]        = self.__root_chord
+                self.__chords_grad_eta[i,:] = self.__root_chord_grad[:]
+                
 
         elif self.__geom_type == 'Broken':
             p      = self.__break_percent/100.
             p_grad = self.__break_percent_grad/100.
             
-            for i in xrange(N):
-                r = abs(float(i+0.5-n)/float(n))
-                
+            for i,r in enumerate(self.__r_list_y):
+                r=abs(2.*r)
                 if r <= p:
                     coeff = r/p
                     dcoeff = -r*p_grad[:]/p**2
@@ -591,10 +620,28 @@ class Wing_param():
                     self.__chords_grad[i,:] = (self.__tip_chord_grad[:] - self.__break_chord_grad[:])*coeff  \
                                             + (self.__tip_chord - self.__break_chord)*dcoeff \
                                             + self.__break_chord_grad[:]
-                                                
-    def __build_rel_thicks(self):
-        N = self.__n_sect
-        n = N/2
+                                            
+            for i,r in enumerate(self.__r_list_eta):
+                r=abs(2.*r)
+                if r <= p:
+                    coeff = r/p
+                    dcoeff = -r*p_grad[:]/p**2
+                    self.__chords_eta[i]        = (self.__break_chord - self.__root_chord)*coeff + self.__root_chord
+                    self.__chords_grad_eta[i,:] = (self.__break_chord_grad[:] - self.__root_chord_grad[:])*coeff  \
+                                                + (self.__break_chord - self.__root_chord)*dcoeff \
+                                                + self.__root_chord_grad[:]
+                    
+                else:
+                    coeff = (r-p)/(1.-p)
+                    dcoeff = (r-1)*p_grad[:]/(1.-p)**2
+                    self.__chords_eta[i]        = (self.__tip_chord - self.__break_chord)*coeff + self.__break_chord
+                    self.__chords_grad_eta[i,:] = (self.__tip_chord_grad[:] - self.__break_chord_grad[:])*coeff  \
+                                                + (self.__tip_chord - self.__break_chord)*dcoeff \
+                                                + self.__break_chord_grad[:]
+    
+    def __build_heights_rel_thicks(self):        
+        self.__heights         = zeros((self.__n_sect))
+        self.__heights_grad    = zeros((self.__n_sect,self.__ndv))
         
         self.__rel_thicks      = zeros((self.__n_sect))
         self.__rel_thicks_grad = zeros((self.__n_sect,self.__ndv))
@@ -602,70 +649,58 @@ class Wing_param():
         if self.__geom_type == 'Broken':
             p      = self.__break_percent/100.
             p_grad = self.__break_percent_grad/100.
-            for i in xrange(N):
-                r=abs(float(i+0.5-n)/float(n))
+            
+            for i,r in enumerate(self.__r_list_y):
+                r=abs(2.*r)
                 if r <= p:
                     coeff = r/p
-                    term = ((self.__break_height - self.__root_height)*coeff + self.__root_height)
-                    self.__rel_thicks[i] = term / self.__chords[i]
-
                     dcoeff = -r*p_grad[:]/p**2
-                    term_grad = (self.__break_height_grad[:] - self.__root_height_grad[:])*coeff \
-                              + (self.__break_height - self.__root_height)*dcoeff \
-                              + self.__root_height_grad[:]
-                    self.__rel_thicks_grad[i,:] = (term_grad[:]*self.__chords[i]-term*self.__chords_grad[i,:])/(self.__chords[i])**2
-                
+                    self.__heights[i]        = ((self.__break_height - self.__root_height)*coeff + self.__root_height)
+                    self.__heights_grad[i,:] = (self.__break_height_grad[:] - self.__root_height_grad[:])*coeff \
+                                            + (self.__break_height - self.__root_height)*dcoeff \
+                                             + self.__root_height_grad[:]
+                    
                 else:
                     coeff = (r-p)/(1.-p)
-                    term = ((self.__tip_height - self.__break_height)*coeff + self.__break_height)
-                    self.__rel_thicks[i]  =  term / self.__chords[i]
-                    
                     dcoeff = (r-1)*p_grad[:]/(1.-p)**2
-                    term_grad = (self.__tip_height_grad[:] - self.__break_height_grad[:])*coeff \
-                               + (self.__tip_height- self.__break_height)*dcoeff \
-                               + self.__break_height_grad[:]
-                    self.__rel_thicks_grad[i,:] = (term_grad[:]*self.__chords[i]-term*self.__chords_grad[i,:])/(self.__chords[i])**2         
-                               
+                    self.__heights[i]        = ((self.__tip_height - self.__break_height)*coeff + self.__break_height)
+                    self.__heights_grad[i,:] = (self.__tip_height_grad[:] - self.__break_height_grad[:])*coeff \
+                                             + (self.__tip_height- self.__break_height)*dcoeff \
+                                             + self.__break_height_grad[:]
         else:
-            for i in xrange(N):
-                r=abs((i+0.5-n)/float(n)) 
-                self.__rel_thicks[i]        = ((self.__tip_height - self.__root_height)*r + self.__root_height) / self.__chords[i]
-                self.__rel_thicks_grad[i,:] = ( ((self.__tip_height_grad[:] - self.__root_height_grad[:])*r + self.__root_height_grad[:])*self.__chords[i] \
-                                            - ((self.__tip_height - self.__root_height)*r + self.__root_height) * self.__chords_grad[i,:] ) / (self.__chords[i])**2
-                    
-
-    def __build_XYZ(self):
-        N = self.__n_sect
-        n = N/2
+            for i,r in enumerate(self.__r_list_y):
+                r=abs(2.*r)
+                self.__heights[i]        = ((self.__tip_height - self.__root_height)*r + self.__root_height)
+                self.__heights_grad[i,:] = ((self.__tip_height_grad[:] - self.__root_height_grad[:])*r + self.__root_height_grad[:])
+                
+        #-- build rel_thiks
+        for i in xrange(self.__n_sect):
+            self.__rel_thicks[i]         =  self.__heights[i] / self.__chords[i]
+            self.__rel_thicks_grad[i,:]  = (self.__heights_grad[i,:]*self.__chords[i]-self.__heights[i]*self.__chords_grad[i,:])/(self.__chords[i])**2 
+            
+    def __build_XYZ_eta(self):       
+        self.__XYZ      = zeros((3,self.__n_sect))
+        self.__XYZ_grad = zeros((3,self.__n_sect,self.__ndv))
         
-        self.__XYZ      = zeros((3,N))
-        self.__XYZ_grad = zeros((3,N,self.__ndv))
+        self.__eta      = zeros((3,self.__n_sect+1))
+        self.__eta_grad = zeros((3,self.__n_sect+1,self.__ndv))
         
-        for i in xrange(N):
-            r=float(i+0.5-n)/float(n)
+        for i,r in enumerate(self.__r_list_y):
             abs_r=abs(r)
-            self.__XYZ[0,i]        = 0.25*self.__chords[i] + abs_r*self.__span*cos(self.__sweep)/2. #+ self.__struct_disp[0,i]
-            self.__XYZ_grad[0,i,:] = 0.25*self.__chords_grad[i] + abs_r*self.__span_grad[:]*cos(self.__sweep)/2.-abs_r*self.__span*sin(self.__sweep)*self.__sweep_grad[:]/2.
+            self.__XYZ[0,i]        = 0.25*self.__chords[i] + abs_r*self.__span*cos(self.__sweep)
+            self.__XYZ_grad[0,i,:] = 0.25*self.__chords_grad[i] + abs_r*self.__span_grad[:]*cos(self.__sweep)-abs_r*self.__span*sin(self.__sweep)*self.__sweep_grad[:]
             
-            self.__XYZ[1,i]        = r*self.__span/2. #+ self.__struct_disp[1,i]
-            self.__XYZ_grad[1,i,:] = r*self.__span_grad[:]/2.
+            self.__XYZ[1,i]        = r*self.__span
+            self.__XYZ_grad[1,i,:] = r*self.__span_grad[:]
         
-#             self.__XYZ[2,i]        = self.__struct_disp[2,i]
-            self.__XYZ[2,i]        = 0.
-            self.__XYZ_grad[2,i,:] = zeros(self.__ndv)
-        
-    def __build_eta(self):
-        N = self.__n_sect
-        n = N/2
-        
-        self.__eta      = zeros((3,N+1))
-        self.__eta_grad = zeros((3,N+1,self.__ndv))
-        
-        for i in xrange(N+1):
-            ifl=float(i-n)
-            self.__eta[1,i]      = (ifl/float(n))*self.__span/2.
-            self.__eta_grad[1,i] = (ifl/float(n))*self.__span_grad[:]/2.
+        for i,r in enumerate(self.__r_list_eta):
+            abs_r=abs(r)
+            self.__eta[0,i]        = 0.25*self.__chords_eta[i] + abs_r*self.__span*cos(self.__sweep)
+            self.__eta_grad[0,i,:] = 0.25*self.__chords_grad_eta[i] + abs_r*self.__span_grad[:]*cos(self.__sweep)-abs_r*self.__span*sin(self.__sweep)*self.__sweep_grad[:]
             
+            self.__eta[1,i]        = r*self.__span 
+            self.__eta_grad[1,i,:] = r*self.__span_grad[:]
+
     # -- Airfoils methods 
     def get_linked_airfoils(self):
         return self.__linked_airfoils
@@ -730,8 +765,10 @@ class Wing_param():
     def __compute_local_info(self,i):
         LLoc      = self.__chords[i]
         LLoc_grad = self.__chords_grad[i]
-        SLoc      = self.__span * LLoc / float(self.__n_sect)
-        SLoc_grad = (self.__span_grad * LLoc + self.__span * LLoc_grad) / float(self.__n_sect)
+        SLoc      = LLoc*(self.__eta[1,i+1]-self.__eta[1,i])
+        SLoc_grad = LLoc_grad*(self.__eta[1,i+1]-self.__eta[1,i])+LLoc*(self.__eta_grad[1,i+1,:]-self.__eta_grad[1,i,:])
+#         SLoc      = self.__span * LLoc / float(self.__n_sect)
+#         SLoc_grad = (self.__span_grad * LLoc + self.__span * LLoc_grad) / float(self.__n_sect)
         return LLoc, LLoc_grad, SLoc, SLoc_grad
     
     def __compute_Sref_Lref_ToC_AR_fuel(self):

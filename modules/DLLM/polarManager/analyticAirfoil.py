@@ -11,8 +11,7 @@ class AnalyticAirfoil(Airfoil):
     """
     An analytic airfoil based on linear theory
     """
-    #THICKNESS_CORRECTION=0.7698
-    THICKNESS_CORRECTION=0.0
+    THICKNESS_CORRECTION=0.7698
     CLALPHA_BASE=2.*pi
     POW_COS  = 1.
     

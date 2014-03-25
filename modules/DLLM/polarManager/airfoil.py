@@ -74,6 +74,7 @@ class Airfoil(DifferentiatedAeroShape):
         return self.__sweep_grad
     
     def gamma(self,alpha,Mach=0.0):
+        #V= self.get_OC().get_V()
         sweep=self.get_sweep()
         L=self.get_Lref()
         Cl=self.Cl(alpha,Mach=Mach)
@@ -90,6 +91,7 @@ class Airfoil(DifferentiatedAeroShape):
         return 0.0  
      
     def dpgamma_dpAoA(self,alpha,Mach):
+        #V= self.get_OC().get_V()
         sweep=self.get_sweep()
         L=self.get_Lref()
         dCl_dAoA=self.ClAlpha(alpha,Mach)
@@ -97,6 +99,7 @@ class Airfoil(DifferentiatedAeroShape):
         return dpgamma_dpAoA
     
     def dpgamma_dpchi(self, alpha, Mach):
+        #V= self.get_OC().get_V()
         L=self.get_Lref()
         dL=self.get_Lref_grad()
         Cl=self.Cl(alpha,Mach=Mach)
