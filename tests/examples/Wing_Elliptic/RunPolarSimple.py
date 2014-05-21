@@ -19,7 +19,7 @@ OC.set_T0_deg(15.)
 OC.set_P0(101325.)
 OC.set_humidity(0.)
 
-wing_param=Wing_param('test_param',geom_type='Elliptic',n_sect=100)
+wing_param=Wing_param('test_param',geom_type='Elliptic',n_sect=50)
 wing_param.set_distrib_type('cos_law')
 wing_param.build_wing()
 wing_param.set_value('test_param.span',40.)
@@ -29,6 +29,7 @@ wing_param.set_value('test_param.tip_height',0.0)
 wing_param.build_linear_airfoil(OC, AoA0=0., Cm0=-0.1, set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()
+wing_param.build_view()
 
 print 'AR=',wing_param.get_AR()
     
