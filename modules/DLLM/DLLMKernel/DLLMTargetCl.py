@@ -1,5 +1,5 @@
 # -*-mode: python; py-indent-offset: 4; tab-width: 8; coding: iso-8859-1 -*-
-# Copyright: Airbus group innovation
+# Copyright: Airbus group innovations
 # @version: 1.0
 # @author: Matthieu MEAUX
 import numpy
@@ -8,8 +8,8 @@ from MDOTools.Solvers.newton_raphson_problem import NewtonRaphsonProblem
 
 class DLLMTargetCl(DLLMSolver):
     ERROR_MSG='ERROR in DLLMTargetCl.'
-    def __init__(self, wing_param, OC):
-        DLLMSolver.__init__(self, wing_param, OC)
+    def __init__(self, tag,  wing_param, OC):
+        DLLMSolver.__init__(self, tag, wing_param, OC)
         
         self.__N            = self.get_wing_param().get_n_sect()
         self.__ndv          = self.get_wing_param().get_ndv()

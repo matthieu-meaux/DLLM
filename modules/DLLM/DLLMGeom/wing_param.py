@@ -1,5 +1,5 @@
 # -*-mode: python; py-indent-offset: 4; tab-width: 8; coding: iso-8859-1 -*-
-# Copyright: EADS
+# Copyright: Airbus Group Innovations
 # @version: 0.1
 # @author: Matthieu Meaux
 
@@ -7,7 +7,7 @@
 import sys
 import string
 import numpy
-from padge.PCADEngine.Base.PCADModel import PCADModel
+from DLLM.Controllers.Kernel.BCManager import BCManager
 from DLLM.polarManager.analyticAirfoil import AnalyticAirfoil
 from DLLM.polarManager.airfoilPolar import AirfoilPolar
 from DLLM.polarManager.MetaAirfoil import MetaAirfoil
@@ -36,9 +36,8 @@ class Wing_param():
         self.set_geom_type(geom_type)
         self.set_n_sect(n_sect)
         
-        self.__PCADModel  = PCADModel(self.__tag)
-        self.__BC_manager = self.__PCADModel.get_BC_manager()
-        self.__CE_manager = self.__PCADModel.get_CE_manager()
+        self.__BC_manager = BCManager()
+
         self.__ndv        = 0
         
         self.__thetaY     = None
@@ -265,8 +264,8 @@ class Wing_param():
     def convert_to_variable(self,Id):
         self.__BC_manager.convert_to_variable(Id)
         
-    def convert_to_design_variable(self, Id, lbnd, ubnd):
-        self.__BC_manager.convert_to_design_variable(Id, lbnd, ubnd)
+    def convert_to_design_variable(self, Id, bounds):
+        self.__BC_manager.convert_to_design_variable(Id, bounds)
         
     def convert_to_parameter(self, Id, fexpr):
         self.__BC_manager.convert_to_parameter(Id, fexpr)
@@ -310,7 +309,7 @@ class Wing_param():
             self.__BC_manager.create_variable(self.__tag+'.tip_height',0.)
             
         for i in xrange(self.__n_sect/2):
-            self.__BC_manager.create_design_variable(self.__tag+'.rtwist'+str(i),-10.,0.,10.)
+            self.__BC_manager.create_design_variable(self.__tag+'.rtwist'+str(i),0.,(-10.,10.))
         for i in xrange(self.__n_sect/2):
 #             print self.__tag+'.twist'+str(i),self.__tag+'.twist'+str(self.__n_sect/2+i),self.__tag+'.rtwist'+str(self.__n_sect/2-1-i),self.__tag+'.rtwist'+str(i)
             self.__BC_manager.create_parameter(self.__tag+'.twist'+str(i),self.__tag+'.rtwist'+str(self.__n_sect/2-1-i))
@@ -375,7 +374,7 @@ class Wing_param():
                     bounds = config_dict[Id_in+'.bounds']
                     value  = config_dict[Id_in+'.value']
                     self.set_value(Id,value)
-                    self.convert_to_design_variable(Id,bounds[0],bounds[1])
+                    self.convert_to_design_variable(Id,bounds)
                 elif type == 'Variable':
                     value  = config_dict[Id_in+'.value']
                     self.set_value(Id,value)
@@ -399,7 +398,7 @@ class Wing_param():
                         if   type == 'DesignVariable':
                             bounds = config_dict[Id_in+'.bounds']
                             value  = config_dict[Id_in+'.value']
-                            self.__BC_manager.create_design_variable(Id,bounds[0],value,bounds[1])
+                            self.__BC_manager.create_design_variable(Id,value,(bounds[0],bounds[1]))
                         elif type == 'Variable':
                             value  = config_dict[Id_in+'.value']
                             self.__BC_manager.create_variable(Id,value)
@@ -409,7 +408,7 @@ class Wing_param():
                         added_list.append(Id)
         
     def update(self):
-        self.__PCADModel.update()
+        self.__BC_manager.update()
         self.__ndv = self.__BC_manager.get_ndv()
         self.__update_AoA()
         self.__check_thetaY()
@@ -686,7 +685,7 @@ class Wing_param():
         self.__eta      = zeros((3,self.__n_sect+1))
         self.__eta_grad = zeros((3,self.__n_sect+1,self.__ndv))
         
-        print 'sweep=',self.__sweep,'sin sweep',sin(self.__sweep)
+        #print 'sweep=',self.__sweep,'sin sweep',sin(self.__sweep)
         
         for i,r in enumerate(self.__r_list_y):
             abs_r=abs(r)
@@ -831,63 +830,63 @@ class Wing_param():
         if not checked:
             sys.exit(1)
             
-    def build_view(self):
-        from padgeGUI.ModelViewer.QTPadge import QTPadge
-        self.update()
-        LE_points=[]
-        TE_points=[]
-        n_eta=len(self.__r_list_eta)
-        for i in xrange(n_eta):
-            LE_points.append(self.__CE_manager.create_point(self.__tag+'.LE'+str(i)))
-            TE_points.append(self.__CE_manager.create_point(self.__tag+'.TE'+str(i)))
-        
-        for i in xrange(n_eta):
-            xyz_LE=[self.__eta[0,i],self.__eta[1,i],0.]
-            LE_points[i].set_xyz(xyz_LE)
-            xyz_grad_LE=zeros((3,self.__ndv))
-            xyz_grad_LE[1,:]=self.__eta_grad[0,i,:]
-            xyz_grad_LE[2,:]=self.__eta_grad[1,i,:]
-            LE_points[i].set_xyz_grad(xyz_grad_LE)
-            xyz_TE=[self.__eta[0,i]+self.__chords_eta[i],self.__eta[1,i],0.]
-            TE_points[i].set_xyz(xyz_TE)
-            xyz_grad_TE=zeros((3,self.__ndv))
-            xyz_grad_TE[1,:]=self.__eta_grad[0,i,:]+self.__chords_grad_eta[i,:]
-            xyz_grad_TE[2,:]=self.__eta_grad[1,i,:]
-            TE_points[i].set_xyz_grad(xyz_grad_TE)
-            
-        chords_curves=[]
-        for i in xrange(n_eta):
-            chords_curves.append(self.__CE_manager.create_line(self.__tag+'.chord'+str(i)))
-            chords_curves[i].set_controller('P1',LE_points[i].get_id())
-            chords_curves[i].set_controller('P2',TE_points[i].get_id())
-            
-        LE_curve1 = self.__CE_manager.create_curve_interp(self.__tag+'.LEcurve1', smoothing=True)
-        LE_curve1.set_tangent_method('bessel')
-        for i in xrange(0,(n_eta+1)/2):
-            pt=LE_points[i]
-            LE_curve1 .set_controller('P'+str(i+1),pt.get_id())
-            
-        LE_curve2 = self.__CE_manager.create_curve_interp(self.__tag+'.LEcurve2', smoothing=True)
-        LE_curve2.set_tangent_method('bessel')
-        for i in xrange((n_eta-1)/2,n_eta):
-            pt=LE_points[i]
-            LE_curve2.set_controller('P'+str(i+1-(n_eta-1)/2),pt.get_id())
-            
-        TE_curve1 = self.__CE_manager.create_curve_interp(self.__tag+'.TEcurve1', smoothing=True)
-        TE_curve1.set_tangent_method('bessel')
-        for i in xrange(0,(n_eta+1)/2):
-            pt=TE_points[i]
-            TE_curve1.set_controller('P'+str(i+1),pt.get_id())
-            
-        TE_curve2 = self.__CE_manager.create_curve_interp(self.__tag+'.TEcurve2', smoothing=True)
-        TE_curve2.set_tangent_method('bessel')
-        for i in xrange((n_eta-1)/2,n_eta):
-            pt=TE_points[i]
-            TE_curve2.set_controller('P'+str(i+1-(n_eta-1)/2),pt.get_id())
-            
-        self.__PCADModel.update()
-        
-        
-        GUI=QTPadge(self.__PCADModel, view_mode='2D')
-        GUI.set_plandef('xy')
-        GUI.launch()
+#     def build_view(self):
+#         from padgeGUI.ModelViewer.QTPadge import QTPadge
+#         self.update()
+#         LE_points=[]
+#         TE_points=[]
+#         n_eta=len(self.__r_list_eta)
+#         for i in xrange(n_eta):
+#             LE_points.append(self.__CE_manager.create_point(self.__tag+'.LE'+str(i)))
+#             TE_points.append(self.__CE_manager.create_point(self.__tag+'.TE'+str(i)))
+#         
+#         for i in xrange(n_eta):
+#             xyz_LE=[self.__eta[0,i],self.__eta[1,i],0.]
+#             LE_points[i].set_xyz(xyz_LE)
+#             xyz_grad_LE=zeros((3,self.__ndv))
+#             xyz_grad_LE[1,:]=self.__eta_grad[0,i,:]
+#             xyz_grad_LE[2,:]=self.__eta_grad[1,i,:]
+#             LE_points[i].set_xyz_grad(xyz_grad_LE)
+#             xyz_TE=[self.__eta[0,i]+self.__chords_eta[i],self.__eta[1,i],0.]
+#             TE_points[i].set_xyz(xyz_TE)
+#             xyz_grad_TE=zeros((3,self.__ndv))
+#             xyz_grad_TE[1,:]=self.__eta_grad[0,i,:]+self.__chords_grad_eta[i,:]
+#             xyz_grad_TE[2,:]=self.__eta_grad[1,i,:]
+#             TE_points[i].set_xyz_grad(xyz_grad_TE)
+#             
+#         chords_curves=[]
+#         for i in xrange(n_eta):
+#             chords_curves.append(self.__CE_manager.create_line(self.__tag+'.chord'+str(i)))
+#             chords_curves[i].set_controller('P1',LE_points[i].get_id())
+#             chords_curves[i].set_controller('P2',TE_points[i].get_id())
+#             
+#         LE_curve1 = self.__CE_manager.create_curve_interp(self.__tag+'.LEcurve1', smoothing=True)
+#         LE_curve1.set_tangent_method('bessel')
+#         for i in xrange(0,(n_eta+1)/2):
+#             pt=LE_points[i]
+#             LE_curve1 .set_controller('P'+str(i+1),pt.get_id())
+#             
+#         LE_curve2 = self.__CE_manager.create_curve_interp(self.__tag+'.LEcurve2', smoothing=True)
+#         LE_curve2.set_tangent_method('bessel')
+#         for i in xrange((n_eta-1)/2,n_eta):
+#             pt=LE_points[i]
+#             LE_curve2.set_controller('P'+str(i+1-(n_eta-1)/2),pt.get_id())
+#             
+#         TE_curve1 = self.__CE_manager.create_curve_interp(self.__tag+'.TEcurve1', smoothing=True)
+#         TE_curve1.set_tangent_method('bessel')
+#         for i in xrange(0,(n_eta+1)/2):
+#             pt=TE_points[i]
+#             TE_curve1.set_controller('P'+str(i+1),pt.get_id())
+#             
+#         TE_curve2 = self.__CE_manager.create_curve_interp(self.__tag+'.TEcurve2', smoothing=True)
+#         TE_curve2.set_tangent_method('bessel')
+#         for i in xrange((n_eta-1)/2,n_eta):
+#             pt=TE_points[i]
+#             TE_curve2.set_controller('P'+str(i+1-(n_eta-1)/2),pt.get_id())
+#             
+#         self.__PCADModel.update()
+#         
+#         
+#         GUI=QTPadge(self.__PCADModel, view_mode='2D')
+#         GUI.set_plandef('xy')
+#         GUI.launch()

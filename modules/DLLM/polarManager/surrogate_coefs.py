@@ -6,7 +6,7 @@
 try:
     from openturns import *
 except:
-    pass
+    print 'OpenTURNS not in ENV'
 import numpy as np
 
 class SurrogateCoefs:
@@ -18,7 +18,10 @@ class SurrogateCoefs:
     def __init__(self, surrogate_model):
         
         fileName = surrogate_model
-        study = Study()
+        try:
+            study = Study()
+        except:
+            raise Exception,'OpenTURNS not available!'
         study.setStorageManager(XMLStorageManager(fileName))
         study.load()
         

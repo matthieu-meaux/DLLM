@@ -9,7 +9,7 @@ from MDOTools.OC.operating_condition import OperatingCondition
 class TestDLLMSimple(unittest.TestCase):
     
     def __init_wing_param(self):
-        OC=OperatingCondition('cond1',atmospheric_model='simple')
+        OC=OperatingCondition('cond1',atmospheric_model='ISA')
         OC.set_Mach(0.8)
         OC.set_AoA(3.5)
         OC.set_altitude(10000.)

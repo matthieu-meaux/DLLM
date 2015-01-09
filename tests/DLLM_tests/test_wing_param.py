@@ -19,7 +19,7 @@ class TestWingParam(unittest.TestCase):
         return OC
     
     def __init_wing_param(self):
-        OC=OperatingCondition('cond1',atmospheric_model='simple')
+        OC=OperatingCondition('cond1',atmospheric_model='ISA')
         OC.set_Mach(0.7)
         OC.set_AoA(3.0)
         OC.set_altitude(5000.)

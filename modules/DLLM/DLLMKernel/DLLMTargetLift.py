@@ -8,8 +8,8 @@ from MDOTools.Solvers.newton_raphson_problem import NewtonRaphsonProblem
 
 class DLLMTargetLift(DLLMSolver):
     ERROR_MSG='ERROR in DLLMTargetLift.'
-    def __init__(self, wing_param, OC):
-        DLLMSolver.__init__(self, wing_param, OC)
+    def __init__(self, tag, wing_param, OC):
+        DLLMSolver.__init__(self, tag, wing_param, OC)
         
         self.__N            = self.get_wing_param().get_n_sect()
         self.__ndv          = self.get_wing_param().get_ndv()

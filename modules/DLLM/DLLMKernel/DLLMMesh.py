@@ -55,9 +55,6 @@ class DLLMMesh:
         eta = self.get_wing_param().get_eta()[1,:]
         y   = self.get_wing_param().get_XYZ()[1,:]
         
-        print 'eta =',eta
-        print 'y=',y
-        
         YminEta=transpose(outer(ones([self.__N+1]),y))-outer(ones([self.__N]),eta)
         Kmetric=divide(ones([self.__N,self.__N+1]),YminEta)
         Kmetric/=4.*numpy.pi

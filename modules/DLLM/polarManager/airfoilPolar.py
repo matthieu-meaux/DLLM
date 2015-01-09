@@ -5,7 +5,7 @@
 
 # - Local imports -
 from airfoil import Airfoil
-from OpenDACE.database.Database import Database
+#from OpenDACE.database.Database import Database
 
 from numpy import array
 from spline_interpolator import Spline2D_interpolator
@@ -24,8 +24,8 @@ class AirfoilPolar(Airfoil):
         '''
         Airfoil.__init__(self,Sref,Lref,relative_thickness)
         
-        self.__database=database
-        self.__fd_database=Database()
+#         self.__database=database
+#         self.__fd_database=Database()
         
         if interpolator == '2DSpline':
                 print "building new spline 2D Interpolator"
