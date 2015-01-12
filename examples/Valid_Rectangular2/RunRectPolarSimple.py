@@ -5,7 +5,7 @@ from MDOTools.OC.operating_condition import OperatingCondition
 import numpy
 import string
 
-OC=OperatingCondition('cond1',atmospheric_model='simple')
+OC=OperatingCondition('cond1')
 #OC.set_Mach(0.8)
 #OC.set_Mach(0.6)
 #OC.set_AoA(3.5)
@@ -19,7 +19,7 @@ OC.set_T0_deg(15.)
 OC.set_P0(101325.)
 OC.set_humidity(0.)
 
-wing_param=Wing_param('test_param',geom_type='Rectangular',n_sect=51)
+wing_param=Wing_param('test_param',geom_type='Rectangular',n_sect=50)
 wing_param.build_wing()
 wing_param.set_value('test_param.span',40.)
 #wing_param.set_value('test_param.sweep',34.)

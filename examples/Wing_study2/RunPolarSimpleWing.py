@@ -5,7 +5,7 @@ from MDOTools.OC.operating_condition import OperatingCondition
 import numpy
 import string
 
-OC=OperatingCondition('cond1',atmospheric_model='simple')
+OC=OperatingCondition('cond1')
 #OC.set_Mach(0.8)
 #OC.set_Mach(0.6)
 #OC.set_AoA(3.5)

@@ -1,10 +1,10 @@
-from OpenDACE.ValidGrad.FDValidGrad import FDValidGrad
 from DLLM.DLLMGeom.wing_param import Wing_param
 from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
+from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
 from MDOTools.OC.operating_condition import OperatingCondition
 import numpy
 
-OC=OperatingCondition('cond1',atmospheric_model='simple')
+OC=OperatingCondition('cond1')
 OC.set_Mach(0.6) #.7
 OC.set_AoA(6.0) #3.
 OC.set_altitude(10000.) #5000
@@ -24,15 +24,15 @@ wing_param.set_value('test_param.tip_chord',1.2)#1.5
 wing_param.set_value('test_param.root_height',.98)#1.28
 wing_param.set_value('test_param.break_height',0.7)#0.97
 wing_param.set_value('test_param.tip_height',0.18)#0.33
-wing_param.convert_to_design_variable('test_param.span',10.,50.)
-wing_param.convert_to_design_variable('test_param.sweep',0.,40.)
-wing_param.convert_to_design_variable('test_param.break_percent',20.,40.)
-wing_param.convert_to_design_variable('test_param.root_chord',5.,7.)
-wing_param.convert_to_design_variable('test_param.break_chord',3.,5.)
-wing_param.convert_to_design_variable('test_param.tip_chord',1.,2.)
-wing_param.convert_to_design_variable('test_param.root_height',.7,1.5)
-wing_param.convert_to_design_variable('test_param.break_height',0.45,1.2)
-wing_param.convert_to_design_variable('test_param.tip_height',0.1,0.5)
+wing_param.convert_to_design_variable('test_param.span',(10.,50.))
+wing_param.convert_to_design_variable('test_param.sweep',(0.,40.))
+wing_param.convert_to_design_variable('test_param.break_percent',(20.,40.))
+wing_param.convert_to_design_variable('test_param.root_chord',(5.,7.))
+wing_param.convert_to_design_variable('test_param.break_chord',(3.,5.))
+wing_param.convert_to_design_variable('test_param.tip_chord',(1.,2.))
+wing_param.convert_to_design_variable('test_param.root_height',(0.7,1.5))
+wing_param.convert_to_design_variable('test_param.break_height',(0.45,1.2))
+wing_param.convert_to_design_variable('test_param.tip_height',(0.1,0.5))
 #wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
 wing_param.build_meta_airfoil(OC, '../MetaModelFixed.xml', relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True)
 wing_param.build_airfoils_from_ref()

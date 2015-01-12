@@ -270,8 +270,8 @@ class Wing_param():
     def convert_to_parameter(self, Id, fexpr):
         self.__BC_manager.convert_to_parameter(Id, fexpr)
         
-    def add_AoA_design_variable(self, lbnd, val, ubnd):
-        self.__BC_manager.create_design_variable(self.__tag+'.'+self.__AoA_id, lbnd, val, ubnd)
+    def add_AoA_design_variable(self, val, bounds):
+        self.__BC_manager.create_design_variable(self.__tag+'.'+self.__AoA_id, val, bounds)
         
     def __update_AoA(self):
         Id   = self.__tag+'.'+self.__AoA_id

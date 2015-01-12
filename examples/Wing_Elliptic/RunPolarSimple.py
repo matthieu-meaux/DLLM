@@ -5,7 +5,7 @@ from MDOTools.OC.operating_condition import OperatingCondition
 import numpy
 import string
 
-OC=OperatingCondition('cond1',atmospheric_model='simple')
+OC=OperatingCondition('cond1')
 #OC.set_Mach(0.8)
 #OC.set_Mach(0.6)
 #OC.set_AoA(3.5)
@@ -29,7 +29,6 @@ wing_param.set_value('test_param.tip_height',0.0)
 wing_param.build_linear_airfoil(OC, AoA0=0., Cm0=-0.1, set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()
-wing_param.build_view()
 
 print 'AR=',wing_param.get_AR()
     

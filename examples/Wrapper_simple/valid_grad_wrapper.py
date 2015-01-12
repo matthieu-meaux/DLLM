@@ -1,4 +1,4 @@
-from OpenDACE.ValidGrad.FDValidGrad import FDValidGrad
+from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
 from DLLM.DLLMEval.DLLMWrapper import DLLMWrapper
 
 config_dict={}

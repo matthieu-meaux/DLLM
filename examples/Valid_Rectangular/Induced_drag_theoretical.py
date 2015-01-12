@@ -3,7 +3,7 @@ from MDOTools.OC.operating_condition import OperatingCondition
 import numpy
 import string
 
-OC=OperatingCondition('cond1',atmospheric_model='simple')
+OC=OperatingCondition('cond1')
 
 OC.set_altitude(10000.)
 OC.set_T0_deg(15.)
