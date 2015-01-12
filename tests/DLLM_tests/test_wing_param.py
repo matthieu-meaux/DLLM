@@ -1,7 +1,7 @@
 import unittest
 from numpy import zeros, array
 
-from OpenDACE.ValidGrad.FDValidGrad import FDValidGrad
+from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
 from DLLM.DLLMGeom.wing_param import Wing_param
 from MDOTools.OC.operating_condition import OperatingCondition
 
@@ -19,7 +19,7 @@ class TestWingParam(unittest.TestCase):
         return OC
     
     def __init_wing_param(self):
-        OC=OperatingCondition('cond1',atmospheric_model='ISA')
+        OC=OperatingCondition('cond1')
         OC.set_Mach(0.7)
         OC.set_AoA(3.0)
         OC.set_altitude(5000.)
@@ -39,15 +39,15 @@ class TestWingParam(unittest.TestCase):
         wing_param.set_value('test_param.root_height',1.28)
         wing_param.set_value('test_param.break_height',0.97)
         wing_param.set_value('test_param.tip_height',0.33)
-        wing_param.convert_to_design_variable('test_param.span',10.,50.)
-        wing_param.convert_to_design_variable('test_param.sweep',0.,40.)
-        wing_param.convert_to_design_variable('test_param.break_percent',20.,40.)
-        wing_param.convert_to_design_variable('test_param.root_chord',5.,7.)
-        wing_param.convert_to_design_variable('test_param.break_chord',3.,5.)
-        wing_param.convert_to_design_variable('test_param.tip_chord',1.,2.)
-        wing_param.convert_to_design_variable('test_param.root_height',1.,1.5)
-        wing_param.convert_to_design_variable('test_param.break_height',0.8,1.2)
-        wing_param.convert_to_design_variable('test_param.tip_height',0.2,0.5)
+        wing_param.convert_to_design_variable('test_param.span',(10.,50.))
+        wing_param.convert_to_design_variable('test_param.sweep',(0.,40.))
+        wing_param.convert_to_design_variable('test_param.break_percent',(20.,40.))
+        wing_param.convert_to_design_variable('test_param.root_chord',(5.,7.))
+        wing_param.convert_to_design_variable('test_param.break_chord',(3.,5.))
+        wing_param.convert_to_design_variable('test_param.tip_chord',(1.,2.))
+        wing_param.convert_to_design_variable('test_param.root_height',(1.,1.5))
+        wing_param.convert_to_design_variable('test_param.break_height',(0.8,1.2))
+        wing_param.convert_to_design_variable('test_param.tip_height',(0.2,0.5))
         wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
         wing_param.build_airfoils_from_ref()
         wing_param.update()
@@ -104,15 +104,15 @@ class TestWingParam(unittest.TestCase):
         wing_param.set_value('test_param.break_height',0.97)
         wing_param.set_value('test_param.tip_height',0.33)
         try:
-            wing_param.convert_to_design_variable('test_param.span',10.,50.)
-            wing_param.convert_to_design_variable('test_param.sweep',0.,40.)
-            wing_param.convert_to_design_variable('test_param.break_percent',20.,40.)
-            wing_param.convert_to_design_variable('test_param.root_chord',5.,7.)
-            wing_param.convert_to_design_variable('test_param.break_chord',3.,5.)
-            wing_param.convert_to_design_variable('test_param.tip_chord',1.,2.)
-            wing_param.convert_to_design_variable('test_param.root_height',1.,1.5)
-            wing_param.convert_to_design_variable('test_param.break_height',0.8,1.2)
-            wing_param.convert_to_design_variable('test_param.tip_height',0.2,0.5)
+            wing_param.convert_to_design_variable('test_param.span',(10.,50.))
+            wing_param.convert_to_design_variable('test_param.sweep',(0.,40.))
+            wing_param.convert_to_design_variable('test_param.break_percent',(20.,40.))
+            wing_param.convert_to_design_variable('test_param.root_chord',(5.,7.))
+            wing_param.convert_to_design_variable('test_param.break_chord',(3.,5.))
+            wing_param.convert_to_design_variable('test_param.tip_chord',(1.,2.))
+            wing_param.convert_to_design_variable('test_param.root_height',(1.,1.5))
+            wing_param.convert_to_design_variable('test_param.break_height',(0.8,1.2))
+            wing_param.convert_to_design_variable('test_param.tip_height',(0.2,0.5))
             ok=True
         except:
             ok=False
@@ -131,15 +131,15 @@ class TestWingParam(unittest.TestCase):
         wing_param.set_value('test_param.root_height',1.28)
         wing_param.set_value('test_param.break_height',0.97)
         wing_param.set_value('test_param.tip_height',0.33)
-        wing_param.convert_to_design_variable('test_param.span',10.,50.)
-        wing_param.convert_to_design_variable('test_param.sweep',0.,40.)
-        wing_param.convert_to_design_variable('test_param.break_percent',20.,40.)
-        wing_param.convert_to_design_variable('test_param.root_chord',5.,7.)
-        wing_param.convert_to_design_variable('test_param.break_chord',3.,5.)
-        wing_param.convert_to_design_variable('test_param.tip_chord',1.,2.)
-        wing_param.convert_to_design_variable('test_param.root_height',1.,1.5)
-        wing_param.convert_to_design_variable('test_param.break_height',0.8,1.2)
-        wing_param.convert_to_design_variable('test_param.tip_height',0.2,0.5)
+        wing_param.convert_to_design_variable('test_param.span',(10.,50.))
+        wing_param.convert_to_design_variable('test_param.sweep',(0.,40.))
+        wing_param.convert_to_design_variable('test_param.break_percent',(20.,40.))
+        wing_param.convert_to_design_variable('test_param.root_chord',(5.,7.))
+        wing_param.convert_to_design_variable('test_param.break_chord',(3.,5.))
+        wing_param.convert_to_design_variable('test_param.tip_chord',(1.,2.))
+        wing_param.convert_to_design_variable('test_param.root_height',(1.,1.5))
+        wing_param.convert_to_design_variable('test_param.break_height',(0.8,1.2))
+        wing_param.convert_to_design_variable('test_param.tip_height',(0.2,0.5))
         try:
             wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
             wing_param.build_airfoils_from_ref()
@@ -161,15 +161,15 @@ class TestWingParam(unittest.TestCase):
         wing_param.set_value('test_param.root_height',1.28)
         wing_param.set_value('test_param.break_height',0.97)
         wing_param.set_value('test_param.tip_height',0.33)
-        wing_param.convert_to_design_variable('test_param.span',10.,50.)
-        wing_param.convert_to_design_variable('test_param.sweep',0.,40.)
-        wing_param.convert_to_design_variable('test_param.break_percent',20.,40.)
-        wing_param.convert_to_design_variable('test_param.root_chord',5.,7.)
-        wing_param.convert_to_design_variable('test_param.break_chord',3.,5.)
-        wing_param.convert_to_design_variable('test_param.tip_chord',1.,2.)
-        wing_param.convert_to_design_variable('test_param.root_height',1.,1.5)
-        wing_param.convert_to_design_variable('test_param.break_height',0.8,1.2)
-        wing_param.convert_to_design_variable('test_param.tip_height',0.2,0.5)
+        wing_param.convert_to_design_variable('test_param.span',(10.,50.))
+        wing_param.convert_to_design_variable('test_param.sweep',(0.,40.))
+        wing_param.convert_to_design_variable('test_param.break_percent',(20.,40.))
+        wing_param.convert_to_design_variable('test_param.root_chord',(5.,7.))
+        wing_param.convert_to_design_variable('test_param.break_chord',(3.,5.))
+        wing_param.convert_to_design_variable('test_param.tip_chord',(1.,2.))
+        wing_param.convert_to_design_variable('test_param.root_height',(1.,1.5))
+        wing_param.convert_to_design_variable('test_param.break_height',(0.8,1.2))
+        wing_param.convert_to_design_variable('test_param.tip_height',(0.2,0.5))
         wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
         wing_param.build_airfoils_from_ref()
         try:
