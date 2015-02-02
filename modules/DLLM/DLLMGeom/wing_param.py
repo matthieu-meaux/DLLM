@@ -7,7 +7,7 @@
 import sys
 import string
 import numpy
-from DLLM.Controllers.Kernel.BCManager import BCManager
+from MDOTools.Controllers.Kernel.BCManager import BCManager
 from DLLM.polarManager.analyticAirfoil import AnalyticAirfoil
 from DLLM.polarManager.airfoilPolar import AirfoilPolar
 from DLLM.polarManager.MetaAirfoil import MetaAirfoil
