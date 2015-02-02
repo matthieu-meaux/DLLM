@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<WormsPlugin>
-	<!-- This file is used to declare the tool to worms -->
-	<Name>DLLM</Name>
-	<Version>1.3.0</Version>
-  	<Python>['modules','tests']</Python>
-</WormsPlugin>
