@@ -42,6 +42,10 @@ class DLLMPost:
         self.__dpF_list_dpAoA  = None
         self.__computed    = False
         
+        self.__Lift_distrib_res          = None
+        self.__dpLift_distrib_res_dpiAoA = None
+        self.__dpLift_distrib_res_dpAoA  = None
+        
     #-- computed related methods
     def is_computed(self):
         return self.__computed
@@ -248,10 +252,84 @@ class DLLMPost:
             self.__dpF_list_dpchi[i,:]  = dpFdpchi[:]
             self.__dpF_list_dpAoA[i]    = dpFdpAoA
 
+
+        self.__Lift_distrib_res=self.__Lift_distrib(distrib=True)
+
         self.__display_info()
         self.set_computed(True)
                 
     #-- Computation methods
+    #-- Lift distrib related methods
+    def comp_Lift_distrib(self, distrib=False):
+        self.__Lift_distrib(distrib=distrib)
+        return self.__Lift_distrib_res
+    
+    def comp_dpLift_distrib_dpiAoA(self):
+        self.__dpLift_distrib_dpiAoA()
+        return self.__dpLift_distrib_res_dpiAoA
+    
+    def comp_dpLift_distrib_dpAoA(self):
+        self.__dpLift_distrib_dpAoA()
+        return self.__dpLift_distrib_res_dpAoA
+    
+    def __Lift_distrib(self, distrib=False):
+        N=self.get_N()
+        self.__Lift_distrib_res=zeros(N)
+        
+        Pdyn=self.get_OC().get_Pdyn()
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        airfoils = self.get_airfoils()
+        
+        Check_Lift = 0.
+        
+        for i in xrange(N):
+            af = airfoils[i]
+            self.__Lift_distrib_res[i]=af.Cl(localAoA[i],Mach)*cos(iAoA[i])*af.get_Sref()*Pdyn
+            Check_Lift += self.__Lift_distrib_res[i]
+            
+        #print 'CHECK LIFT = ',Check_Lift
+            
+        if distrib:
+            y   = self.get_wing_param().get_XYZ()[1,:]
+            fid=open(self.get_tag()+'_Lift_distrib.dat','w')
+            line="#Slice\t%24s"%"y"+"\t%24s"%"Lift"+"\n"
+            fid.write(line)
+            for i in xrange(N):
+                line=str(i)+"\t%24.16e"%y[i]+"\t%24.16e"%self.__Lift_distrib_res[i]+"\n"
+                fid.write(line)
+            fid.close()
+            
+    def __dpLift_distrib_dpiAoA(self):
+        N=self.get_N()
+        self.__dpLift_distrib_res_dpiAoA=zeros((N,N))
+        Pdyn=self.get_OC().get_Pdyn()
+        
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        dplocalAoA_dpiAoA = self.get_dplocalAoA_dpiAoA()
+        airfoils = self.get_airfoils()
+        for i in range(N):
+            af = airfoils[i]
+            self.__dpLift_distrib_res_dpiAoA[i,i]=-af.Cl(localAoA[i],Mach)*sin(iAoA[i])*af.get_Sref()*Pdyn
+            self.__dpLift_distrib_res_dpiAoA[i,:]=af.ClAlpha(localAoA[i],Mach=Mach)*cos(iAoA[i])*dplocalAoA_dpiAoA[i]*af.get_Sref()*Pdyn
+            
+    def __dpLift_distrib_dpAoA(self):
+        N=self.get_N()
+        self.__dpLift_distrib_res_dpAoA=zeros(N)
+        Pdyn=self.get_OC().get_Pdyn()
+        
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        dplocalAoA_dpAoA = self.get_dplocalAoA_dpAoA()
+        airfoils = self.get_airfoils()
+        for i in range(N):
+            af = airfoils[i]
+            self.__dpLift_distrib_res_dpAoA[i]=af.ClAlpha(localAoA[i],Mach=Mach)*cos(iAoA[i])*af.get_Sref()*dplocalAoA_dpAoA[i]*Pdyn
+        
     #-- Cl related methods
     def comp_Cl(self):
         Cl=self.__Cl()
