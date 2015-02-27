@@ -23,14 +23,29 @@
 import unittest
 
 from test_wing_param import TestWingParam
-from test_DLLM_simple import TestDLLMSimple
-from test_DLLM_meta import TestDLLMMeta
+from test_DLLM_simple_base import TestDLLMSimpleBase
+from test_DLLM_simple_R import TestDLLMSimpleR
+from test_DLLM_simple_F import TestDLLMSimpleF
+from test_DLLM_simple_Loads import TestDLLMSimpleLoads
+from test_DLLM_simple_TCl_TLift import TestDLLMSimpleTClTLift
+# from test_DLLM_meta import TestDLLMMeta
+
+try:
+    from openturns import *
+    run_meta=True
+except:
+    run_meta=False
 
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(TestWingParam))
-    suite.addTest(unittest.makeSuite(TestDLLMSimple))
-    suite.addTest(unittest.makeSuite(TestDLLMMeta))
+    suite.addTest(unittest.makeSuite(TestDLLMSimpleBase))
+    suite.addTest(unittest.makeSuite(TestDLLMSimpleR))
+    suite.addTest(unittest.makeSuite(TestDLLMSimpleF))
+    suite.addTest(unittest.makeSuite(TestDLLMSimpleLoads))
+    suite.addTest(unittest.makeSuite(TestDLLMSimpleTClTLift))
+    if run_meta:
+        suite.addTest(unittest.makeSuite(TestDLLMMeta))
     return suite
 
 if __name__ == '__main__':

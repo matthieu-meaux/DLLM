@@ -142,6 +142,9 @@ class DLLMSolver:
     def comp_dpR_dpthetaY(self):
         return self.__DLLMDirect.comp_dpR_dpthetaY()
     
+    def comp_dpR_dpAoA(self):
+        return self.__DLLMDirect.comp_dpR_dpAoA()
+    
     #-- DLLMPost accessors
     def is_post_computed(self):
         return self.__DLLMPost.is_computed()
@@ -154,6 +157,9 @@ class DLLMSolver:
     
     def get_dpF_list_dpW(self):
         return self.__DLLMPost.get_dpF_list_dpiAoA()
+    
+    def get_dpF_list_dpAoA(self):
+        return self.__DLLMPost.get_dpF_list_dpAoA()
     
     def get_dpF_list_dpchi(self):
         return self.__DLLMPost.get_dpF_list_dpchi()

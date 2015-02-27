@@ -19,6 +19,7 @@
 # 
 #  http://github.com/TBD
 #
+import string
 from numpy import zeros, dot
 from numpy import sin,cos
 
@@ -45,6 +46,8 @@ class DLLMPost:
         self.__Lift_distrib_res          = None
         self.__dpLift_distrib_res_dpiAoA = None
         self.__dpLift_distrib_res_dpAoA  = None
+        
+        self.__target_loads              = None
         
     #-- computed related methods
     def is_computed(self):
@@ -114,6 +117,32 @@ class DLLMPost:
     #-- Setters 
     def set_F_list_names(self, F_list_names):
         self.__F_list_names    = F_list_names
+        
+    def set_target_loads_file(self, loads_file):
+        N = self.get_N()
+        
+        loads=zeros(N)
+        
+        fid = open(loads_file,'r')
+        all_lines = fid.readlines()
+        fid.close()
+        i=0
+        for line in all_lines:
+            words = string.split(line)
+            if len(words)==2:
+                loads[i]=eval(words[1])
+                i+=1
+        
+        self.set_target_loads(loads)
+        
+    def set_target_loads(self, loads):
+        self.__target_loads = loads
+        
+        if 'target_loads' not in self.__F_list_names_calc:
+            self.__F_list_names_calc.append('target_loads')
+            
+        if 'target_loads' not in self.__F_list_names:
+            self.__F_list_names.append('target_loads')
 
     #-- Run method
     def __init_run(self):
