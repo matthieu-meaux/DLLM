@@ -61,8 +61,11 @@ class DLLMMP():
         wrap_tags,x0,bounds=Wrap0.get_tags_x0_and_bounds()
         for tag in wrap_tags:
             words=tag.split('.')
-            next_index=self.__check_tag(words)
-            new_tag=string.join(words[next_index+1:],'.')
+            if len(words)>1:
+                next_index=self.__check_tag(words)
+                new_tag=string.join(words[next_index+1:],'.')
+            else:
+                new_tag=words[0]
             tags.append(new_tag)
         return tags,x0,bounds
     

@@ -288,10 +288,10 @@ class Wing_param():
         self.__BC_manager.convert_to_parameter(Id, fexpr)
         
     def add_AoA_design_variable(self, val, bounds):
-        self.__BC_manager.create_design_variable(self.__tag+'.'+self.__AoA_id, val, bounds)
+        self.__BC_manager.create_design_variable(self.__AoA_id, val, bounds)
         
     def __update_AoA(self):
-        Id   = self.__tag+'.'+self.__AoA_id
+        Id   = self.__AoA_id
         if Id in self.get_dv_id_list():
             pt   = self.__BC_manager.get_pt(Id)
             deg_to_rad = pi/180.
@@ -309,28 +309,28 @@ class Wing_param():
         
     def build_wing(self):
         self.__BC_manager.clean()
-        self.__BC_manager.create_variable(self.__tag+'.span',0.)
+        self.__BC_manager.create_variable('span',0.)
         if self.__geom_type not in ['Elliptic']:
-            self.__BC_manager.create_variable(self.__tag+'.sweep',0.)
+            self.__BC_manager.create_variable('sweep',0.)
         if   self.__geom_type in ['Rectangular','Elliptic']:
-            self.__BC_manager.create_variable(self.__tag+'.root_chord',0.)
-            self.__BC_manager.create_variable(self.__tag+'.root_height',0.)
-            self.__BC_manager.create_variable(self.__tag+'.tip_height',0.)
+            self.__BC_manager.create_variable('root_chord',0.)
+            self.__BC_manager.create_variable('root_height',0.)
+            self.__BC_manager.create_variable('tip_height',0.)
         elif self.__geom_type == 'Broken':
-            self.__BC_manager.create_variable(self.__tag+'.break_percent',0.33)
-            self.__BC_manager.create_variable(self.__tag+'.root_chord',0.)
-            self.__BC_manager.create_variable(self.__tag+'.break_chord',0.)
-            self.__BC_manager.create_variable(self.__tag+'.tip_chord',0.)
-            self.__BC_manager.create_variable(self.__tag+'.root_height',0.)
-            self.__BC_manager.create_variable(self.__tag+'.break_height',0.)
-            self.__BC_manager.create_variable(self.__tag+'.tip_height',0.)
+            self.__BC_manager.create_variable('break_percent',0.33)
+            self.__BC_manager.create_variable('root_chord',0.)
+            self.__BC_manager.create_variable('break_chord',0.)
+            self.__BC_manager.create_variable('tip_chord',0.)
+            self.__BC_manager.create_variable('root_height',0.)
+            self.__BC_manager.create_variable('break_height',0.)
+            self.__BC_manager.create_variable('tip_height',0.)
             
         for i in xrange(self.__n_sect/2):
-            self.__BC_manager.create_design_variable(self.__tag+'.rtwist'+str(i),0.,(-10.,10.))
+            self.__BC_manager.create_design_variable('rtwist'+str(i),0.,(-10.,10.))
         for i in xrange(self.__n_sect/2):
 #             print self.__tag+'.twist'+str(i),self.__tag+'.twist'+str(self.__n_sect/2+i),self.__tag+'.rtwist'+str(self.__n_sect/2-1-i),self.__tag+'.rtwist'+str(i)
-            self.__BC_manager.create_parameter(self.__tag+'.twist'+str(i),self.__tag+'.rtwist'+str(self.__n_sect/2-1-i))
-            self.__BC_manager.create_parameter(self.__tag+'.twist'+str(self.__n_sect/2+i),self.__tag+'.rtwist'+str(i))
+            self.__BC_manager.create_parameter('twist'+str(i),'rtwist'+str(self.__n_sect/2-1-i))
+            self.__BC_manager.create_parameter('twist'+str(self.__n_sect/2+i),'rtwist'+str(i))
 #         for i in xrange(self.__n_sect):
 #             self.__BC_manager.create_design_variable(self.__tag+'.twist'+str(i),-25.,0.,25.)
     
@@ -384,7 +384,7 @@ class Wing_param():
             ex_words=existing_id.split('.')
             name=ex_words[-1]
             Id_in=self.__tag+'.desc.'+name
-            Id=self.__tag+'.'+name
+            Id=name
             if Id_in+'.type' in in_keys_list:
                 type=config_dict[Id_in+'.type']
                 if   type == 'DesignVariable':
@@ -408,7 +408,7 @@ class Wing_param():
                 test=string.join(words[:-2],'.')
                 if test==self.__tag+'.desc':
                     name=words[-2]
-                    Id=self.__tag+'.'+name
+                    Id=name
                     Id_in=self.__tag+'.desc.'+name
                     type=config_dict[Id_in+'.type']
                     if Id not in existing_keys and Id not in added_list:
@@ -480,7 +480,7 @@ class Wing_param():
         deg_to_rad = pi/180.
         
         # -- span
-        Id   = self.__tag+'.span'
+        Id   = 'span'
         pt   = self.__BC_manager.get_pt(Id)
         val  = pt.get_value()
         grad = pt.get_gradient()
@@ -489,7 +489,7 @@ class Wing_param():
         
         if self.__geom_type not in ['Elliptic']:
             # -- sweep
-            Id   = self.__tag+'.sweep'
+            Id   = 'sweep'
             pt   = self.__BC_manager.get_pt(Id)
             val  = pt.get_value()
             grad = pt.get_gradient()
@@ -500,21 +500,21 @@ class Wing_param():
             self.__sweep_grad = zeros(self.get_ndv())
         
         if   self.__geom_type in ['Rectangular','Elliptic']:
-            Id   = self.__tag+'.root_chord'
+            Id   = 'root_chord'
             pt   = self.__BC_manager.get_pt(Id)
             val  = pt.get_value()
             grad = pt.get_gradient()
             self.__root_chord      = val
             self.__root_chord_grad = grad
             
-            Id   = self.__tag+'.root_height'
+            Id   = 'root_height'
             pt   = self.__BC_manager.get_pt(Id)
             val  = pt.get_value()
             grad = pt.get_gradient()
             self.__root_height      = val
             self.__root_height_grad = grad
 
-            Id   = self.__tag+'.tip_height'
+            Id   = 'tip_height'
             pt   = self.__BC_manager.get_pt(Id)
             val  = pt.get_value()
             grad = pt.get_gradient()
@@ -522,49 +522,49 @@ class Wing_param():
             self.__tip_height_grad = grad
 
         elif self.__geom_type == 'Broken':
-            Id   = self.__tag+'.break_percent'
+            Id   = 'break_percent'
             pt   = self.__BC_manager.get_pt(Id)
             val  = pt.get_value()
             grad = pt.get_gradient()
             self.__break_percent      = val
             self.__break_percent_grad = grad
             
-            Id   = self.__tag+'.root_chord'
+            Id   = 'root_chord'
             pt   = self.__BC_manager.get_pt(Id)
             val  = pt.get_value()
             grad = pt.get_gradient()
             self.__root_chord      = val
             self.__root_chord_grad = grad
             
-            Id   = self.__tag+'.break_chord'
+            Id   = 'break_chord'
             pt   = self.__BC_manager.get_pt(Id)
             val  = pt.get_value()
             grad = pt.get_gradient()
             self.__break_chord      = val
             self.__break_chord_grad = grad
             
-            Id   = self.__tag+'.tip_chord'
+            Id   = 'tip_chord'
             pt   = self.__BC_manager.get_pt(Id)
             val  = pt.get_value()
             grad = pt.get_gradient()
             self.__tip_chord      = val
             self.__tip_chord_grad = grad
             
-            Id   = self.__tag+'.root_height'
+            Id   = 'root_height'
             pt   = self.__BC_manager.get_pt(Id)
             val  = pt.get_value()
             grad = pt.get_gradient()
             self.__root_height      = val
             self.__root_height_grad = grad
             
-            Id   = self.__tag+'.break_height'
+            Id   = 'break_height'
             pt   = self.__BC_manager.get_pt(Id)
             val  = pt.get_value()
             grad = pt.get_gradient()
             self.__break_height      = val
             self.__break_height_grad = grad
 
-            Id   = self.__tag+'.tip_height'
+            Id   = 'tip_height'
             pt   = self.__BC_manager.get_pt(Id)
             val  = pt.get_value()
             grad = pt.get_gradient()
@@ -574,7 +574,7 @@ class Wing_param():
         self.__twist      = zeros((self.__n_sect))
         self.__twist_grad = zeros((self.__n_sect,self.__ndv))
         for i in xrange(self.__n_sect):
-            Id   = self.__tag+'.twist'+str(i)
+            Id   = 'twist'+str(i)
             pt   = self.__BC_manager.get_pt(Id)
             val  = pt.get_value()
             grad = pt.get_gradient()
