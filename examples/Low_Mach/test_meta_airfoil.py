@@ -35,24 +35,24 @@ OC.compute_atmosphere()
 
 wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
 wing_param.build_wing()
-wing_param.set_value('test_param.span',34.1)  #34.1
-wing_param.set_value('test_param.sweep',34.)
-wing_param.set_value('test_param.break_percent',23.) #33.
-wing_param.set_value('test_param.root_chord',5.4)  #6.1
-wing_param.set_value('test_param.break_chord',4.6)
-wing_param.set_value('test_param.tip_chord',1.2) #1.5
-wing_param.set_value('test_param.root_height',.98)
-wing_param.set_value('test_param.break_height',0.70)
-wing_param.set_value('test_param.tip_height',0.18)
-wing_param.convert_to_design_variable('test_param.span',(10.,50.))
-wing_param.convert_to_design_variable('test_param.sweep',(0.,40.))
-wing_param.convert_to_design_variable('test_param.break_percent',(20.,40.))
-wing_param.convert_to_design_variable('test_param.root_chord',(5.,7.))
-wing_param.convert_to_design_variable('test_param.break_chord',(3.,5.))
-wing_param.convert_to_design_variable('test_param.tip_chord',(1.,2.))
-wing_param.convert_to_design_variable('test_param.root_height',(0.7,1.))
-wing_param.convert_to_design_variable('test_param.break_height',(0.45,0.8))
-wing_param.convert_to_design_variable('test_param.tip_height',(0.10,0.26))
+wing_param.set_value('span',34.1)  #34.1
+wing_param.set_value('sweep',34.)
+wing_param.set_value('break_percent',23.) #33.
+wing_param.set_value('root_chord',5.4)  #6.1
+wing_param.set_value('break_chord',4.6)
+wing_param.set_value('tip_chord',1.2) #1.5
+wing_param.set_value('root_height',.98)
+wing_param.set_value('break_height',0.70)
+wing_param.set_value('tip_height',0.18)
+wing_param.convert_to_design_variable('span',(10.,50.))
+wing_param.convert_to_design_variable('sweep',(0.,40.))
+wing_param.convert_to_design_variable('break_percent',(20.,40.))
+wing_param.convert_to_design_variable('root_chord',(5.,7.))
+wing_param.convert_to_design_variable('break_chord',(3.,5.))
+wing_param.convert_to_design_variable('tip_chord',(1.,2.))
+wing_param.convert_to_design_variable('root_height',(0.7,1.))
+wing_param.convert_to_design_variable('break_height',(0.45,0.8))
+wing_param.convert_to_design_variable('tip_height',(0.10,0.26))
 #wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
 wing_param.build_meta_airfoil(OC, '../MetaModelCleaning.xml', relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True)
 wing_param.build_airfoils_from_ref()
