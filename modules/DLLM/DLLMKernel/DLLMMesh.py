@@ -20,7 +20,7 @@
 #  http://github.com/TBD
 #
 import numpy
-from numpy import array, transpose,outer, ones, zeros, copy, divide, diag, dot
+from numpy import array, transpose, outer, ones, zeros, copy, divide, diag, dot
 from numpy.linalg import norm, solve
 
 class DLLMMesh:
