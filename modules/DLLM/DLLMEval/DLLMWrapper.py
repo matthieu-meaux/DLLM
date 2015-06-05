@@ -217,7 +217,7 @@ class DLLMWrapper():
         type = self.__config_dict[type_key]
         
         if type not in self.POS_SOLVER:
-            print WARNING_MSG+'solver_type = '+str(solve_type)+' not in '+str(self.POS_SOLVER)+'. Set to default solver_type = Solver'
+            print WARNING_MSG+'solver_type = '+str(type)+' not in '+str(self.POS_SOLVER)+'. Set to default solver_type = Solver'
             type='Solver'
             
         if   type == 'Solver':

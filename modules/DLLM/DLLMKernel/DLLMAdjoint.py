@@ -105,4 +105,3 @@ class DLLMAdjoint:
             self.__dF_list_dchi.append(AdjPb.get_dFdchi())
             
             print '  - Convergence adjoint correction for '+str(F_name)+' = '+str(self.__adj_conv_corr_list[i])
-           

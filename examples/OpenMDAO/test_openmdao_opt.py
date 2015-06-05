@@ -9,7 +9,7 @@ from openmdao.lib.drivers.api import SLSQPdriver
 from DLLMWrappers.OpenMDAOWrapper import DLLMOpenMDAOComponent
 
 
-# class StructuralOptimization(Assembly):
+# class StructuralOptimization(Assembly): 
 # 
 #     """Unconstrained optimization of the DSM Component."""
 # 

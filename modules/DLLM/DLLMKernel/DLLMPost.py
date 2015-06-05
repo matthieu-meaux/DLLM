@@ -757,7 +757,7 @@ class DLLMPost:
             af=airfoils[i]
             dCm+=af.CmAlpha(localAoA[i],Mach)*af.getSref()*dplocalAoA_dpiAoA[i]
         dCm/=self.get_Sref()
-        return dCm_diAoA
+        return dCm
     
     def dpCm_dpchi(self):
         N=self.get_N()
@@ -771,7 +771,7 @@ class DLLMPost:
         for i in range(N):
             af=airfoils[i]
             Cm+=af.Cm(localAoA[i],Mach)*af.get_Sref()
-            dCm+=af.CmAlpha(localAoA[i],Mach)*af.get_Sref()*dlAoAchi[i]+af.dCm_dchi(localAoA[i],Mach)*af.get_Sref()+af.Cm(localAoA[i],Mach)*af.get_Sref_grad()
+            dCm+=af.CmAlpha(localAoA[i],Mach)*af.get_Sref()*dlAoAdchi[i]+af.dCm_dchi(localAoA[i],Mach)*af.get_Sref()+af.Cm(localAoA[i],Mach)*af.get_Sref_grad()
         Cm/=self.get_Sref()
         dCmdchi = (dCm*self.get_Sref()- Cm*self.get_Sref_grad())/(self.get_Sref()**2) 
         

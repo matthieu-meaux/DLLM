@@ -266,9 +266,9 @@ class DLLMDirect:
         twist  = self.get_wing_param().get_twist()
         AoA    = self.get_wing_param().get_AoA()
         if AoA is None:
-           AoA    = self.get_OC().get_AoA_rad()
+            AoA    = self.get_OC().get_AoA_rad()
         else:
-           self.get_OC().set_AoA(AoA*180./numpy.pi)
+            self.get_OC().set_AoA(AoA*180./numpy.pi)
          
          
         # Why this formula ? twist increases the local airfoil angle of attack normally...
