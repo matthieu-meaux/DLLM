@@ -26,6 +26,8 @@ from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
 from DLLM.DLLMGeom.wing_param import Wing_param
 from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
 from MDOTools.OC.operating_condition import OperatingCondition
+from os.path import dirname, join, realpath
+
 
 class TestDLLMMeta(unittest.TestCase): 
 
@@ -59,7 +61,9 @@ class TestDLLMMeta(unittest.TestCase):
         wing_param.convert_to_design_variable('root_height',(1.,1.5))
         wing_param.convert_to_design_variable('break_height',(0.8,1.2))
         wing_param.convert_to_design_variable('tip_height',(0.2,0.5))
-        wing_param.build_meta_airfoil(OC, '../examples/MetaModelFixed.xml', relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True)
+        fpath=join(dirname(realpath(__file__)),join("examples"),"MetaModelFixed.xml")
+        print "fpath = ",fpath
+        wing_param.build_meta_airfoil(OC,fpath , relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True)
         wing_param.build_airfoils_from_ref()
         wing_param.update()
         
