@@ -27,7 +27,7 @@ class DLLMMesh:
     """
     Class that deals with geometry for the lifting mine wing solver
     """
-    def __init__(self, LLW,verbose = 1):
+    def __init__(self, LLW,verbose = 0):
         self.__LLW = LLW
         self.__verbose = verbose
         self.__ndv = self.get_wing_param().get_ndv()

@@ -94,7 +94,7 @@ class DLLMAdjoint:
         dpFdpchi_list = self.get_dpF_list_dpchi()
         
         if self.__verbose == 0 :
-            print "Running adjoint problem for ",F_list_names
+            print "Running adjoint"
         for i, F_name in enumerate(F_list_names):
             if self.__verbose > 0 :
                 print 'Run adjoint problem for func = '+str(F_name)

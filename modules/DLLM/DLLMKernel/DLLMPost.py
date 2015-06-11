@@ -838,6 +838,9 @@ class DLLMPost:
         Lift = self.__Lift()
         return Lift
 
+    def get_Lift(self):
+        return self.__Lift()
+
     def comp_dpLift_dpiAoA(self):
         dpLift_dpiAoA = self.__dpLift_dpiAoA()
         return dpLift_dpiAoA
@@ -879,7 +882,22 @@ class DLLMPost:
         Cd = self.__Cd()
         Drag = Pdyn * Sref * Cd
         return Drag
+    
+    def get_Drag(self):
+        return self.__Drag()
 
+    def get_Drag_Friction(self):
+        return self.__Drag_Friction()
+
+    def get_Drag_Induced(self):
+        return self.__Drag_Induced()
+
+    def get_Drag_Wave(self):
+        return self.__Drag_Wave()
+    
+    def get_Drag_Pressure(self):
+        return self.__Drag_Pressure()
+    
     def dpDrag_dpAoA(self):
         Pdyn = self.get_OC().get_Pdyn()
         Sref = self.get_Sref()

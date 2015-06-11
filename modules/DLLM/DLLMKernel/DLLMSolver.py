@@ -27,7 +27,7 @@ from DLLM.DLLMKernel.DLLMAdjoint import DLLMAdjoint
 
 class DLLMSolver:
     ERROR_MSG='ERROR in DLLMSolver.'
-    def __init__(self, tag, wing_param, OC, verbose = 1):
+    def __init__(self, tag, wing_param, OC, verbose = 0):
         '''
         Constructor for wings based on lifting line theory
         @param wing_geom : the wing geometry

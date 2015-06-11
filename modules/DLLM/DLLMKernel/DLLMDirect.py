@@ -34,7 +34,7 @@ class DLLMDirect:
     DEG_TO_RAD = numpy.pi / 180.
     RAD_TO_DEG = 180. / numpy.pi
 
-    def __init__(self, LLW, verbose = 1):
+    def __init__(self, LLW, verbose = 0):
         self.__LLW = LLW
         self.__verbose = verbose
         self.__computed = False
