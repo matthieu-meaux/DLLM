@@ -304,6 +304,9 @@ class Wing_param():
     def get_dv_id_list(self):
         return self.__BC_manager.get_dv_id_list()
     
+    def get_dv_info_list(self):
+        return self.__BC_manager.get_dv_info_list()
+
     def get_bounds_array(self):
         return self.__BC_manager.get_bounds_array()
         

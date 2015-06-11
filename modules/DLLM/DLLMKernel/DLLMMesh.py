@@ -27,8 +27,9 @@ class DLLMMesh:
     """
     Class that deals with geometry for the lifting mine wing solver
     """
-    def __init__(self, LLW):
+    def __init__(self, LLW,verbose = 1):
         self.__LLW = LLW
+        self.__verbose = verbose
         self.__ndv = self.get_wing_param().get_ndv()
         self.__N       = None
         self.__K       = None
@@ -89,10 +90,13 @@ class DLLMMesh:
             YminEta_grad[:,:,n] = transpose(outer(ones([self.__N+1]),y_grad[:,n]))-outer(ones([self.__N]),eta_grad[:,n])
         
         dKmetric_dchi=zeros((self.__N,self.__N+1,self.__ndv))
+#         for n in xrange(self.__ndv):
+#             for j in xrange(self.__N+1):
+#                 for i in xrange(self.__N):
+#                     dKmetric_dchi[i,j,n]=-YminEta_grad[i,j,n]/YminEta[i,j]**2
+#                     
         for n in xrange(self.__ndv):
-            for j in xrange(self.__N+1):
-                for i in xrange(self.__N):
-                    dKmetric_dchi[i,j,n]=-YminEta_grad[i,j,n]/YminEta[i,j]**2
+            dKmetric_dchi[:,:,n]=-YminEta_grad[:,:,n]/YminEta[:,:]**2
         dKmetric_dchi/=4.*numpy.pi
         
         self.__dK_dchi = zeros((self.__N,self.__N,self.__ndv))

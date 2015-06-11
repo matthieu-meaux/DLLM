@@ -191,7 +191,7 @@ class AnalyticAirfoil(Airfoil):
         if Mach < Mcrit:
             Cdw = 0.0
         else:
-            Cdw = 20*(Mach-Mcrit)**4
+            Cdw = 20.*(Mach-Mcrit)**4
         return Cdw
     
     def __dCd_wave_dAoA(self, alpha, Mach):
