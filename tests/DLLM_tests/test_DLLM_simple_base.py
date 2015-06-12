@@ -65,36 +65,36 @@ class TestDLLMSimpleBase(unittest.TestCase):
         
         return OC,wing_param
 
-#     def test_DLLM_instantiation(self):
-#         """
-#         test class instantiation
-#         """
-#         OC,wing_param = self.__init_wing_param()
-#         DLLM = DLLMSolver('test',wing_param,OC)
-#         assert(DLLM is not None)
-#         
-#     def test_DLLM_run_direct(self):
-#         OC,wing_param = self.__init_wing_param()
-#         DLLM = DLLMSolver('test',wing_param,OC)
-#         try:
-#             print ''
-#             DLLM.run_direct()
-#             ok=True
-#         except:
-#             ok=False
-#         assert(ok)
-#         
-#     def test_DLLM_run_direct_post(self):
-#         OC,wing_param = self.__init_wing_param()
-#         DLLM = DLLMSolver('test',wing_param,OC)
-#         try:
-#             print ''
-#             DLLM.run_direct()
-#             DLLM.run_post()
-#             ok=True
-#         except:
-#             ok=False
-#         assert(ok)
+    def test_DLLM_instantiation(self):
+        """
+        test class instantiation
+        """
+        OC,wing_param = self.__init_wing_param()
+        DLLM = DLLMSolver('test',wing_param,OC)
+        assert(DLLM is not None)
+         
+    def test_DLLM_run_direct(self):
+        OC,wing_param = self.__init_wing_param()
+        DLLM = DLLMSolver('test',wing_param,OC)
+        try:
+            print ''
+            DLLM.run_direct()
+            ok=True
+        except:
+            ok=False
+        assert(ok)
+         
+    def test_DLLM_run_direct_post(self):
+        OC,wing_param = self.__init_wing_param()
+        DLLM = DLLMSolver('test',wing_param,OC)
+        try:
+            print ''
+            DLLM.run_direct()
+            DLLM.run_post()
+            ok=True
+        except:
+            ok=False
+        assert(ok)
     
     def test_DLLM_run_direct_post_adjoint(self):
         OC,wing_param = self.__init_wing_param()
