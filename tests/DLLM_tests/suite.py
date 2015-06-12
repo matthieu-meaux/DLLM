@@ -36,6 +36,7 @@ try:
 except:
     run_meta=False
 
+run_meta = False
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(TestWingParam))
