@@ -101,6 +101,12 @@ class DLLMOpenMDAOComponent(Component):
             print wing_param
 
     def __init_OC(self, OC_name = 'cond1',default = True, **kwargs):
+        """Initialize operating condtions. Some default values exist
+        but they can be overwritten using appropriate key word defined by 
+        keywordname = keywordvalue
+        example :
+        __init_OC(self, OC_name = 'cond1',default = True, Mach = 0.75)
+        """
         OC = self.__set_default_OC(OC_name = OC_name)
         if not default :
             for name, value in  kwargs.items():
@@ -121,6 +127,7 @@ class DLLMOpenMDAOComponent(Component):
         self.OC = OC
     
     def __set_default_OC(self, OC_name):
+        """ Set default operating conditions"""
         OC = OperatingCondition(OC_name, atmospheric_model='ISA')
         OC.set_Mach(0.8)
         OC.set_AoA(3.5)

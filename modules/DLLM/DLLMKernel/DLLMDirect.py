@@ -45,7 +45,6 @@ class DLLMDirect:
 
         # initialize the Newton-Raphson problem
         self.__NRPb = None
-        self.verbose = verbose
         self.__init_Newton_Raphson()
 
     #-- Accessors
@@ -120,7 +119,7 @@ class DLLMDirect:
         self.__NRPb = NewtonRaphsonProblem(
             iAoA0,
             self.comp_R,
-            self.comp_dpR_dpiAoA,verbose = self.verbose)
+            self.comp_dpR_dpiAoA,verbose = self.__verbose)
         self.__NRPb.set_relax_factor(0.99)
         self.__NRPb.set_stop_residual(1.e-9)
         self.__NRPb.set_max_iterations(100)
