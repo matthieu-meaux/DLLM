@@ -26,9 +26,8 @@ import string
 import numpy
 from MDOTools.Controllers.Kernel.BCManager import BCManager
 from DLLM.polarManager.analyticAirfoil import AnalyticAirfoil
-from DLLM.polarManager.airfoilPolar import AirfoilPolar
 from DLLM.polarManager.MetaAirfoil import MetaAirfoil
-from numpy import zeros, array
+from numpy import zeros
 from numpy import pi, sqrt, cos, sin
 from copy import deepcopy
 
@@ -197,7 +196,7 @@ class Wing_param():
 
     def get_thetaY(self):
         return self.__thetaY
-    
+
     def get_BC_manager(self):
         return self.__BC_manager
 
@@ -643,8 +642,8 @@ class Wing_param():
             for i, r in enumerate(self.__r_list_eta):
                 self.__chords_eta[i] = self.__root_chord * \
                     sqrt(1. - (2. * r)**2)
-                self.__chords_grad_eta[i, :] = self.__root_chord_grad[
-                    :] * sqrt(1. - (2. * r)**2)
+                self.__chords_grad_eta[i, :] = self.__root_chord_grad[:] \
+                * sqrt(1. - (2. * r)**2)
 
         elif self.__geom_type == 'Rectangular':
             for i in xrange(self.__n_sect):
@@ -663,20 +662,16 @@ class Wing_param():
                 if r <= p:
                     coeff = r / p
                     dcoeff = -r * p_grad[:] / p**2
-                    self.__chords[i] = (
-                        self.__break_chord - self.__root_chord) * coeff + self.__root_chord
+                    self.__chords[i] = (self.__break_chord - self.__root_chord) * coeff + self.__root_chord
                     self.__chords_grad[i, :] = (self.__break_chord_grad[:] - self.__root_chord_grad[:]) * coeff  \
-                        + (self.__break_chord - self.__root_chord) * dcoeff \
-                        + self.__root_chord_grad[:]
+                        + (self.__break_chord - self.__root_chord) * dcoeff + self.__root_chord_grad[:]
 
                 else:
                     coeff = (r - p) / (1. - p)
                     dcoeff = (r - 1) * p_grad[:] / (1. - p)**2
-                    self.__chords[i] = (
-                        self.__tip_chord - self.__break_chord) * coeff + self.__break_chord
+                    self.__chords[i] = ( self.__tip_chord - self.__break_chord) * coeff + self.__break_chord
                     self.__chords_grad[i, :] = (self.__tip_chord_grad[:] - self.__break_chord_grad[:]) * coeff  \
-                        + (self.__tip_chord - self.__break_chord) * dcoeff \
-                        + self.__break_chord_grad[:]
+                        + (self.__tip_chord - self.__break_chord) * dcoeff + self.__break_chord_grad[:]
 
             for i, r in enumerate(self.__r_list_eta):
                 r = abs(2. * r)
@@ -832,14 +827,8 @@ class Wing_param():
     def build_meta_airfoil(self, OC, surrogate_model, relative_thickness=.12,
                            camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True):
         self.__airfoil_type = 'meta'
-        airfoil = MetaAirfoil(
-            OC,
-            surrogate_model,
-            relative_thickness=relative_thickness,
-            camber=camber,
-            Sref=Sref,
-            Lref=Lref,
-            sweep=sweep)
+        airfoil = MetaAirfoil(OC, surrogate_model, relative_thickness=relative_thickness,
+                              camber=camber, Sref=Sref, Lref=Lref, sweep=sweep)
         if set_as_ref:
             self.set_ref_aifoil(airfoil)
         return airfoil
@@ -874,14 +863,8 @@ class Wing_param():
         LLoc = self.__chords[i]
         LLoc_grad = self.__chords_grad[i]
         SLoc = LLoc * (self.__eta[1, i + 1] - self.__eta[1, i])
-        SLoc_grad = LLoc_grad * (self.__eta[1,
-                                            i + 1] - self.__eta[1,
-                                                                i]) + LLoc * (self.__eta_grad[1,
-                                                                                              i +
-                                                                                              1,
-                                                                                              :] - self.__eta_grad[1,
-                                                                                                                   i,
-                                                                                                                   :])
+        SLoc_grad = LLoc_grad * (self.__eta[1, i + 1] - self.__eta[1, i]) + \
+            LLoc * (self.__eta_grad[1, i + 1, :] - self.__eta_grad[1, i, :])
 #         SLoc      = self.__span * LLoc / float(self.__n_sect)
 #         SLoc_grad = (self.__span_grad * LLoc + self.__span * LLoc_grad) / float(self.__n_sect)
         return LLoc, LLoc_grad, SLoc, SLoc_grad

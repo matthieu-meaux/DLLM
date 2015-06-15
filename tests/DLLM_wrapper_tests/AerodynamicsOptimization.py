@@ -30,12 +30,11 @@ class AerodynamicOptimization(Assembly):
         # SLSQP Flags
         self.driver.iprint = 0
         self.driver.accuracy = 1e-6
-        self.driver.maxiter = 40
+        self.driver.maxiter = 400
 
         # Objective
 
         self.driver.add_objective('%s.Drag' % workflow_name)
-        # self.driver.
 
         # Design Variables
         wing_param = self.DLLMOpenMDAO.wing_param

@@ -45,10 +45,9 @@ class DLLMOpenMDAOComponent(Component):
     tip_height = Float(desc='tip_height', default_value=0.33, iotype="in")
     # Operating conditions variables
     Mach = Float(iotype='in', default_value=0.7, desc='Mach')
-    altitude = Float(iotype='in', default_value=10000., desc='altitude')
-    T0 = Float(iotype='in', default_value=15., desc='T0')
-    P0 = Float(iotype='in', default_value=101325., desc='P0')
-    humidity = Float(iotype='in', default_value=0.0, desc='humidity')
+    altitude = Float(iotype='in', default_value=0., desc='Altitude')
+    T0 = Float(iotype='in', default_value=OperatingCondition.T0, desc='Ground ISA ref Temperature')
+    P0 = Float(iotype='in', default_value=OperatingCondition.P0, desc='Ground ISA ref Pressure')
 
     def __init__(self, N, verbose=0):
         """Initialization of DLLM component.
@@ -58,13 +57,14 @@ class DLLMOpenMDAOComponent(Component):
             - verbose : integer : verbosity level
         """
         self.N = N
-        self.OC = self.__set_OC(OC_name="LLW_OC")
+        self.OC = None
         self.rtwist = np.zeros(N)
-        super(DLLMOpenMDAOComponent, self).__init__()
         self.__display_wing_param = True
         self.__verbose = verbose
+        self.wing_param = None
+        super(DLLMOpenMDAOComponent, self).__init__()
+        self.__set_OC(OC_name="LLW_OC")
         self.__set_wing_param()
-
         self.DLLM = DLLMTargetLift('test', self.wing_param,
                                    self.OC, verbose=self.__verbose)
         self.DLLM.run_direct()
@@ -108,14 +108,13 @@ class DLLMOpenMDAOComponent(Component):
 
     def __set_OC(self, OC_name='OC1'):
         """ Set default operating conditions"""
-        OC = OperatingCondition(OC_name, atmospheric_model='ISA')
-        OC.set_Mach(self.Mach)
-        OC.set_altitude(self.altitude)
-        OC.set_T0_deg(self.T0)
-        OC.set_P0(self.P0)
-        OC.set_humidity(self.humidity)
-        OC.compute_atmosphere()
-        return OC
+        self.OC = OperatingCondition(OC_name, atmospheric_model='ISA')
+        self.OC.set_Mach(self.Mach)
+        self.OC.set_altitude(self.altitude)
+        self.OC.set_T0(self.T0)
+        self.OC.set_P0(self.P0)
+        self.OC.set_humidity(1.)
+        self.OC.compute_atmosphere()
 
     def execute(self):
         """ Perform a DLLM computation with the """
@@ -126,8 +125,8 @@ class DLLMOpenMDAOComponent(Component):
             else:
                 exec("self.wing_param.set_value('%s',float(self.%s))" %
                      (dv_id, dv_id))
-
         self.wing_param.update()
+        self.__set_OC()
         self.DLLM.run_direct()
         self.DLLM.run_post()
         output = self.DLLM.get_F_list()
@@ -149,21 +148,22 @@ class DLLMOpenMDAOComponent(Component):
 
     def provideJ(self):
         """Calculate the Jacobian according inputs and outputs"""
-        return self.DLLM.get_dpF_list_dpchi()
+        self.DLLM.run_adjoint()
+        return np.array(self.DLLM.get_dF_list_dchi())
 
-if __name__ == "__main__":
-    import time
-    tt = time.time()
-    N = 20
-    DLLMOpenMDAO = DLLMOpenMDAOComponent(N, verbose=1)
-    DLLMOpenMDAO.OC.set_altitude(190000.)
-    DLLMOpenMDAO.DLLM.set_target_Lift(606570.049598)
-    DLLMOpenMDAO.run()
-
-    print "Final point :"
-    print "    -lift :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Lift()
-    print "    -total drag :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Drag()
-    print "    -induced drag :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Drag_Induced()
-    print "    -wave drag :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Drag_Pressure()
-    print "    -wave drag :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Drag_Wave()
-    print "    -friction drag :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Drag_Friction()
+# if __name__ == "__main__":
+#     import time
+#     tt = time.time()
+#     N = 20
+#     DLLMOpenMDAO = DLLMOpenMDAOComponent(N, verbose=1)
+#     DLLMOpenMDAO.OC.set_altitude(190000.)
+#     DLLMOpenMDAO.DLLM.set_target_Lift(606570.049598)
+#     DLLMOpenMDAO.run()
+# 
+#     print "Final point :"
+#     print "    -lift :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Lift()
+#     print "    -total drag :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Drag()
+#     print "    -induced drag :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Drag_Induced()
+#     print "    -wave drag :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Drag_Pressure()
+#     print "    -wave drag :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Drag_Wave()
+#     print "    -friction drag :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Drag_Friction()

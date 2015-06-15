@@ -30,7 +30,7 @@ class AnalyticAirfoil(Airfoil):
     """
     THICKNESS_CORRECTION=0.7698
     CLALPHA_BASE=2.*pi
-    POW_COS  = 1.
+    POW_COS  = 1
     
     def __init__(self, OC, AoA0=0., Cm0=0.0, Sref=1., Lref=1., rel_thick=0.0, sweep=0.0, Ka=0.95):
         '''
