@@ -15,6 +15,8 @@ class DLLMOpenMDAOComponent(Component):
     # set up interface to the framework
     # pylint: disable-msg=E1101
     # Outputs of lifting line problem
+    """OpenMDAO component for DLLM implementation
+    """
     Lift = Float(iotype='out', desc='Lift')
     Drag = Float(iotype='out', desc='Drag')
     Drag_Pressure = Float(iotype='out', desc='Drag_Pressure')
@@ -49,6 +51,12 @@ class DLLMOpenMDAOComponent(Component):
     humidity = Float(iotype='in', default_value=0.0, desc='humidity')
 
     def __init__(self, N, verbose=0):
+        """Initialization of DLLM component.
+        DLLM component use target lift capability of DLLM kernel
+        Inputs :
+            - N : integer. Number of discrete section on 1/2 wing
+            - verbose : integer : verbosity level
+        """
         self.N = N
         self.OC = self.__set_OC(OC_name="LLW_OC")
         self.rtwist = np.zeros(N)
@@ -63,7 +71,7 @@ class DLLMOpenMDAOComponent(Component):
         self.DLLM.run_post()
 
     def __set_wing_param(self, wing_param_name='test_param'):
-
+        """Method for wing parameters setting : design variables initial values and bounds"""
         self.__set_wing_param_values(wing_param_name=wing_param_name)
 
         self.__set_wing_param_bounds()
@@ -77,6 +85,7 @@ class DLLMOpenMDAOComponent(Component):
             print self.wing_param
 
     def __set_wing_param_values(self, wing_param_name='test_param'):
+        """Method for wing parameters variables setting""" 
         self.wing_param = Wing_param(wing_param_name,
             geom_type='Broken', n_sect=self.N * 2)
         self.wing_param.build_wing()
@@ -84,6 +93,10 @@ class DLLMOpenMDAOComponent(Component):
             self.wing_param.set_value(param, eval('self.%s' % param))
 
     def __set_wing_param_bounds(self):
+        """Method for desing variables bounds settings
+        Values are set to inf/-inf in DLLM component and their 'real' bounds
+        are defined when optimization problem is set 
+        """
         for i in xrange(self.N):
             self.wing_param.convert_to_design_variable(
 #                'rtwist%s' % i, (-float('inf'), float('inf')))
@@ -105,7 +118,7 @@ class DLLMOpenMDAOComponent(Component):
         return OC
 
     def execute(self):
-
+        """ Perform a DLLM computation with the """
         for dv_id in self.wing_param.get_dv_id_list():
             if dv_id.startswith('rtwist'):
                 i_twist = int(dv_id.replace('rtwist', ''))
@@ -122,7 +135,9 @@ class DLLMOpenMDAOComponent(Component):
             exec("self." + f_name + "=" + str(f))
 
     def list_deriv_vars(self):
-        """specified the inputs and outputs where derivatives are defined"""
+        """specify the inputs and outputs where derivatives are defined
+        Specific treatment for twist : defined as rtwist0, rtwist1,... in DLLM
+        but as an array rtwist in openmdao component"""
 
         out_dvid = []
         for dv_id in self.wing_param.get_dv_id_list():
@@ -133,15 +148,13 @@ class DLLMOpenMDAOComponent(Component):
         return tuple(out_dvid), tuple(self.DLLM.get_F_list_names())
 
     def provideJ(self):
-        """Calculate the Jacobian"""
+        """Calculate the Jacobian according inputs and outputs"""
         return self.DLLM.get_dpF_list_dpchi()
 
 if __name__ == "__main__":
     import time
     tt = time.time()
     N = 20
-    #options_dict = {'Mach':0.80001,'span':34.100001,'span_bounds':(10.0001,40.00001)}
-    #DLLMOpenMDAO = DLLMOpenMDAOComponent(N, verbose=1,Mach=0.800,span=34.100001,span_bounds=(10.0001,40.00001))
     DLLMOpenMDAO = DLLMOpenMDAOComponent(N, verbose=1)
     DLLMOpenMDAO.OC.set_altitude(190000.)
     DLLMOpenMDAO.DLLM.set_target_Lift(606570.049598)
@@ -154,8 +167,3 @@ if __name__ == "__main__":
     print "    -wave drag :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Drag_Pressure()
     print "    -wave drag :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Drag_Wave()
     print "    -friction drag :", DLLMOpenMDAO.DLLM.get_DLLMPost().get_Drag_Friction()
-#     print DLLMOpenMDAO.provideJ()
-#     print DLLMOpenMDAO.list_deriv_vars()
-#     print DLLMOpenMDAO.Cd
-
-#    print "\n"
