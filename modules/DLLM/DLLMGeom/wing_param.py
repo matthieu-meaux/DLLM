@@ -379,27 +379,6 @@ class Wing_param():
         in_keys_list=sorted(config_dict.keys())
         existing_keys=deepcopy(self.__BC_manager.get_list_id())
         
-        # Convert pre-defined parameters
-        for existing_id in existing_keys:
-            ex_words=existing_id.split('.')
-            name=ex_words[-1]
-            Id_in=self.__tag+'.desc.'+name
-            Id=name
-            if Id_in+'.type' in in_keys_list:
-                type=config_dict[Id_in+'.type']
-                if   type == 'DesignVariable':
-                    bounds = config_dict[Id_in+'.bounds']
-                    value  = config_dict[Id_in+'.value']
-                    self.set_value(Id,value)
-                    self.convert_to_design_variable(Id,bounds)
-                elif type == 'Variable':
-                    value  = config_dict[Id_in+'.value']
-                    self.set_value(Id,value)
-                    self.convert_to_variable(Id)
-                elif type == 'Parameter':
-                    fexpr = config_dict[Id_in+'.fexpr']
-                    self.convert_to_parameter(Id,fexpr)
-        
         # Add user defined DesignVariable, Variable and Parameter
         added_list=[]        
         for in_key in in_keys_list:
@@ -423,6 +402,27 @@ class Wing_param():
                             fexpr = config_dict[Id_in+'.fexpr']
                             self.__BC_manager.create_parameter(Id,fexpr)
                         added_list.append(Id)
+        
+        # Convert pre-defined parameters
+        for existing_id in existing_keys:
+            ex_words=existing_id.split('.')
+            name=ex_words[-1]
+            Id_in=self.__tag+'.desc.'+name
+            Id=name
+            if Id_in+'.type' in in_keys_list:
+                type=config_dict[Id_in+'.type']
+                if   type == 'DesignVariable':
+                    bounds = config_dict[Id_in+'.bounds']
+                    value  = config_dict[Id_in+'.value']
+                    self.set_value(Id,value)
+                    self.convert_to_design_variable(Id,bounds)
+                elif type == 'Variable':
+                    value  = config_dict[Id_in+'.value']
+                    self.set_value(Id,value)
+                    self.convert_to_variable(Id)
+                elif type == 'Parameter':
+                    fexpr = config_dict[Id_in+'.fexpr']
+                    self.convert_to_parameter(Id,fexpr)
         
     def update(self):
         self.__BC_manager.update()
