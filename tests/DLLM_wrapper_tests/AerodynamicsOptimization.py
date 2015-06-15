@@ -39,7 +39,7 @@ class AerodynamicOptimization(Assembly):
 
         # Design Variables
         wing_param = self.DLLMOpenMDAO.wing_param
-        print "Adding desing variables to openMDAO problem :"
+        print "Adding desing variables to openMDAO problem "
         # print 5*" "+"Variable name"+20*' '+'Lower bound'+20*" "+'Upper bound'
         rtwist_lb_array = -12.*np.ones(self.N)
         rtwist_ub_array = 12.*np.ones(self.N)
