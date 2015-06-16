@@ -175,6 +175,9 @@ class DLLMOpenMDAOComponent(Component):
 
     def get_F_list(self):
         return self.__DLLM.get_F_list()
+
+    def get_F_list_names(self):
+        return self.__DLLM.get_F_list_names()
     
     def get_dv_array(self):
         return self.__wing_param.get_dv_array()
