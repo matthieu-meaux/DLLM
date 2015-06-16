@@ -1,6 +1,6 @@
 from DLLMWrappers.OpenMDAOWrapper import DLLMOpenMDAOComponent
 
-from openmdao.lib.drivers.api import *
+from openmdao.lib.drivers.api import SLSQPdriver
 from openmdao.main.api import Assembly
 import numpy as np
 
@@ -9,8 +9,21 @@ class AerodynamicOptimization(Assembly):
 
     """Constrained optimization of the LLW Component."""
 
-    def __init__(self, N):
+    def __init__(self, Target_Lift, N = 10, verbose = 0):
+        """Initialization of OpenMDAO component.
+        DLLM component use target lift capability of DLLM kernel
+            @param Target_Lift : the targeted lift value (float)
+            @param N : integer. Number of discrete section on 1/2 wing
+            @param verbose : integer : verbosity level
+        """
+        try :
+            float(Target_Lift)
+        except:
+            raise ValueError('You MUST define a float target lift value, get '+str(Target_Lift)+' instead.')
+
+        self.Target_Lift = Target_Lift
         self.N = N
+        self.verbose = verbose
         super(AerodynamicOptimization, self).__init__()
 
     def configure(self):
@@ -19,8 +32,8 @@ class AerodynamicOptimization(Assembly):
         self.add('driver', SLSQPdriver())
         # Create Paraboloid component instances
         workflow_name = 'llw_comp'
-        self.DLLMOpenMDAO = DLLMOpenMDAOComponent(self.N, verbose=0)
-        self.DLLMOpenMDAO.DLLM.set_target_Lift(606570.049598)
+        self.DLLMOpenMDAO = DLLMOpenMDAOComponent(N=self.N, Target_Lift = self.Target_Lift, verbose=self.verbose)
+        #self.DLLMOpenMDAO.DLLM.set_target_Lift(self.Target_Lift)
         # DLLMOpenMDAO.check_gradient()
         self.add(workflow_name, self.DLLMOpenMDAO)
 
@@ -30,14 +43,13 @@ class AerodynamicOptimization(Assembly):
         # SLSQP Flags
         self.driver.iprint = 0
         self.driver.accuracy = 1e-6
-        self.driver.maxiter = 400
+        self.driver.maxiter = 20
 
         # Objective
 
         self.driver.add_objective('%s.Drag' % workflow_name)
 
         # Design Variables
-        wing_param = self.DLLMOpenMDAO.wing_param
         print "Adding desing variables to openMDAO problem "
         # print 5*" "+"Variable name"+20*' '+'Lower bound'+20*" "+'Upper bound'
         rtwist_lb_array = -12.*np.ones(self.N)

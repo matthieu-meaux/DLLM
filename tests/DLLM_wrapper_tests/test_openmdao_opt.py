@@ -17,23 +17,36 @@ class TestDLLM_MDAO_opt(unittest.TestCase):
     
     def test_optim(self):
         N = 10
-        opt_problem = AerodynamicOptimization(N)
+        Target_Lift = 606570.049598
+        opt_problem = AerodynamicOptimization(N = N, Target_Lift = Target_Lift)
         parameters_dict = opt_problem.driver.get_parameters()
         out_dvid_tuple, F_list_names_tuple = opt_problem.DLLMOpenMDAO.list_deriv_vars()
         self.assertEqual(len(parameters_dict.keys()), len(out_dvid_tuple))
         
-        Initial_Lift =  606570.049598
-        Initial_drag = 15751.3017003
-        Initial_LoD = Initial_Lift/Initial_drag
+        Initial_drag = 15805.247796847883
+        Initial_LoD = Target_Lift/Initial_drag
         opt_problem.llw_comp.execute()
-        self.assertAlmostEqual(Initial_Lift, opt_problem.llw_comp.Lift, places =3)
+        self.assertAlmostEqual(Target_Lift, opt_problem.llw_comp.Lift, places =3)
         self.assertAlmostEqual(Initial_drag, opt_problem.llw_comp.Drag, places =3)
         self.assertAlmostEqual(Initial_LoD, opt_problem.llw_comp.LoD, places =3)        
                 
         print "Running optimization"
         opt_problem.run()
+#         print "Final :" 
+#         print "    OC :"
+#         print "        AoA :",OC.get_AoA()
+#         print "        P0:",OC.get_P0()
+#         print "        T0:",OC.get_T0()
+#         print "        Alt.:",OC.get_altitude()
+#         print "        Mach:",OC.get_Mach()
+#         print "    Outputs :"
+#         for i, varname in enumerate(DLLMPost.DEF_F_LIST_NAMES) :
+#             print "        Varname : %s = %s" %(varname,DLLMPost.get_F_list()[i])
+#         print "    Inputs"
+#         for i,varname in enumerate(DLLMOpenMDAO.wing_param.get_dv_id_list()):
+#             print "        Varname : %s=%s" %(varname,DLLMOpenMDAO.wing_param.get_dv_array()[i])
         
-        self.assertAlmostEqual(Initial_Lift, opt_problem.llw_comp.Lift, places =3)
+        self.assertAlmostEqual(Target_Lift, opt_problem.llw_comp.Lift, places =3)
         self.assertGreater(Initial_drag, opt_problem.llw_comp.Drag)
         self.assertGreater( opt_problem.llw_comp.LoD,Initial_LoD)
         return

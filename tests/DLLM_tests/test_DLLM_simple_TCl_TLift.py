@@ -20,7 +20,7 @@
 #  http://github.com/TBD
 #
 import unittest
-from numpy import zeros, array
+from numpy import array
 
 from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
 from DLLM.DLLMGeom.wing_param import Wing_param
@@ -69,7 +69,7 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
     def test_DLLM_valid_TCl(self):
         OC,wing_param = self.__init_wing_param()
         DLLM = DLLMTargetCl('Simple',wing_param,OC)
-        F_list=DLLM.get_F_list()
+#         F_list=DLLM.get_F_list()
         F_list_names=DLLM.get_F_list_names()
         print F_list_names
         DLLM.set_target_Cl(0.5)
@@ -111,7 +111,7 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
     def test_DLLM_valid_TLift(self):
         OC,wing_param = self.__init_wing_param()
         DLLM = DLLMTargetLift('Simple',wing_param,OC)
-        F_list=DLLM.get_F_list()
+#         F_list=DLLM.get_F_list()
         F_list_names=DLLM.get_F_list_names()
         print F_list_names
         DLLM.set_target_Lift(769200.)

@@ -558,7 +558,6 @@ class DLLMPost:
                     i) + "\t%24.16e" % y[i] + "\t%24.16e" % Cdi_loc[i] + "\n"
                 fid.write(line)
             fid.close()
-
         return Cdi
 
     def __dpCdi_dpiAoA(self):
@@ -769,16 +768,17 @@ class DLLMPost:
 
         Cd = 0.0
         dCd = zeros(ndv)
+        mySref = 0.
         for i in range(N):
             af = airfoils[i]
             lAoA = localAoA[i]
             Cdloc = af.Cdf(lAoA, Mach)
-            dCdloc = af.CdfAlpha(
-                lAoA, Mach) * dlAoAdchi[i] + af.dCdf_dchi(lAoA, Mach)
+            dCdloc = af.CdfAlpha(lAoA, Mach) * dlAoAdchi[i] +\
+                     af.dCdf_dchi(lAoA, Mach)
             Cd += Cdloc * af.get_Sref()
             dCd += dCdloc * af.get_Sref() + Cdloc * af.get_Sref_grad()
-        dCddchi = (
-            dCd * self.get_Sref() - Cd * self.get_Sref_grad()) / (self.get_Sref()**2)
+        dCddchi = (dCd * self.get_Sref() - Cd * self.get_Sref_grad()) / \
+                  (self.get_Sref()**2)
         return dCddchi
 
     #-- Cm related methods (bugged for now)
