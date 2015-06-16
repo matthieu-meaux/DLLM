@@ -61,7 +61,7 @@ class TestDLLMMeta(unittest.TestCase):
         wing_param.convert_to_design_variable('root_height',(1.,1.5))
         wing_param.convert_to_design_variable('break_height',(0.8,1.2))
         wing_param.convert_to_design_variable('tip_height',(0.2,0.5))
-        fpath=join(dirname(realpath(__file__)),join("examples"),"MetaModelFixed.xml")
+        fpath=join(dirname(realpath(__file__)),join("examples"),"MetaModelCleaning.xml")
         print "fpath = ",fpath
         wing_param.build_meta_airfoil(OC,fpath , relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=.0, set_as_ref=True)
         wing_param.build_airfoils_from_ref()
