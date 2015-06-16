@@ -26,11 +26,12 @@ from numpy.linalg import norm, solve
 from MDOTools.Solvers.adjoint_problem import AdjointProblem
 
 class DLLMAdjoint:
-    def __init__(self, LLW):
+    def __init__(self, LLW, verbose = 1):
         """
         Adjoint module for the lifting line model
         """
         self.__LLW = LLW
+        self.__verbose = verbose
         self.__computed = False
 
         self.__adj_list           = None
@@ -92,8 +93,11 @@ class DLLMAdjoint:
         dpFdpW_list   = self.get_dpF_list_dpW()
         dpFdpchi_list = self.get_dpF_list_dpchi()
         
+        if self.__verbose == 0 :
+            print "Running adjoint"
         for i, F_name in enumerate(F_list_names):
-            print 'Run adjoint problem for func = '+str(F_name)
+            if self.__verbose > 0 :
+                print 'Run adjoint problem for func = '+str(F_name)
             dpFdpW   = dpFdpW_list[i]
             dpFdpchi = dpFdpchi_list[i]
             
@@ -104,4 +108,4 @@ class DLLMAdjoint:
             self.__adj_conv_corr_list.append(AdjPb.get_convergence_correction())
             self.__dF_list_dchi.append(AdjPb.get_dFdchi())
             
-            print '  - Convergence adjoint correction for '+str(F_name)+' = '+str(self.__adj_conv_corr_list[i])
+            if self.__verbose > 0 : print '  - Convergence adjoint correction for '+str(F_name)+' = '+str(self.__adj_conv_corr_list[i])

@@ -21,7 +21,6 @@
 #
 # - Local imports -
 from differentiatedAeroShape import DifferentiatedAeroShape
-from numpy import sqrt,sin,cos
 
 class Airfoil(DifferentiatedAeroShape):
     '''

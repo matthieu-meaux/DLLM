@@ -27,7 +27,7 @@ from DLLM.DLLMKernel.DLLMAdjoint import DLLMAdjoint
 
 class DLLMSolver:
     ERROR_MSG='ERROR in DLLMSolver.'
-    def __init__(self, tag, wing_param, OC):
+    def __init__(self, tag, wing_param, OC, verbose = 0):
         '''
         Constructor for wings based on lifting line theory
         @param wing_geom : the wing geometry
@@ -36,6 +36,9 @@ class DLLMSolver:
         @param stopCriteria : the stop criteria for the iterative method for computing the wing circulation.
         '''
         self.__tag        = tag
+
+        self.__verbose = verbose
+
         
         self.__wing_param = wing_param
         self.__OC         = OC
@@ -45,12 +48,13 @@ class DLLMSolver:
         self.__Lref_grad  = None
         self.__Sref_grad  = None
         
-        self.__DLLMMesh   = DLLMMesh(self)
-        self.__DLLMDirect = DLLMDirect(self)
-        self.__DLLMPost   = DLLMPost(self)
-        self.__DLLMAdjoint= DLLMAdjoint(self)
-        
+        self.__DLLMMesh   = DLLMMesh(self, verbose = self.__verbose)
+        self.__DLLMDirect = DLLMDirect(self, verbose = self.__verbose)
+        self.__DLLMPost   = DLLMPost(self, verbose = self.__verbose)
+        self.__DLLMAdjoint= DLLMAdjoint(self, verbose = self.__verbose)
+
         self.set_OC(OC)
+        
     
     #-- Accessors
     def get_tag(self):
