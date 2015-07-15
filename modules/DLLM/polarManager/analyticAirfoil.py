@@ -46,7 +46,7 @@ class AnalyticAirfoil(Airfoil):
             raise Exception, "Relative thickness must be >0. and <0.25"
         
         Airfoil.__init__(self,OC, Sref,Lref,rel_thick,sweep)
-        self.__AoA0 = AoA0
+        self.__AoA0 = AoA0*np.pi/180.
         self.__Cm0  = Cm0
         self.__Ka   = Ka
         
@@ -94,7 +94,6 @@ class AnalyticAirfoil(Airfoil):
         return dClalpha_dchi
     
     def __Prandtl_corr(self,Mach):
-        return 1.
         if Mach<0.:
             raise Exception, "Mach number should be positive."
         elif Mach<0.3:
@@ -107,7 +106,6 @@ class AnalyticAirfoil(Airfoil):
         return corr
         
     def __dPrandtl_corr_dMach(self, Mach):
-        return 0.
         if Mach<0.:
             raise Exception, "Mach number should be positive."
         elif Mach<0.3:
