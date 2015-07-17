@@ -21,6 +21,7 @@
 #
 
 # - Local imports -
+import numpy as np
 from numpy import pi,cos, sin, sqrt
 from airfoil import Airfoil
 
