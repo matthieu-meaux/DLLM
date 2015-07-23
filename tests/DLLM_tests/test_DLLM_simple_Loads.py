@@ -20,7 +20,7 @@
 #  http://github.com/TBD
 #
 import unittest
-from numpy import zeros, array
+from numpy import zeros
 
 from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
 from DLLM.DLLMGeom.wing_param import Wing_param

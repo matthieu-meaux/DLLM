@@ -1,6 +1,26 @@
-"""
-@author Francois Gallard
-"""
+# -*-mode: python; py-indent-offset: 4; tab-width: 8; coding: iso-8859-1 -*-
+#  DLLM (non-linear Differentiated Lifting Line Model, open source software)
+# 
+#  Copyright (C) 2013-2015 Airbus Group SAS
+# 
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+# 
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+# 
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# 
+#  http://github.com/TBD
+#
+# @author : Francois Gallard
+# @author : Damien Guenot
 
 # pylint: disable-msg=E0611,F0401
 from DLLM.DLLMGeom.wing_param import Wing_param
@@ -9,6 +29,8 @@ from MDOTools.OC.operating_condition import OperatingCondition
 
 from openmdao.main.api import Component
 from openmdao.main.datatypes.api import Float, Array
+from openmdao.lib.drivers.api import SLSQPdriver
+from openmdao.main.api import Assembly
 
 import numpy as np
 
@@ -185,5 +207,71 @@ class DLLMOpenMDAOComponent(Component):
     def get_dv_id_list(self):
         return self.__wing_param.get_dv_id_list()
     
+    def get_dv_info_list(self):
+        return self.__wing_param.get_dv_info_list()
+    
     def get_dv_value(self,dv_id):
         return self.get_dv_array()[self.get_dv_id_list().index(dv_id)]
+    
+    
+class AerodynamicOptimization(Assembly):
+
+    """Constrained optimization of the LLW Component."""
+
+    def __init__(self, Target_Lift, N = 10, verbose = 0):
+        """Initialization of OpenMDAO component.
+        DLLM component use target lift capability of DLLM kernel
+            @param Target_Lift : the targeted lift value (float)
+            @param N : integer. Number of discrete section on 1/2 wing
+            @param verbose : integer : verbosity level
+        """
+        try :
+            float(Target_Lift)
+        except:
+            raise ValueError('You MUST define a float target lift value, get '+str(Target_Lift)+' instead.')
+
+        self.Target_Lift = Target_Lift
+        self.N = N
+        self.verbose = verbose
+        super(AerodynamicOptimization, self).__init__()
+
+    def configure(self):
+        print "Configuration openmdao optimizer"
+        # Create Optimizer instance
+        self.add('driver', SLSQPdriver())
+        # Create Paraboloid component instances
+        workflow_name = 'llw_comp'
+        self.DLLMOpenMDAO = DLLMOpenMDAOComponent(N=self.N, Target_Lift = self.Target_Lift, verbose=self.verbose)
+        self.DLLMOpenMDAO.Mach = 0.6
+        #self.DLLMOpenMDAO.DLLM.set_target_Lift(self.Target_Lift)
+        # DLLMOpenMDAO.check_gradient()
+        self.add(workflow_name, self.DLLMOpenMDAO)
+
+        # Iteration Hierarchy
+        self.driver.workflow.add(workflow_name)
+
+        # SLSQP Flags
+        self.driver.iprint = 0
+        self.driver.accuracy = 1e-6
+        self.driver.maxiter = 20
+
+        # Objective
+
+        self.driver.add_objective('%s.Drag' % workflow_name)
+
+        # Design Variables
+        print "Adding desing variables to openMDAO problem "
+        # print 5*" "+"Variable name"+20*' '+'Lower bound'+20*" "+'Upper bound'
+        rtwist_lb_array = -12.*np.ones(self.N)
+        rtwist_ub_array = 12.*np.ones(self.N)
+        self.driver.add_parameter('%s.rtwist' %workflow_name,
+            low=rtwist_lb_array,high=rtwist_ub_array)
+        self.driver.add_parameter('%s.span'%workflow_name,10.,50.,34.)
+        self.driver.add_parameter('%s.sweep'%workflow_name,0.,40.,34.)
+        self.driver.add_parameter('%s.break_percent'%workflow_name,20.,40.,33.)
+        self.driver.add_parameter('%s.root_chord'%workflow_name,5.,7.,6.1)
+        self.driver.add_parameter('%s.break_chord'%workflow_name,3.,5.,4.6)
+        self.driver.add_parameter('%s.tip_chord'%workflow_name,1.,2.,1.5)
+        self.driver.add_parameter('%s.root_height'%workflow_name,1.,1.5,1.28)
+        self.driver.add_parameter('%s.break_height'%workflow_name,0.8,1.2,0.97)
+        self.driver.add_parameter('%s.tip_height'%workflow_name,0.2,0.5,0.33)        

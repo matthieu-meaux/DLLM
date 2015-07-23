@@ -1,8 +1,26 @@
-'''
-Created on Jun 4, 2015
-
-@author: Francois
-'''
+# -*-mode: python; py-indent-offset: 4; tab-width: 8; coding: iso-8859-1 -*-
+#  DLLM (non-linear Differentiated Lifting Line Model, open source software)
+# 
+#  Copyright (C) 2013-2015 Airbus Group SAS
+# 
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+# 
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+# 
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# 
+#  http://github.com/TBD
+#
+# @author : Damien Guenot
+# @author : Francois Gallard
 
 from DLLMWrappers.OpenMDAOWrapper import DLLMOpenMDAOComponent
 from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
@@ -19,16 +37,16 @@ class TestDLLM_wrapper(unittest.TestCase):
         Target_Lift = 606570.049598
         
         DLLMOpenMDAO = DLLMOpenMDAOComponent(N=5,
-            Target_Lift=Target_Lift,verbose=0)
-        return DLLMOpenMDAO,N
+            Target_Lift=Target_Lift, verbose=0)
+        return DLLMOpenMDAO, N
 
     def test_init_component(self):
-        DLLMOpenMDAO,N = self.__init_DLLM()
+        DLLMOpenMDAO, N = self.__init_DLLM()
         default_lift = 0.00
         self.assertEqual(DLLMOpenMDAO.Lift, default_lift)
 
     def test_change_OC(self):
-        DLLMOpenMDAO,N = self.__init_DLLM()
+        DLLMOpenMDAO, N = self.__init_DLLM()
         self.assertEqual(10000., DLLMOpenMDAO.OC.get_altitude())
         DLLMOpenMDAO.Mach = 0.1
         DLLMOpenMDAO.altitude = 0.
@@ -44,7 +62,7 @@ class TestDLLM_wrapper(unittest.TestCase):
 
 
     def test_change_param(self):
-        DLLMOpenMDAO,N = self.__init_DLLM()
+        DLLMOpenMDAO, N = self.__init_DLLM()
         DLLMOpenMDAO.execute()
         span = 48.0
         twist = -1.
@@ -56,7 +74,7 @@ class TestDLLM_wrapper(unittest.TestCase):
         root_height = 1.30
         break_height = 0.99
         tip_height = 0.38
-        DLLMOpenMDAO.rtwist = twist*np.ones((5))
+        DLLMOpenMDAO.rtwist = twist * np.ones((5))
         DLLMOpenMDAO.span = span
         DLLMOpenMDAO.sweep = sweep
         DLLMOpenMDAO.break_percent = break_percent
@@ -77,45 +95,45 @@ class TestDLLM_wrapper(unittest.TestCase):
         self.assertEqual(break_height, DLLMOpenMDAO.get_dv_value('break_height'))
         self.assertEqual(tip_height, DLLMOpenMDAO.get_dv_value('tip_height'))
         for i in range(N) :
-            self.assertEqual(twist, DLLMOpenMDAO.get_dv_value('rtwist%s'%i))
-        self.assertAlmostEqual(DLLMOpenMDAO.Target_Lift,DLLMOpenMDAO.Lift,places=2)
-        self.assertAlmostEqual(14048.225514487907,DLLMOpenMDAO.Drag,places=2)
+            self.assertEqual(twist, DLLMOpenMDAO.get_dv_value('rtwist%s' % i))
+        self.assertAlmostEqual(DLLMOpenMDAO.Target_Lift, DLLMOpenMDAO.Lift, places=2)
+        self.assertAlmostEqual(14013.884850035265, DLLMOpenMDAO.Drag, places=2)
         return
 
     def test_get_dv_id_list(self):
-        DLLMOpenMDAO,N = self.__init_DLLM()
+        DLLMOpenMDAO, N = self.__init_DLLM()
         for dv_id in DLLMOpenMDAO.get_dv_id_list() :
             if dv_id.startswith('rtwist') :
                 dv_id = 'rtwist'
             if dv_id not in dir(DLLMOpenMDAO) :
-                print "Can not find %s in %s" %(dv_id,dir(DLLMOpenMDAO))
+                print "Can not find %s in %s" % (dv_id, dir(DLLMOpenMDAO))
                 assert(False)
 
     def test_get_F_list_names(self):
-        DLLMOpenMDAO,N = self.__init_DLLM()
+        DLLMOpenMDAO, N = self.__init_DLLM()
         for f in DLLMOpenMDAO.get_F_list_names() :
             if f not in dir(DLLMOpenMDAO) :
-                print "Can not find %s in %s" %(f,dir(DLLMOpenMDAO))
+                print "Can not find %s in %s" % (f, dir(DLLMOpenMDAO))
                 assert(False)
 
     def test_get_dv_value(self):
-        DLLMOpenMDAO,N = self.__init_DLLM()
+        DLLMOpenMDAO, N = self.__init_DLLM()
         for dv_id in DLLMOpenMDAO.get_dv_id_list() :
             value = DLLMOpenMDAO.get_dv_value(dv_id)
             if dv_id.startswith('rtwist') :
-                index_twist = int(dv_id.replace('rtwist',''))
-                rtwist = getattr(DLLMOpenMDAO,'rtwist')
-                self.assertEqual(value, rtwist[index_twist] )
+                index_twist = int(dv_id.replace('rtwist', ''))
+                rtwist = getattr(DLLMOpenMDAO, 'rtwist')
+                self.assertEqual(value, rtwist[index_twist])
             else :
-                self.assertEqual(value, getattr(DLLMOpenMDAO,dv_id))
+                self.assertEqual(value, getattr(DLLMOpenMDAO, dv_id))
 #         DLLMOpenMDAO.execute()
 
     def test_get_F_value(self):
-        DLLMOpenMDAO,N = self.__init_DLLM()
+        DLLMOpenMDAO, N = self.__init_DLLM()
         DLLMOpenMDAO.execute()
         f_value = DLLMOpenMDAO.get_F_list()
-        for i,f_name in enumerate(DLLMOpenMDAO.get_F_list_names()) :
-            self.assertEqual(f_value[i], getattr(DLLMOpenMDAO,f_name))
+        for i, f_name in enumerate(DLLMOpenMDAO.get_F_list_names()) :
+            self.assertEqual(f_value[i], getattr(DLLMOpenMDAO, f_name))
 
 
     def update_dllm_from_x(self, DLLMOpenMDAO, x):
@@ -132,7 +150,7 @@ class TestDLLM_wrapper(unittest.TestCase):
         return
 
     def test_exec(self):
-        DLLMOpenMDAO,N = self.__init_DLLM()
+        DLLMOpenMDAO, N = self.__init_DLLM()
         x0 = DLLMOpenMDAO.get_dv_array()
         self.update_dllm_from_x(DLLMOpenMDAO, x0)
         DLLMOpenMDAO.Mach = 0.4
@@ -156,10 +174,10 @@ class TestDLLM_wrapper(unittest.TestCase):
             DLLMOpenMDAO.Target_Lift,
             DLLMOpenMDAO.Lift,
             places=3)
-        self.assertAlmostEqual(32992.524019875869,DLLMOpenMDAO.Drag,places=2)
+        self.assertAlmostEqual(32951.826392216724, DLLMOpenMDAO.Drag, places=2)
 
     def test_list_deriv_vars(self):
-        DLLMOpenMDAO,N = self.__init_DLLM()
+        DLLMOpenMDAO, N = self.__init_DLLM()
         DLLMOpenMDAO.execute()
         self.assertAlmostEqual(
             DLLMOpenMDAO.Target_Lift,
@@ -172,7 +190,7 @@ class TestDLLM_wrapper(unittest.TestCase):
         self.assertTupleEqual(F_list_names_ref, F_list_names_tuple)
 
     def test_jacobian(self):
-        DLLMOpenMDAO,N = self.__init_DLLM()
+        DLLMOpenMDAO, N = self.__init_DLLM()
         DLLMOpenMDAO.execute()
         out_dvid_tuple, F_list_names_tuple = DLLMOpenMDAO.list_deriv_vars()
         n_F = len(F_list_names_tuple)
@@ -208,7 +226,7 @@ class TestDLLM_wrapper(unittest.TestCase):
             if err.size > 0:
                 # Compute absolute error when gradient or fd is lower than
                 # threshold
-                inf_tol = err[np.where((np.abs(gr[err]) < treshold) |
+                inf_tol = err[np.where((np.abs(gr[err]) < treshold) | 
                                        (np.abs(fd[err]) < treshold))[0]]
                 # Scale gradient by function value for the lift issue in
                 # particular
@@ -226,7 +244,7 @@ class TestDLLM_wrapper(unittest.TestCase):
         assert(ok)
         # OpenMDAO check grad method is not that reliable...
         # threshold is hard coded at 1e-5, only relative error is computed...
-        #out = DLLMOpenMDAO.check_gradient(fd_form='central', fd_step=1e-6, fd_step_type='relative')
+        # out = DLLMOpenMDAO.check_gradient(fd_form='central', fd_step=1e-6, fd_step_type='relative')
         # assert(len(out[-1])==0)
 
 
