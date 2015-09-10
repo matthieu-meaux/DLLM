@@ -84,7 +84,7 @@ def df(x):
     return func_grad
 
 val_grad=FDValidGrad(2,f,df,fd_step=1.e-8)
-ok,df_fd,df=val_grad.compare(iAoA0,treshold=1.e-2,return_all=True,split_out=True)
+ok,df_fd,df=val_grad.compare(iAoA0,treshold=1.e-6,return_all=True,split_out=True)
 
 
 print '\n****************************************************'

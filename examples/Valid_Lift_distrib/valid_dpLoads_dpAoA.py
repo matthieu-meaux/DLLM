@@ -91,7 +91,7 @@ def df(x):
     return np_func_grad
 
 val_grad=FDValidGrad(2,f,df,fd_step=1.e-8)
-ok,df_fd,df=val_grad.compare([AoA0],treshold=1.e-5,return_all=True)
+ok,df_fd,df=val_grad.compare([AoA0],treshold=1.e-6,return_all=True)
 
 
 print '\n****************************************************'

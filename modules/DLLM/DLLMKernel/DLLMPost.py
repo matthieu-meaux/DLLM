@@ -304,75 +304,232 @@ class DLLMPost:
     #-- Computation methods
     #-- Lift distrib related methods
     def comp_Lift_distrib(self, distrib=False):
-        self.__Lift_distrib(distrib=distrib)
-        return self.__Lift_distrib_res
+        return self.__Lift_distrib(distrib=distrib)
     
     def comp_dpLift_distrib_dpiAoA(self):
-        self.__dpLift_distrib_dpiAoA()
-        return self.__dpLift_distrib_res_dpiAoA
+        return self.__dpLift_distrib_dpiAoA()
     
     def comp_dpLift_distrib_dpAoA(self):
-        self.__dpLift_distrib_dpAoA()
-        return self.__dpLift_distrib_res_dpAoA
-    
+        return self.__dpLift_distrib_dpAoA()
+
+    def comp_dpLift_distrib_dpthetaY(self):
+        return self.__dpLift_distrib_dpthetaY()
+
+    def comp_dpLift_distrib_dpchi(self):
+        return self.__dpLift_distrib_dpchi()
+	 
     def __Lift_distrib(self, distrib=False):
-        N=self.get_N()
-        self.__Lift_distrib_res=zeros(N)
-        
-        Pdyn=self.get_OC().get_Pdyn()
+        N        = self.get_N()       
+        Pdyn     = self.get_OC().get_Pdyn()
         Mach     = self.get_OC().get_Mach()
         localAoA = self.get_localAoA()
         iAoA     = self.get_iAoA()
         airfoils = self.get_airfoils()
-        
-        Check_Lift = 0.
+	Lift_distrib=zeros(N)        
         
         for i in xrange(N):
             af = airfoils[i]
-            self.__Lift_distrib_res[i]=af.Cl(localAoA[i],Mach)*cos(iAoA[i])*af.get_Sref()*Pdyn
-            Check_Lift += self.__Lift_distrib_res[i]
-            
-        #print 'CHECK LIFT = ',Check_Lift
+            Lift_distrib[i]=af.Cl(localAoA[i],Mach)*cos(iAoA[i])*af.get_Sref()*Pdyn
             
         if distrib:
+	    #print 'CHECK LIFT = ',sum(Lift_distrib)-self.__Lift()
             y   = self.get_wing_param().get_XYZ()[1,:]
             fid=open(self.get_tag()+'_Lift_distrib.dat','w')
             line="#Slice\t%24s"%"y"+"\t%24s"%"Lift"+"\n"
             fid.write(line)
             for i in xrange(N):
-                line=str(i)+"\t%24.16e"%y[i]+"\t%24.16e"%self.__Lift_distrib_res[i]+"\n"
+                line=str(i)+"\t%24.16e"%y[i]+"\t%24.16e"%Lift_distrib[i]+"\n"
                 fid.write(line)
             fid.close()
+	return Lift_distrib
             
     def __dpLift_distrib_dpiAoA(self):
-        N=self.get_N()
-        self.__dpLift_distrib_res_dpiAoA=zeros((N,N))
-        Pdyn=self.get_OC().get_Pdyn()
-        
+        N        = self.get_N()
+        Pdyn     = self.get_OC().get_Pdyn()
         Mach     = self.get_OC().get_Mach()
         localAoA = self.get_localAoA()
         iAoA     = self.get_iAoA()
+	airfoils = self.get_airfoils()
         dplocalAoA_dpiAoA = self.get_dplocalAoA_dpiAoA()
-        airfoils = self.get_airfoils()
+	dLift_distrib_dpiAoA=zeros((N,N))
+
         for i in range(N):
             af = airfoils[i]
-            self.__dpLift_distrib_res_dpiAoA[i,i]=-af.Cl(localAoA[i],Mach)*sin(iAoA[i])*af.get_Sref()*Pdyn
-            self.__dpLift_distrib_res_dpiAoA[i,:]=af.ClAlpha(localAoA[i],Mach=Mach)*cos(iAoA[i])*dplocalAoA_dpiAoA[i]*af.get_Sref()*Pdyn
-            
+            dLift_distrib_dpiAoA[i,i]  = -af.Cl(localAoA[i],Mach)*sin(iAoA[i])*af.get_Sref()*Pdyn
+            dLift_distrib_dpiAoA[i,:] +=  af.ClAlpha(localAoA[i],Mach=Mach)*cos(iAoA[i])*dplocalAoA_dpiAoA[i]*af.get_Sref()*Pdyn 
+	return dLift_distrib_dpiAoA
+
     def __dpLift_distrib_dpAoA(self):
-        N=self.get_N()
-        self.__dpLift_distrib_res_dpAoA=zeros(N)
-        Pdyn=self.get_OC().get_Pdyn()
-        
+        N        = self.get_N()
+        Pdyn     = self.get_OC().get_Pdyn()  
         Mach     = self.get_OC().get_Mach()
         localAoA = self.get_localAoA()
         iAoA     = self.get_iAoA()
-        dplocalAoA_dpAoA = self.get_dplocalAoA_dpAoA()
         airfoils = self.get_airfoils()
+	dplocalAoA_dpAoA = self.get_dplocalAoA_dpAoA()
+	dLift_distrib_dpAoA=zeros(N)
+
         for i in range(N):
             af = airfoils[i]
-            self.__dpLift_distrib_res_dpAoA[i]=af.ClAlpha(localAoA[i],Mach=Mach)*cos(iAoA[i])*af.get_Sref()*dplocalAoA_dpAoA[i]*Pdyn
+            dLift_distrib_dpAoA[i]=af.ClAlpha(localAoA[i],Mach=Mach)*cos(iAoA[i])*af.get_Sref()*dplocalAoA_dpAoA[i]*Pdyn
+	return dLift_distrib_dpAoA
+
+
+    def __dpLift_distrib_dpchi(self):
+        N        = self.get_N()
+        ndv      = self.get_ndv()
+	Pdyn     = self.get_OC().get_Pdyn()
+        Mach     = self.get_OC().get_Mach()
+        iAoA     = self.get_iAoA()
+        localAoA = self.get_localAoA()
+        airfoils = self.get_airfoils()
+        dlAoAdchi=self.get_dplocalAoA_dpchi()
+        dLift_distrib_dchi=zeros((N,ndv))
         
+        for i in xrange(N):
+            af=airfoils[i]
+            Cl = af.Cl( localAoA[i],Mach)*cos(iAoA[i])
+	    dpCl = (af.ClAlpha( localAoA[i],Mach)*dlAoAdchi[i] + af.dCl_dchi( localAoA[i],Mach))*cos(iAoA[i])
+	    dLift_distrib_dchi[i,:] = (Cl*af.get_Sref_grad() + dpCl*af.get_Sref())*Pdyn	
+	return dLift_distrib_dchi
+
+    def __dpLift_distrib_dpthetaY(self):
+        N        = self.get_N()
+	Pdyn     = self.get_OC().get_Pdyn()
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        airfoils = self.get_airfoils()
+	dplocalAoA_dpthetaY = self.get_dplocalAoA_dpthetaY()
+	dLift_distrib_dpthetaY=zeros((N,N))
+
+        for i in range(N):
+            af  = airfoils[i]
+	    dpCl =   af.ClAlpha(localAoA[i],Mach)*cos(iAoA[i])	
+ 	    dLift_distrib_dpthetaY[i,:] = dpCl*dplocalAoA_dpthetaY[i]*af.get_Sref()*Pdyn
+    	return dLift_distrib_dpthetaY  
+
+    #-- Drag distrib related methods
+    def comp_Drag_distrib(self, distrib=False):
+    	return self.__Drag_distrib(distrib=distrib)
+
+    def comp_dpDrag_distrib_dpiAoA(self):
+	return self.__dpDrag_distrib_dpiAoA()
+
+    def comp_dpDrag_distrib_dpAoA(self):
+	return self.__dpDrag_distrib_dpAoA()
+
+    def comp_dpDrag_distrib_dpthetaY(self):
+	return self.__dpDrag_distrib_dpthetaY()
+
+    def comp_dpDrag_distrib_dpchi(self):
+        return self.__dpDrag_distrib_dpchi()
+     
+    def __Drag_distrib(self, distrib=False):
+        N        = self.get_N() 
+        Pdyn     = self.get_OC().get_Pdyn()
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        airfoils = self.get_airfoils()
+        Drag_distrib=zeros(N) 
+        
+        for i in xrange(N):
+            af  = airfoils[i]
+            Cdi = -af.Cl( localAoA[i],Mach)*sin(iAoA[i])
+ 	    Cdw =  af.Cdp(localAoA[i],Mach)
+	    Cdf =  af.Cdf(localAoA[i],Mach)
+            Drag_distrib[i] = (Cdi + Cdw + Cdf)*af.get_Sref()*Pdyn
+            
+        if distrib:
+	    #print 'CHECK Drag = ',sum(Drag_distrib)-self.__Drag()
+            y   = self.get_wing_param().get_XYZ()[1,:]
+            fid=open(self.get_tag()+'_Drag_distrib.dat','w')
+            line="#Slice\t%24s"%"y"+"\t%24s"%"Lift"+"\n"
+            fid.write(line)
+            for i in xrange(N):
+                line=str(i)+"\t%24.16e"%y[i]+"\t%24.16e"%Drag_distrib[i]+"\n"
+                fid.write(line)
+            fid.close()
+	return Drag_distrib
+  
+    def __dpDrag_distrib_dpiAoA(self):
+        N        = self.get_N()
+        Pdyn     = self.get_OC().get_Pdyn()
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        airfoils = self.get_airfoils()
+	dplocalAoA_dpiAoA = self.get_dplocalAoA_dpiAoA()
+	dDrag_distrib_dpiAoA=zeros((N,N))
+
+        for i in range(N):
+            af = airfoils[i]
+ 	    dpCdi = -af.ClAlpha( localAoA[i],Mach)*sin(iAoA[i])
+	    dpCdw =  af.CdpAlpha(localAoA[i],Mach)
+	    dpCdf =  af.CdfAlpha(localAoA[i],Mach)
+            dDrag_distrib_dpiAoA[i,i]  = -af.Cl(localAoA[i],Mach)*cos(iAoA[i])*af.get_Sref()*Pdyn
+            dDrag_distrib_dpiAoA[i,:] += (dpCdi + dpCdw + dpCdf)*dplocalAoA_dpiAoA[i]*af.get_Sref()*Pdyn 
+	return dDrag_distrib_dpiAoA
+
+    def __dpDrag_distrib_dpAoA(self):
+        N        = self.get_N()
+        Pdyn     = self.get_OC().get_Pdyn()
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        airfoils = self.get_airfoils()
+    	dplocalAoA_dpAoA = self.get_dplocalAoA_dpAoA()
+	dDrag_distrib_dpAoA=zeros(N)
+
+        for i in range(N):
+            af  = airfoils[i]
+            dpCdi = -af.ClAlpha( localAoA[i],Mach)*sin(iAoA[i])
+	    dpCdw =  af.CdpAlpha(localAoA[i],Mach)
+	    dpCdf =  af.CdfAlpha(localAoA[i],Mach)
+            dDrag_distrib_dpAoA[i] = (dpCdi + dpCdw + dpCdf)*dplocalAoA_dpAoA[i]*af.get_Sref()*Pdyn
+	return dDrag_distrib_dpAoA
+  
+    def __dpDrag_distrib_dpchi(self):
+        N        = self.get_N()
+        ndv      = self.get_ndv()
+	Pdyn     = self.get_OC().get_Pdyn()
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        airfoils = self.get_airfoils()
+        dlAoAdchi=self.get_dplocalAoA_dpchi()
+        dDrag_distrib_dpchi=zeros((N,ndv))
+
+        for i in range(N):
+            af=airfoils[i]
+            Cdi =-af.Cl( localAoA[i],Mach)*sin(iAoA[i])
+	    Cdw = af.Cdp(localAoA[i],Mach)
+	    Cdf = af.Cdf(localAoA[i],Mach)
+	    dpCdi = (-af.ClAlpha( localAoA[i],Mach)*dlAoAdchi[i] - af.dCl_dchi( localAoA[i],Mach))*sin(iAoA[i])
+            dpCdw =   af.CdpAlpha(localAoA[i],Mach)*dlAoAdchi[i] + af.dCdp_dchi(localAoA[i],Mach)
+            dpCdf =   af.CdfAlpha(localAoA[i],Mach)*dlAoAdchi[i] + af.dCdf_dchi(localAoA[i],Mach)
+            dDrag_distrib_dpchi[i,:] = ((Cdi + Cdw + Cdf)*af.get_Sref_grad() + (dpCdi + dpCdw + dpCdf)*af.get_Sref())*Pdyn               
+        return dDrag_distrib_dpchi
+
+    def __dpDrag_distrib_dpthetaY(self):
+        N        = self.get_N()
+	Pdyn     = self.get_OC().get_Pdyn()
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        dplocalAoA_dpthetaY = self.get_dplocalAoA_dpthetaY()
+        airfoils = self.get_airfoils()
+	dDrag_distrib_dpthetaY=zeros((N,N))
+
+        for i in range(N):
+            af  = airfoils[i]
+            dpCdi = -af.ClAlpha( localAoA[i],Mach)*sin(iAoA[i])
+	    dpCdw =  af.CdpAlpha(localAoA[i],Mach)
+	    dpCdf =  af.CdfAlpha(localAoA[i],Mach)
+ 	    dDrag_distrib_dpthetaY[i,:] = (dpCdi + dpCdw + dpCdf)*dplocalAoA_dpthetaY[i]*af.get_Sref()*Pdyn
+    	return dDrag_distrib_dpthetaY   
+
     #-- Cl related methods
     def comp_Cl(self):
         Cl=self.__Cl()
