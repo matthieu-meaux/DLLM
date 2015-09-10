@@ -32,22 +32,18 @@ class DLLMPost:
         """
         Post-Processing module compatible with adjoint for DLLM
         """
-        self.__LLW = LLW
+        self.__LLW               = LLW
         self.__F_list_names_calc = self.DEF_F_LIST_NAMES
         self.__F_list_calc       = None
-        self.__F_list_names = self.DEF_F_LIST_NAMES
-        self.__F_list_dim   = 0
-        self.__F_list       = None
-        self.__dpF_list_dpiAoA = None
-        self.__dpF_list_dpchi  = None
-        self.__dpF_list_dpAoA  = None
-        self.__computed    = False
-        
-        self.__Lift_distrib_res          = None
-        self.__dpLift_distrib_res_dpiAoA = None
-        self.__dpLift_distrib_res_dpAoA  = None
-        
-        self.__target_loads              = None
+        self.__F_list_names      = self.DEF_F_LIST_NAMES
+        self.__F_list_dim        = 0
+        self.__F_list            = None
+        self.__dpF_list_dpiAoA   = None
+        self.__dpF_list_dpchi    = None
+        self.__dpF_list_dpAoA    = None
+	self.__dpF_list_dpthetaY = None
+        self.__computed          = False
+        self.__target_loads      = None
         
     #-- computed related methods
     def is_computed(self):
@@ -80,7 +76,10 @@ class DLLMPost:
     
     def get_dpF_list_dpAoA(self):
         return self.__dpF_list_dpAoA
-    
+	
+    def get_dpF_list_dpthetaY(self):
+        return self.__dpF_list_dpthetaY
+
     def get_wing_param(self):
         return self.__LLW.get_wing_param()
     
@@ -101,6 +100,9 @@ class DLLMPost:
     
     def get_dplocalAoA_dpchi(self):
         return self.__LLW.get_dplocalAoA_dpchi()
+
+    def get_dplocalAoA_dpthetaY(self):
+        return self.__LLW.get_dplocalAoA_dpthetaY()
     
     def get_iAoA(self):
         return self.__LLW.get_iAoA()
@@ -150,12 +152,12 @@ class DLLMPost:
         ndv=self.get_ndv()
         self.__F_list_calc_dim = len(self.__F_list_names_calc)
         self.__F_list_calc     = zeros(self.__F_list_calc_dim)
-        self.__F_list          = zeros(self.__F_list_dim)
         self.__F_list_dim      = len(self.__F_list_names)
         self.__F_list          = zeros(self.__F_list_dim)
         self.__dpF_list_dpAoA  = zeros(self.__F_list_dim)
         self.__dpF_list_dpiAoA = zeros((self.__F_list_dim, N))
         self.__dpF_list_dpchi  = zeros((self.__F_list_dim, ndv))
+	self.__dpF_list_dpthetaY = zeros((self.__F_list_dim, N))
         
     def run(self, F_list_names=None):
         ERROR_MSG=self.ERROR_MSG+'run: '
@@ -206,31 +208,37 @@ class DLLMPost:
                 dpFdpiAoA = self.__dpCl_dpiAoA()
                 dpFdpchi  = self.dpCl_dpchi()
                 dpFdpAoA  = self.dpCl_dpAoA()
+	        dpFdpthetaY = self.dpCl_dpthetaY()	
             elif F_name == 'Cd':
                 val       = self.__Cd()
                 dpFdpiAoA = self.__dpCd_dpiAoA()
                 dpFdpchi  = self.dpCd_dpchi()
                 dpFdpAoA  = self.dpCd_dpAoA()
+                dpFdpthetaY = self.dpCd_dpthetaY()	
             elif F_name == 'Cdi':
                 val       = self.__Cdi(distrib=True)
                 dpFdpiAoA = self.__dpCdi_dpiAoA()
                 dpFdpchi  = self.dpCdi_dpchi()
                 dpFdpAoA  = self.dpCdi_dpAoA()
+                dpFdpthetaY = self.dpCdi_dpthetaY()
             elif F_name == 'Cdw':
                 val       = self.__Cdw()
                 dpFdpiAoA = self.__dpCdw_dpiAoA()
                 dpFdpchi  = self.dpCdw_dpchi()
                 dpFdpAoA  = self.dpCdw_dpAoA()
+	        dpFdpthetaY = self.dpCdw_dpthetaY()
             elif F_name == 'Cdp':
                 val       = self.__Cdp()
                 dpFdpiAoA = self.__dpCdp_dpiAoA()
                 dpFdpchi  = self.dpCdp_dpchi()
                 dpFdpAoA  = self.dpCdp_dpAoA()
+                dpFdpthetaY = self.dpCdp_dpthetaY()
             elif F_name == 'Cdf':
                 val       = self.__Cdf()
                 dpFdpiAoA = self.__dpCdf_dpiAoA()
                 dpFdpchi  = self.dpCdf_dpchi()
                 dpFdpAoA  = self.dpCdf_dpAoA()
+	        dpFdpthetaY = self.dpCdf_dpthetaY()
 #            Moments calculation are bugged for now
 #             elif func == 'Cm':
 #                 val = self.__Cm()
@@ -239,50 +247,56 @@ class DLLMPost:
                 dpFdpiAoA = self.__dpLift_dpiAoA()
                 dpFdpchi  = self.dpLift_dpchi()
                 dpFdpAoA  = self.dpLift_dpAoA()
+	        dpFdpthetaY = self.dpLift_dpthetaY()
             elif F_name == 'Drag':
                 val       = self.__Drag()
                 dpFdpiAoA = self.__dpDrag_dpiAoA()
                 dpFdpchi  = self.dpDrag_dpchi()
                 dpFdpAoA  = self.dpDrag_dpAoA()
+	        dpFdpthetaY = self.dpDrag_dpthetaY()
             elif F_name == 'Drag_Pressure':
                 val       = self.__Drag_Pressure()
                 dpFdpiAoA = self.__dpDrag_Pressure_dpiAoA()
                 dpFdpchi  = self.dpDrag_Pressure_dpchi()
                 dpFdpAoA  = self.dpDrag_Pressure_dpAoA()
+		dpFdpthetaY = self.dpDrag_Pressure_dpthetaY()
             elif F_name == 'Drag_Induced':
                 val       = self.__Drag_Induced()
                 dpFdpiAoA = self.__dpDrag_Induced_dpiAoA()
                 dpFdpchi  = self.dpDrag_Induced_dpchi()
                 dpFdpAoA  = self.dpDrag_Induced_dpAoA()
+                dpFdpthetaY = self.dpDrag_Induced_dpthetaY()
             elif F_name == 'Drag_Wave':
                 val       = self.__Drag_Wave()
                 dpFdpiAoA = self.__dpDrag_Wave_dpiAoA()
                 dpFdpchi  = self.dpDrag_Wave_dpchi()
                 dpFdpAoA  = self.dpDrag_Wave_dpAoA()
+                dpFdpthetaY = self.dpDrag_Wave_dpthetaY()
             elif F_name == 'Drag_Friction':
                 val       = self.__Drag_Friction()
                 dpFdpiAoA = self.__dpDrag_Friction_dpiAoA()
                 dpFdpchi  = self.dpDrag_Friction_dpchi()
                 dpFdpAoA  = self.dpDrag_Friction_dpAoA()
+                dpFdpthetaY = self.dpDrag_Friction_dpthetaY()
             elif F_name == 'LoD':
                 val       = self.__LoD()
                 dpFdpiAoA = self.__dpLoD_dpiAoA()
                 dpFdpchi  = self.dpLoD_dpchi()
                 dpFdpAoA  = self.dpLoD_dpAoA()
+		dpFdpthetaY = self.dpLoD_dpthetaY()
             elif F_name == 'Sref':
                 val       = self.get_Sref()
                 dpFdpiAoA = zeros(N)
                 dpFdpchi  = self.get_Sref_grad()
                 dpFdpAoA  = 0.
+		dpFdpthetaY = zeros(N)
             else:
                 raise Exception,ERROR_MSG+' unknown function '+str(F_name)
             self.__F_list[i]            = val
             self.__dpF_list_dpiAoA[i,:] = dpFdpiAoA[:]
             self.__dpF_list_dpchi[i,:]  = dpFdpchi[:]
             self.__dpF_list_dpAoA[i]    = dpFdpAoA
-
-
-        self.__Lift_distrib_res=self.__Lift_distrib(distrib=True)
+	    self.__dpF_list_dpthetaY[i,:] = dpFdpthetaY[:]
 
         self.__display_info()
         self.set_computed(True)
@@ -445,6 +459,23 @@ class DLLMPost:
             
         dCldchi = (dCl*self.get_Sref() - Cl*self.get_Sref_grad())/(self.get_Sref()**2)        
         return dCldchi
+
+    def dpCl_dpthetaY(self):
+	N=self.get_N()
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        dplocalAoA_dpthetaY = self.get_dplocalAoA_dpthetaY()
+        airfoils = self.get_airfoils()
+
+        dCldpthetaY =zeros(N)
+        for i in range(N):
+            af = airfoils[i]
+            dCldpthetaY += af.ClAlpha(localAoA[i],Mach=Mach)*cos(iAoA[i])*af.get_Sref()*dplocalAoA_dpthetaY[i]
+        dCldpthetaY/=self.get_Sref()
+
+        return dCldpthetaY
+
     
     #-- Cd related methods
     def __Cd(self):
@@ -470,6 +501,12 @@ class DLLMPost:
         dpCdf_dpchi = self.dpCdf_dpchi()
         dpCd_dpchi = dpCdp_dpchi + dpCdf_dpchi
         return dpCd_dpchi
+
+    def dpCd_dpthetaY(self):
+        dpCdp_dpthetaY = self.dpCdp_dpthetaY()
+        dpCdf_dpthetaY = self.dpCdf_dpthetaY()
+        dpCd_dpthetaY = dpCdp_dpthetaY + dpCdf_dpthetaY
+        return dpCd_dpthetaY
     
     #-- Cdp related methods
     def __Cdp(self):
@@ -496,6 +533,12 @@ class DLLMPost:
         dpCdp_dpchi = dpCdi_dpchi + dpCdw_dpchi
         return dpCdp_dpchi
     
+    def dpCdp_dpthetaY(self):
+        dpCdi_dpthetaY = self.dpCdi_dpthetaY()
+        dpCdw_dpthetaY = self.dpCdw_dpthetaY()
+        dpCdp_dpthetaY = dpCdi_dpthetaY + dpCdw_dpthetaY
+        return dpCdp_dpthetaY
+
     #-- Cdi related methods
     def __Cdi(self,distrib=False):
         N=self.get_N()
@@ -584,7 +627,24 @@ class DLLMPost:
         dCddchi = (dCd*self.get_Sref()- Cd*self.get_Sref_grad())/(self.get_Sref()**2) 
          
         return dCddchi
-    
+
+    def dpCdi_dpthetaY(self):
+        N=self.get_N()
+        Mach     = self.get_OC().get_Mach()
+        airfoils = self.get_airfoils()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        dplocalAoA_dpthetaY = self.get_dplocalAoA_dpthetaY()
+        
+        dpCdidpthetaY=zeros(N)
+        for i in range(N):#Dependance by induced angles
+            af=airfoils[i]
+            lAoA=localAoA[i]
+            dpCdidpthetaY -= af.ClAlpha(lAoA,Mach)*sin(iAoA[i])*af.get_Sref()*dplocalAoA_dpthetaY[i]
+        dpCdidpthetaY/=self.get_Sref()
+        
+        return dpCdidpthetaY    
+
     #-- Cdw related methods
     def __Cdw(self):
         N=self.get_N()
@@ -657,6 +717,22 @@ class DLLMPost:
          
         return dCddchi
     
+    def dpCdw_dpthetaY(self):
+        N=self.get_N()
+        Mach     = self.get_OC().get_Mach()
+        airfoils = self.get_airfoils()
+        localAoA = self.get_localAoA()
+        dplocalAoA_dpthetaY = self.get_dplocalAoA_dpthetaY()
+        
+        dpCdwdpthetaY=zeros(N)
+        for i in range(N):#Dependance by induced angles
+            af=airfoils[i]
+            lAoA=localAoA[i]
+            dpCdwdpthetaY += af.CdpAlpha(lAoA,Mach)*af.get_Sref()*dplocalAoA_dpthetaY[i]
+        dpCdwdpthetaY/=self.get_Sref()
+        
+        return dpCdwdpthetaY
+
     #-- Cdf related methods
     def __Cdf(self):
         N=self.get_N()
@@ -730,6 +806,24 @@ class DLLMPost:
             dCd+=dCdloc*af.get_Sref()+Cdloc*af.get_Sref_grad()
         dCddchi = (dCd*self.get_Sref()- Cd*self.get_Sref_grad())/(self.get_Sref()**2) 
         return dCddchi
+
+
+    def dpCdf_dpthetaY(self):
+        N=self.get_N()
+        Mach     = self.get_OC().get_Mach()
+        airfoils = self.get_airfoils()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        dplocalAoA_dpthetaY = self.get_dplocalAoA_dpthetaY()
+        
+        dpCdfdpthetaY=zeros(N)
+        for i in range(N):#Dependance by induced angles
+            af=airfoils[i]
+            lAoA=localAoA[i]	
+            dpCdfdpthetaY += af.CdfAlpha(lAoA,Mach)*af.get_Sref()*dplocalAoA_dpthetaY[i]
+        dpCdfdpthetaY/=self.get_Sref()
+        
+        return dpCdfdpthetaY
     
     #-- Cm related methods (bugged for now)
     def __Cm(self):
@@ -815,6 +909,13 @@ class DLLMPost:
         dpCl_dpchi=self.dpCl_dpchi()
         dpLift_dpchi = Pdyn*Sref*dpCl_dpchi+Pdyn*Sref_grad*Cl
         return dpLift_dpchi
+
+    def dpLift_dpthetaY(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        dCl_dthetaY=self.dpCl_dpthetaY()
+        dLift_dthetaY = Pdyn*Sref*dCl_dthetaY
+        return dLift_dthetaY
         
     #-- Drag related methods
     def __Drag(self):
@@ -847,6 +948,13 @@ class DLLMPost:
         dpDrag_dpchi = Pdyn*Sref*dpCd_dpchi+Pdyn*Sref_grad*Cd
         return dpDrag_dpchi
     
+    def dpDrag_dpthetaY(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        dCd_dthetaY=self.dpCd_dpthetaY()
+        dDrag_dthetaY = Pdyn*Sref*dCd_dthetaY
+        return dDrag_dthetaY
+
     #-- Pressure Drag related methods
     def __Drag_Pressure(self):
         Pdyn=self.get_OC().get_Pdyn()
@@ -877,6 +985,13 @@ class DLLMPost:
         dpCd_dpchi = self.dpCdp_dpchi()
         dpDrag_dpchi = Pdyn*Sref*dpCd_dpchi+Pdyn*Sref_grad*Cd
         return dpDrag_dpchi
+
+    def dpDrag_Pressure_dpthetaY(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        dCd_dthetaY=self.dpCdp_dpthetaY()
+        dDrag_dthetaY = Pdyn*Sref*dCd_dthetaY
+        return dDrag_dthetaY
     
     #-- Friction Drag related methods
     def __Drag_Friction(self):
@@ -908,6 +1023,13 @@ class DLLMPost:
         dpCd_dpchi = self.dpCdf_dpchi()
         dpDrag_dpchi = Pdyn*Sref*dpCd_dpchi+Pdyn*Sref_grad*Cd
         return dpDrag_dpchi
+
+    def dpDrag_Friction_dpthetaY(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        dCd_dthetaY=self.dpCdf_dpthetaY()
+        dDrag_dthetaY = Pdyn*Sref*dCd_dthetaY
+        return dDrag_dthetaY
     
     #-- Induced Drag related methods
     def __Drag_Induced(self):
@@ -939,6 +1061,13 @@ class DLLMPost:
         dpCd_dpchi = self.dpCdi_dpchi()
         dpDrag_dpchi = Pdyn*Sref*dpCd_dpchi+Pdyn*Sref_grad*Cd
         return dpDrag_dpchi
+
+    def dpDrag_Induced_dpthetaY(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        dCd_dthetaY=self.dpCdi_dpthetaY()
+        dDrag_dthetaY = Pdyn*Sref*dCd_dthetaY
+        return dDrag_dthetaY
     
     #-- Wave Drag related methods
     def __Drag_Wave(self):
@@ -970,6 +1099,13 @@ class DLLMPost:
         dpCd_dpchi = self.dpCdw_dpchi()
         dpDrag_dpchi = Pdyn*Sref*dpCd_dpchi+Pdyn*Sref_grad*Cd
         return dpDrag_dpchi
+
+    def dpDrag_Wave_dpthetaY(self):
+        Pdyn=self.get_OC().get_Pdyn()
+        Sref=self.get_Sref()
+        dCd_dthetaY=self.dpCdw_dpthetaY()
+        dDrag_dthetaY = Pdyn*Sref*dCd_dthetaY
+        return dDrag_dthetaY
     
     #-- LoD related methods
     def __LoD(self):
@@ -1001,6 +1137,14 @@ class DLLMPost:
         dpCd_dpchi = self.dpCd_dpchi()
         dpLoD_dpchi  = (dpCl_dpchi*Cd - Cl*dpCd_dpchi)/Cd**2
         return dpLoD_dpchi
+
+    def dpLoD_dpthetaY(self):
+        Cl = self.__Cl()
+        Cd = self.__Cd()
+        dpCl_dpthetaY = self.dpCl_dpthetaY()
+        dpCd_dpthetaY = self.dpCd_dpthetaY()
+        dpLoD_dpthetaY  = (dpCl_dpthetaY*Cd - Cl*dpCd_dpthetaY)/Cd**2
+        return dpLoD_dpthetaY
     
     #-- Display methods
     def __display_info(self):

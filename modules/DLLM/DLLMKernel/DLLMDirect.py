@@ -95,6 +95,9 @@ class DLLMDirect:
     
     def get_dplocalAoA_dpchi(self):
         return self.__dplocalAoA_dpchi
+
+    def get_dplocalAoA_dpthetaY(self):
+        return self.__dplocalAoA_dpthetaY
     
     def get_convergence_history(self):
         """

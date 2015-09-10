@@ -129,6 +129,9 @@ class DLLMSolver:
     
     def get_dplocalAoA_dpchi(self):
         return self.__DLLMDirect.get_dplocalAoA_dpchi()
+
+    def get_dplocalAoA_dpthetaY(self):
+        return self.__DLLMDirect.get_dplocalAoA_dpthetaY()
     
     def comp_R(self, iAoA):
         return self.__DLLMDirect.comp_R(iAoA)
@@ -163,7 +166,10 @@ class DLLMSolver:
     
     def get_dpF_list_dpchi(self):
         return self.__DLLMPost.get_dpF_list_dpchi()
-    
+
+    def get_dpF_list_dpthetaY(self):
+        return self.__DLLMPost.get_dpF_list_dpthetaY()
+
     #-- DLLMAdjoint accessors
     def get_adjoint_list(self):
         return self.__DLLMAdjoint.get_adjoint_list()
