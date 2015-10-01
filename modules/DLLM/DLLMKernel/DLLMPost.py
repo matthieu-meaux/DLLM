@@ -1302,6 +1302,10 @@ class DLLMPost:
         dpCd_dpthetaY = self.dpCd_dpthetaY()
         dpLoD_dpthetaY  = (dpCl_dpthetaY*Cd - Cl*dpCd_dpthetaY)/Cd**2
         return dpLoD_dpthetaY
+
+    def comp_LoD(self):            return self.__LoD()
+    def comp_dpLoD_dpthetaY(self): return self.dpLoD_dpthetaY()
+    def comp_dpLoD_dpiAoA(self):   return self.__dpLoD_dpiAoA()
     
     #-- Display methods
     def __display_info(self):
