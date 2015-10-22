@@ -22,19 +22,24 @@
 
 import unittest
 
+try:
+    from openturns import *
+    run_meta=True
+except:
+    run_meta=False
+
+run_meta = False
+
+if run_meta:
+    from test_DLLM_meta import TestDLLMMeta  
+    
 from test_wing_param import TestWingParam
 from test_DLLM_simple_base import TestDLLMSimpleBase
 from test_DLLM_simple_R import TestDLLMSimpleR
 from test_DLLM_simple_F import TestDLLMSimpleF
 from test_DLLM_simple_Loads import TestDLLMSimpleLoads
 from test_DLLM_simple_TCl_TLift import TestDLLMSimpleTClTLift
-# from test_DLLM_meta import TestDLLMMeta
-
-try:
-    from openturns import *
-    run_meta=True
-except:
-    run_meta=False
+from test_DLLM_meta import TestDLLMMeta
 
 def suite():
     suite = unittest.TestSuite()

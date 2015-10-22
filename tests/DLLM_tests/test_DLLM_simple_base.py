@@ -17,8 +17,10 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
-#  http://github.com/TBD
+#  https://github.com/matthieu-meaux/DLLM.git
 #
+# @author : Matthieu Meaux
+
 import unittest
 from numpy import zeros, array
 
@@ -72,7 +74,7 @@ class TestDLLMSimpleBase(unittest.TestCase):
         OC,wing_param = self.__init_wing_param()
         DLLM = DLLMSolver('test',wing_param,OC)
         assert(DLLM is not None)
-        
+         
     def test_DLLM_run_direct(self):
         OC,wing_param = self.__init_wing_param()
         DLLM = DLLMSolver('test',wing_param,OC)
@@ -83,7 +85,7 @@ class TestDLLMSimpleBase(unittest.TestCase):
         except:
             ok=False
         assert(ok)
-        
+         
     def test_DLLM_run_direct_post(self):
         OC,wing_param = self.__init_wing_param()
         DLLM = DLLMSolver('test',wing_param,OC)
@@ -98,7 +100,7 @@ class TestDLLMSimpleBase(unittest.TestCase):
     
     def test_DLLM_run_direct_post_adjoint(self):
         OC,wing_param = self.__init_wing_param()
-        DLLM = DLLMSolver('test',wing_param,OC)
+        DLLM = DLLMSolver('test',wing_param,OC, verbose = 2)
         try:
             print ''
             DLLM.run_direct()

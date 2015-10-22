@@ -25,8 +25,9 @@ from MDOTools.Solvers.newton_raphson_problem import NewtonRaphsonProblem
 
 class DLLMTargetCl(DLLMSolver):
     ERROR_MSG='ERROR in DLLMTargetCl.'
-    def __init__(self, tag,  wing_param, OC):
-        DLLMSolver.__init__(self, tag, wing_param, OC)
+    def __init__(self, tag,  wing_param, OC, verbose = 0):
+        self.__verbose = verbose
+        DLLMSolver.__init__(self, tag, wing_param, OC, verbose = self.__verbose)
         
         self.__N            = self.get_wing_param().get_n_sect()
         self.__ndv          = self.get_wing_param().get_ndv()
@@ -53,7 +54,7 @@ class DLLMTargetCl(DLLMSolver):
     #-- Newton-Raphson related methods
     def __init_Newton_Raphson(self):
         W0= numpy.zeros(self.__N+1)
-        self.__NRPb = NewtonRaphsonProblem(W0, self.comp_R_TCl, self.comp_dpR_TCl_dpW)
+        self.__NRPb = NewtonRaphsonProblem(W0, self.comp_R_TCl, self.comp_dpR_TCl_dpW, verbose = self.__verbose)
         self.__NRPb.set_relax_factor(0.99)
         self.__NRPb.set_stop_residual(1.e-9)
         self.__NRPb.set_max_iterations(100)
@@ -153,14 +154,4 @@ class DLLMTargetCl(DLLMSolver):
         DLLMDirect.set_computed(True)
         DLLMDirect.write_gamma_to_file()
         DLLMDirect.comp_dpR_dpchi()
-        
-        
-        
-
-        
-        
-        
-        
-        
-
-        
+            

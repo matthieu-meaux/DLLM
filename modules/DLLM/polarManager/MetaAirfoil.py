@@ -23,6 +23,7 @@
 from airfoil import Airfoil
 import numpy as np 
 from surrogate_coefs import SurrogateCoefs
+import math
 
 class MetaAirfoil(Airfoil):
     """
@@ -180,7 +181,7 @@ class MetaAirfoil(Airfoil):
             Cdf = 0.
         elif Re < 1.e5:
             # Laminar flow
-            Cdf=1.328/sqrt(Re)*thick_coeff
+            Cdf=1.328/math.sqrt(Re)*thick_coeff
         else:
             # Turbulent flow
             Cdf=0.074*Re**(-0.2)*thick_coeff
@@ -219,7 +220,7 @@ class MetaAirfoil(Airfoil):
             dCdf = 0.
         elif Re < 1.e5:
             # Laminar flow
-            dCdf=-0.664/(Re**1.5)*dRe*thick_coeff+1.328/sqrt(Re)*dthick_coeff
+            dCdf=-0.664/(Re**1.5)*dRe*thick_coeff+1.328/math.sqrt(Re)*dthick_coeff
         else:
             # Turbulent flow
             dCdf=-0.0148*Re**(-1.2)*dRe*thick_coeff+0.074*Re**(-0.2)*dthick_coeff

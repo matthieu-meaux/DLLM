@@ -17,9 +17,12 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
-#  http://github.com/TBD
+#  https://github.com/matthieu-meaux/DLLM.git
 #
+# @author : Louis Blanchard
+
 import unittest
+from numpy import zeros
 
 from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
 from DLLM.DLLMGeom.wing_param import Wing_param
@@ -71,39 +74,39 @@ class TestDLLMSimpleLoads(unittest.TestCase):
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
     def plot_valid_FD(self,X, name1,df1,df1_fd,name2,df2,df2_fd, norm1, norm2, name):
 
-	M1_per_error = 100*abs(df1_fd-df1)/abs(df1_fd)
-	M2_per_error = 100*abs(df2_fd-df2)/abs(df2_fd)
-	M1_per_error = M1_per_error[~np.isnan(M1_per_error)].T
-	M2_per_error = M2_per_error[~np.isnan(M2_per_error)].T
-	fig =plt.figure(figsize=(15,10))
-	nb=10e1
-	x1=np.linspace(1,nb,num= len(M1_per_error))
-	x2=np.linspace(1,nb,num= len(M2_per_error))
-	plt.semilogy(x1,M1_per_error,'ro-',markersize=5)
-	plt.semilogy(x2,M2_per_error,'bo-',markersize=5)
-	plt.grid()
-	plt.ylabel("y")
-	plt.legend(['percentage error : '+name1,'percentage error : '+name2 ], loc='best')
-	txt=" Jacobian matrix validation by FD : norm error : "+name1+" = %.3e, "+name2+" = %.3e"
-	plt.title(txt % (norm1,norm2) )
-	plt.savefig("DLLM_Jacobian_validation_FD_"+name+".png")
+        M1_per_error = 100*abs(df1_fd-df1)/abs(df1_fd)
+        M2_per_error = 100*abs(df2_fd-df2)/abs(df2_fd)
+        M1_per_error = M1_per_error[~np.isnan(M1_per_error)].T
+        M2_per_error = M2_per_error[~np.isnan(M2_per_error)].T
+        fig =plt.figure(figsize=(15,10))
+        nb=10e1
+        x1=np.linspace(1,nb,num= len(M1_per_error))
+        x2=np.linspace(1,nb,num= len(M2_per_error))
+        plt.semilogy(x1,M1_per_error,'ro-',markersize=5)
+        plt.semilogy(x2,M2_per_error,'bo-',markersize=5)
+        plt.grid()
+        plt.ylabel("y")
+        plt.legend(['percentage error : '+name1,'percentage error : '+name2 ], loc='best')
+        txt=" Jacobian matrix validation by FD : norm error : "+name1+" = %.3e, "+name2+" = %.3e"
+        plt.title(txt % (norm1,norm2) )
+        plt.savefig("DLLM_Jacobian_validation_FD_"+name+".png")
 
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     def print_valid_FD(self,X,name1,df1,df1_fd, name2,df2,df2_fd):
-	diff1  = abs(df1_fd-df1).sum()
-	diff2  = abs(df2_fd-df2).sum()
-	norm1  = norm(df1_fd-df1)/norm(df1_fd)
-	norm2  = norm(df2_fd-df2)/norm(df2_fd)
-	print  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-	print  "            Finite Difference Validation for Jacobian matrix : "
-	print  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-	print  " X = ",X
-	print  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-	print  name1,": diff = %.5e  norm = %.5e" % (diff1,norm1)
-	print  name2,": diff = %.5e  norm = %.5e" % (diff2,norm2)
-	print  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-	return norm1, norm2
+        diff1  = abs(df1_fd-df1).sum()
+        diff2  = abs(df2_fd-df2).sum()
+        norm1  = norm(df1_fd-df1)/norm(df1_fd)
+        norm2  = norm(df2_fd-df2)/norm(df2_fd)
+        print  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+        print  "            Finite Difference Validation for Jacobian matrix : "
+        print  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+        print  " X = ",X
+        print  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+        print  name1,": diff = %.5e  norm = %.5e" % (diff1,norm1)
+        print  name2,": diff = %.5e  norm = %.5e" % (diff2,norm2)
+        print  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+        return norm1, norm2
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     def test_DLLM_valid_dpLoads_distrib_dpiAoA(self):
@@ -112,7 +115,7 @@ class TestDLLMSimpleLoads(unittest.TestCase):
         print ''
         DLLM.run_direct()
         iAoA0=DLLM.get_iAoA()
-	Post=DLLM.get_DLLMPost()
+        Post=DLLM.get_DLLMPost()
 
         def f1(x):
             R=DLLM.comp_R(x)
@@ -124,7 +127,7 @@ class TestDLLMSimpleLoads(unittest.TestCase):
             func_grad=Post.comp_dpLift_distrib_dpiAoA()
             return func_grad
 
-	def f2(x):
+        def f2(x):
             R=DLLM.comp_R(x)
             func=Post.comp_Drag_distrib()
             return func
@@ -138,10 +141,12 @@ class TestDLLMSimpleLoads(unittest.TestCase):
         ok1,df_fd1,df1=val_grad1.compare(iAoA0,treshold=1.e-8,return_all=True)
        	val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-8)
         ok2,df_fd2,df2=val_grad2.compare(iAoA0,treshold=1.e-8,return_all=True)
-	norm1, norm2 = self.print_valid_FD(iAoA0,'dpLift_distrib_dpiAoA',df1,df_fd1,'dpDrag_distrib_dpiAoA',df2,df_fd2)
-	self.plot_valid_FD(iAoA0,'dpLift_distrib_dpiAoA',df1,df_fd1,'dpDrag_distrib_dpiAoA',df2,df_fd2, norm1, norm2, 'Loads_distrib_dpiAoA')
-	if (ok1==True) and (ok2==True): ok = True
-	else : 	ok = False
+    	norm1, norm2 = self.print_valid_FD(iAoA0,'dpLift_distrib_dpiAoA',df1,df_fd1,'dpDrag_distrib_dpiAoA',df2,df_fd2)
+    	self.plot_valid_FD(iAoA0,'dpLift_distrib_dpiAoA',df1,df_fd1,'dpDrag_distrib_dpiAoA',df2,df_fd2, norm1, norm2, 'Loads_distrib_dpiAoA')
+    	if (ok1==True) and (ok2==True): 
+            ok = True
+    	else : 	
+            ok = False
         assert(ok)
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
@@ -169,7 +174,7 @@ class TestDLLMSimpleLoads(unittest.TestCase):
             np_func_grad[:,0]=func_grad[:]
             return np_func_grad
 
- 	def f2(x):
+     	def f2(x):
             OC.set_AoA_rad(x[0])
             R=DLLM.comp_R(iAoA0)
             func=Post.comp_Drag_distrib()
@@ -186,12 +191,14 @@ class TestDLLMSimpleLoads(unittest.TestCase):
         
         val_grad1=FDValidGrad(2,f1,df1,fd_step=1.e-8)
         ok1,df_fd1,df1=val_grad1.compare([AoA0],treshold=1.e-8,return_all=True)
-	val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-8)
+        val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-8)
         ok2,df_fd2,df2=val_grad2.compare([AoA0],treshold=1.e-8,return_all=True)
-	norm1, norm2 = self.print_valid_FD([AoA0],'dpLift_distrib_dpAoA',df1,df_fd1,'dpDrag_distrib_dpAoA',df2,df_fd2)
-	self.plot_valid_FD([AoA0],'dpLift_distrib_dpAoA',df1,df_fd1,'dpDrag_distrib_dpAoA',df2,df_fd2, norm1, norm2, 'Loads_distrib_dpAoA')
-	if (ok1==True) and (ok2==True): ok = True
-	else : 	ok = False
+        norm1, norm2 = self.print_valid_FD([AoA0],'dpLift_distrib_dpAoA',df1,df_fd1,'dpDrag_distrib_dpAoA',df2,df_fd2)
+        self.plot_valid_FD([AoA0],'dpLift_distrib_dpAoA',df1,df_fd1,'dpDrag_distrib_dpAoA',df2,df_fd2, norm1, norm2, 'Loads_distrib_dpAoA')
+        if (ok1==True) and (ok2==True): 
+            ok = True
+        else : 	
+            ok = False
         assert(ok)
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
@@ -202,7 +209,7 @@ class TestDLLMSimpleLoads(unittest.TestCase):
         DLLM.run_direct()
         iAoA=DLLM.get_iAoA()
         x0=wing_param.get_dv_array()
-	Post=DLLM.get_DLLMPost()
+    	Post=DLLM.get_DLLMPost()
 
         def f1(x):
             wing_param.update_from_x_list(x)
@@ -236,12 +243,13 @@ class TestDLLMSimpleLoads(unittest.TestCase):
         ok1,df_fd1,df1=val_grad1.compare(x0,treshold=1.e-6,return_all=True)
         val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-8)
         ok2,df_fd2,df2=val_grad2.compare(x0,treshold=1.e-6,return_all=True)
-	norm1, norm2 = self.print_valid_FD(x0,'dpLift_distrib_dpchi',df1,df_fd1,'dpDrag_distrib_dpchi',df2,df_fd2)
-	self.plot_valid_FD(x0,'dpLift_distrib_dpchi',df1,df_fd1,'dpDrag_distrib_dpchi',df2,df_fd2, norm1, norm2, 'Loads_distrib_dpchi')
-	if (ok1==True) and (ok2==True): ok = True
-	else : 	ok = False
-	assert(ok)
-
+    	norm1, norm2 = self.print_valid_FD(x0,'dpLift_distrib_dpchi',df1,df_fd1,'dpDrag_distrib_dpchi',df2,df_fd2)
+    	self.plot_valid_FD(x0,'dpLift_distrib_dpchi',df1,df_fd1,'dpDrag_distrib_dpchi',df2,df_fd2, norm1, norm2, 'Loads_distrib_dpchi')
+    	if (ok1==True) and (ok2==True):
+            ok = True
+    	else : 
+            ok = False
+    	assert(ok)
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
     def test_DLLM_valid_dpLoads_distrib_dpthetaY(self):
@@ -251,7 +259,7 @@ class TestDLLMSimpleLoads(unittest.TestCase):
         DLLM.run_direct()
         iAoA=DLLM.get_iAoA()
         thetaY0=wing_param.get_thetaY()
-	Post=DLLM.get_DLLMPost()
+    	Post=DLLM.get_DLLMPost()
 
         def f1(x):
             wing_param.set_thetaY(x)
@@ -277,12 +285,14 @@ class TestDLLMSimpleLoads(unittest.TestCase):
         
         val_grad1=FDValidGrad(2,f1,df1,fd_step=1.e-8)
         ok1,df_fd1,df1=val_grad1.compare(thetaY0,treshold=1.e-6,return_all=True)
-	val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-8)
+    	val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-8)
         ok2,df_fd2,df2=val_grad2.compare(thetaY0,treshold=1.e-6,return_all=True)
-	norm1, norm2 = self.print_valid_FD(thetaY0,'dpLift_distrib_dpthetaY',df1,df_fd1,'dpDrag_distrib_dpthetaY',df2,df_fd2)
-	self.plot_valid_FD(thetaY0,'dpLift_distrib_dpthetaY',df1,df_fd1,'dpDrag_distrib_dpthetaY',df2,df_fd2, norm1, norm2, 'Loads_distrib_dpthetaY')
-	if (ok1==True) and (ok2==True): ok = True
-	else : 	ok = False
+    	norm1, norm2 = self.print_valid_FD(thetaY0,'dpLift_distrib_dpthetaY',df1,df_fd1,'dpDrag_distrib_dpthetaY',df2,df_fd2)
+    	self.plot_valid_FD(thetaY0,'dpLift_distrib_dpthetaY',df1,df_fd1,'dpDrag_distrib_dpthetaY',df2,df_fd2, norm1, norm2, 'Loads_distrib_dpthetaY')
+    	if (ok1==True) and (ok2==True):
+            ok = True
+    	else : 
+            ok = False
         assert(ok)
            
 if __name__ == '__main__':

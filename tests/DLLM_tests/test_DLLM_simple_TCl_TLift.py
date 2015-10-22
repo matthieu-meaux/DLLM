@@ -17,10 +17,12 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
-#  http://github.com/TBD
+#  https://github.com/matthieu-meaux/DLLM.git
 #
+# @author : Matthieu Meaux
+
 import unittest
-from numpy import zeros, array
+from numpy import array
 
 from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
 from DLLM.DLLMGeom.wing_param import Wing_param
@@ -69,6 +71,9 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
     def test_DLLM_valid_TCl(self):
         OC,wing_param = self.__init_wing_param()
         DLLM = DLLMTargetCl('Simple',wing_param,OC)
+#         F_list=DLLM.get_F_list()
+        F_list_names=DLLM.get_F_list_names()
+        print F_list_names
         DLLM.set_target_Cl(0.5)
         DLLM.run_direct()
         DLLM.run_post()
@@ -77,11 +82,11 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
         cl_index = F_list_names.index('Cl')
         Cl=F_list[cl_index]
         assert(abs(Cl-0.5)<1.e-10)
-        
+          
     def test_DLLM_valid_grad_TCl(self):
         OC,wing_param = self.__init_wing_param()
         x0=wing_param.get_dv_array()
-         
+           
         def f1(x):
             wing_param.update_from_x_list(x)
             DLLM = DLLMTargetCl('Simple',wing_param,OC)
@@ -90,7 +95,7 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
             DLLM.run_post()
             func=DLLM.get_F_list()
             return func
-         
+           
         def df1(x):
             wing_param.update_from_x_list(x)
             DLLM = DLLMTargetCl('Simple',wing_param,OC)
@@ -100,7 +105,7 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
             DLLM.run_adjoint()
             func_grad=array(DLLM.get_dF_list_dchi())
             return func_grad
-         
+           
         val_grad1=FDValidGrad(2,f1,df1,fd_step=1.e-8)
         ok1,df_fd1,df1=val_grad1.compare(x0,treshold=1.e-6,split_out=True,return_all=True)
         assert(ok1)
@@ -108,11 +113,15 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
     def test_DLLM_valid_TLift(self):
         OC,wing_param = self.__init_wing_param()
         DLLM = DLLMTargetLift('Simple',wing_param,OC)
+#         F_list=DLLM.get_F_list()
+        F_list_names=DLLM.get_F_list_names()
+        print F_list_names
         DLLM.set_target_Lift(769200.)
         DLLM.run_direct()
         DLLM.run_post()
         F_list=DLLM.get_F_list()
         F_list_names=DLLM.get_F_list_names()
+        print F_list_names
         lift_index = F_list_names.index('Lift')
         Lift=F_list[lift_index]
         assert(abs(Lift-769200.)<1.e-2)
@@ -122,8 +131,8 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
         x0=wing_param.get_dv_array()
         DLLM = DLLMTargetLift('Simple',wing_param,OC)
         F_list_names = DLLM.get_DLLMPost().DEF_F_LIST_NAMES
-        F_list_names.remove('Lift')
-
+#        F_list_names.remove('Lift')
+  
         def f2(x):
             wing_param.update_from_x_list(x)
             DLLM = DLLMTargetLift('Simple',wing_param,OC)
@@ -133,7 +142,7 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
             DLLM.run_post()
             func=DLLM.get_F_list()
             return func
-        
+          
         def df2(x):
             wing_param.update_from_x_list(x)
             DLLM = DLLMTargetLift('Simple',wing_param,OC)
@@ -144,9 +153,9 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
             DLLM.run_adjoint()
             func_grad=array(DLLM.get_dF_list_dchi())
             return func_grad
-    
-        val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-8)
-        ok2,df_fd2,df2=val_grad2.compare(x0,treshold=1.e-6,split_out=True,return_all=True)
+      
+        val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-6)
+        ok2,df_fd2,df2=val_grad2.compare(x0,treshold=1.e-2,split_out=True,return_all=True)
         assert(ok2)
         
 if __name__ == '__main__':
