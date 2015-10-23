@@ -17,8 +17,10 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
-#  http://github.com/TBD
+#  https://github.com/matthieu-meaux/DLLM.git
 #
+# @author : Francois Gallard
+
 # - Local imports -
 class AeroShape:
 
