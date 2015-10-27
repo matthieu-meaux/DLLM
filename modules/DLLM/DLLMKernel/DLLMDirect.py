@@ -122,6 +122,8 @@ class DLLMDirect:
     def __init_Newton_Raphson(self):
         N = self.get_N()
         iAoA0 = zeros(N)
+        self.comp_R(iAoA0)
+        self.comp_dpR_dpiAoA(iAoA0)
         self.__NRPb = NewtonRaphsonProblem(
             iAoA0,
             self.comp_R,

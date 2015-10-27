@@ -49,12 +49,14 @@ class AnalyticAirfoil(Airfoil):
             raise Exception, "Relative thickness must be >0. and <0.25"
         
         Airfoil.__init__(self,OC, Sref,Lref,rel_thick,sweep)
-        self.__AoA0 = AoA0*np.pi/180.
-        self.__Cm0  = Cm0
-        self.__Ka   = Ka
+        self.__AoA0_deg = AoA0
+        self.__AoA0     = self.__AoA0_deg*np.pi/180.
+        self.__Cm0      = Cm0
+        self.__Ka        = Ka
         
     #-- Cl related methods       
     def Cl(self,alpha,Mach=0.0):
+        #print 'alpha = ',alpha
         Cl=self.ClAlpha(alpha,Mach)*(alpha-self.__AoA0)
         return Cl
     
@@ -308,4 +310,4 @@ class AnalyticAirfoil(Airfoil):
             sweep = self.get_sweep()
         if OC is None:
             OC = self.get_OC()
-        return AnalyticAirfoil(OC, self.__AoA0, self.__Cm0, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep, Ka=self.__Ka)
+        return AnalyticAirfoil(OC, self.__AoA0_deg, self.__Cm0, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep, Ka=self.__Ka)

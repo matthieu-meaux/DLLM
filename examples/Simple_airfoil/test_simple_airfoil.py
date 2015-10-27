@@ -28,7 +28,7 @@ from MDOTools.OC.operating_condition import OperatingCondition
 
 OC=OperatingCondition('cond1',atmospheric_model='ISA')
 OC.set_Mach(0.8)
-OC.set_AoA(3.5)
+OC.set_AoA(0.0)
 OC.set_altitude(10000.)
 OC.set_T0_deg(15.)
 OC.set_P0(101325.)
@@ -80,7 +80,7 @@ wing_param.convert_to_design_variable('tip_chord',(1.,2.))
 wing_param.convert_to_design_variable('root_height',(1.,1.5))
 wing_param.convert_to_design_variable('break_height',(0.8,1.2))
 wing_param.convert_to_design_variable('tip_height',(0.2,0.5))
-wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
+wing_param.build_linear_airfoil(OC, AoA0=0.0, Cm0=-0.1, set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()
 
@@ -88,8 +88,8 @@ wing_param.update()
 
 print wing_param
 
-DLLM = DLLMSolver('test',wing_param,OC)
+DLLM = DLLMSolver('test', wing_param, OC, verbose=1)
 DLLM.run_direct()
 DLLM.run_post()
-#DLLM.run_adjoint()
+DLLM.run_adjoint()
 

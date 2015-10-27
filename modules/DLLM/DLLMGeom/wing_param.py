@@ -803,11 +803,9 @@ class Wing_param():
     def build_linear_airfoil(self, OC, AoA0=0., Cm0=0., Sref=1.,
                              Lref=1., rel_thick=0., sweep=0., Ka=0.95, set_as_ref=True):
         self.__airfoil_type = 'simple'
-        degToRad = pi / 180.
         airfoil = AnalyticAirfoil(
             OC,
-            AoA0=degToRad *
-            AoA0,
+            AoA0=AoA0,
             Cm0=Cm0,
             Sref=Sref,
             Lref=Lref,
