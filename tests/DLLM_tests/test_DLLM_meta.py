@@ -142,13 +142,13 @@ class TestDLLMMeta(unittest.TestCase):
         x0=wing_param.get_dv_array()
         def f2(x):
             wing_param.update_from_x_list(x)
-            DLLM.set_wing_param(wing_param)
+            DLLM.set_geom(wing_param)
             func=DLLM.comp_R(iAoA)
             return func
          
         def df2(x):
             wing_param.update_from_x_list(x)
-            DLLM.set_wing_param(wing_param)
+            DLLM.set_geom(wing_param)
             func=DLLM.comp_R(iAoA)
             func_grad=DLLM.comp_dpR_dpchi()
             return func_grad
@@ -211,7 +211,7 @@ class TestDLLMMeta(unittest.TestCase):
         x0=wing_param.get_dv_array()
         def f5(x):
             wing_param.update_from_x_list(x)
-            DLLM.set_wing_param(wing_param)
+            DLLM.set_geom(wing_param)
             DLLM.comp_R(iAoA)
             DLLM.set_direct_computed()
             DLLM.run_post()
@@ -220,7 +220,7 @@ class TestDLLMMeta(unittest.TestCase):
          
         def df5(x):
             wing_param.update_from_x_list(x)
-            DLLM.set_wing_param(wing_param)
+            DLLM.set_geom(wing_param)
             DLLM.comp_R(iAoA)
             DLLM.set_direct_computed()
             DLLM.run_post()

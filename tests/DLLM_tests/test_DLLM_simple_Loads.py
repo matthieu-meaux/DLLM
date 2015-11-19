@@ -138,9 +138,9 @@ class TestDLLMSimpleLoads(unittest.TestCase):
             return func_grad
         
         val_grad1=FDValidGrad(2,f1,df1,fd_step=1.e-8)
-        ok1,df_fd1,df1=val_grad1.compare(iAoA0,treshold=1.e-8,return_all=True)
+        ok1,df_fd1,df1=val_grad1.compare(iAoA0,treshold=1.e-6,return_all=True)
        	val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-8)
-        ok2,df_fd2,df2=val_grad2.compare(iAoA0,treshold=1.e-8,return_all=True)
+        ok2,df_fd2,df2=val_grad2.compare(iAoA0,treshold=1.e-6,return_all=True)
     	norm1, norm2 = self.print_valid_FD(iAoA0,'dpLift_distrib_dpiAoA',df1,df_fd1,'dpDrag_distrib_dpiAoA',df2,df_fd2)
     	self.plot_valid_FD(iAoA0,'dpLift_distrib_dpiAoA',df1,df_fd1,'dpDrag_distrib_dpiAoA',df2,df_fd2, norm1, norm2, 'Loads_distrib_dpiAoA')
     	if (ok1==True) and (ok2==True): 
@@ -190,9 +190,9 @@ class TestDLLMSimpleLoads(unittest.TestCase):
             return np_func_grad
         
         val_grad1=FDValidGrad(2,f1,df1,fd_step=1.e-8)
-        ok1,df_fd1,df1=val_grad1.compare([AoA0],treshold=1.e-8,return_all=True)
+        ok1,df_fd1,df1=val_grad1.compare([AoA0],treshold=1.e-6,return_all=True)
         val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-8)
-        ok2,df_fd2,df2=val_grad2.compare([AoA0],treshold=1.e-8,return_all=True)
+        ok2,df_fd2,df2=val_grad2.compare([AoA0],treshold=1.e-6,return_all=True)
         norm1, norm2 = self.print_valid_FD([AoA0],'dpLift_distrib_dpAoA',df1,df_fd1,'dpDrag_distrib_dpAoA',df2,df_fd2)
         self.plot_valid_FD([AoA0],'dpLift_distrib_dpAoA',df1,df_fd1,'dpDrag_distrib_dpAoA',df2,df_fd2, norm1, norm2, 'Loads_distrib_dpAoA')
         if (ok1==True) and (ok2==True): 
@@ -213,28 +213,28 @@ class TestDLLMSimpleLoads(unittest.TestCase):
 
         def f1(x):
             wing_param.update_from_x_list(x)
-            DLLM.set_wing_param(wing_param)
+            DLLM.set_geom(wing_param)
             DLLM.comp_R(iAoA)
             func=Post.comp_Lift_distrib()
             return func
         
         def df1(x):
             wing_param.update_from_x_list(x)
-            DLLM.set_wing_param(wing_param)
+            DLLM.set_geom(wing_param)
             DLLM.comp_R(iAoA)
             func_grad=Post.comp_dpLift_distrib_dpchi()
             return func_grad
         
         def f2(x):
             wing_param.update_from_x_list(x)
-            DLLM.set_wing_param(wing_param)
+            DLLM.set_geom(wing_param)
             DLLM.comp_R(iAoA)
             func=Post.comp_Drag_distrib()
             return func
         
         def df2(x):
             wing_param.update_from_x_list(x)
-            DLLM.set_wing_param(wing_param)
+            DLLM.set_geom(wing_param)
             DLLM.comp_R(iAoA)
             func_grad=Post.comp_dpDrag_distrib_dpchi()
             return func_grad

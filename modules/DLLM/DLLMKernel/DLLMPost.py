@@ -83,10 +83,10 @@ class DLLMPost:
         return self.__LLW.get_tag()
 
     def get_N(self):
-        return self.get_wing_param().get_n_sect()
+        return self.get_geom().get_n_sect()
 
     def get_ndv(self):
-        return self.get_wing_param().get_ndv()
+        return self.get_geom().get_ndv()
 
     def get_F_list_names(self):
         return self.__F_list_names
@@ -106,8 +106,8 @@ class DLLMPost:
     def get_dpF_list_dpthetaY(self):
         return self.__dpF_list_dpthetaY
     
-    def get_wing_param(self):
-        return self.__LLW.get_wing_param()
+    def get_geom(self):
+        return self.__LLW.get_geom()
 
     def get_airfoils(self):
         return self.__LLW.get_airfoils()
@@ -363,7 +363,7 @@ class DLLMPost:
             
         if distrib:
 	    #print 'CHECK LIFT = ',sum(Lift_distrib)-self.__Lift()
-            y   = self.get_wing_param().get_XYZ()[1,:]
+            y   = self.get_geom().get_XYZ()[1,:]
             fid=open(self.get_tag()+'_Lift_distrib.dat','w')
             line="#Slice\t%24s"%"y"+"\t%24s"%"Lift"+"\n"
             fid.write(line)
@@ -472,7 +472,7 @@ class DLLMPost:
             
         if distrib:
 	    #print 'CHECK Drag = ',sum(Drag_distrib)-self.__Drag()
-            y   = self.get_wing_param().get_XYZ()[1,:]
+            y   = self.get_geom().get_XYZ()[1,:]
             fid=open(self.get_tag()+'_Drag_distrib.dat','w')
             line="#Slice\t%24s"%"y"+"\t%24s"%"Lift"+"\n"
             fid.write(line)
@@ -588,7 +588,7 @@ class DLLMPost:
             Cl += Cl_loc[i]
 
         if distrib:
-            y = self.get_wing_param().get_XYZ()[1, :]
+            y = self.get_geom().get_XYZ()[1, :]
             fid = open(self.get_tag() + '_Cl_distrib.dat', 'w')
             line = "#Slice\t%24s" % "y" + "\t%24s" % "Cl" + "\n"
             fid.write(line)
@@ -756,7 +756,7 @@ class DLLMPost:
             Cdi += Cdi_loc[i]
 
         if distrib:
-            y = self.get_wing_param().get_XYZ()[1, :]
+            y = self.get_geom().get_XYZ()[1, :]
             fid = open(self.get_tag() + '_Cdi_distrib.dat', 'w')
             line = "#Slice\t%24s" % "y" + "\t%24s" % "Cdi" + "\n"
             fid.write(line)

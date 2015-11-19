@@ -73,7 +73,7 @@ iAoA=DLLM.get_iAoA()
 # Split validation in 2 steps since the norm depends on the function value scale...
 def f(x):
     wing_param.update_from_x_list(x)
-    DLLM.set_wing_param(wing_param)
+    DLLM.set_geom(wing_param)
     DLLM.comp_R(iAoA)
     DLLM.set_direct_computed()
     DLLM.run_post()
@@ -82,7 +82,7 @@ def f(x):
 
 def df(x):
     wing_param.update_from_x_list(x)
-    DLLM.set_wing_param(wing_param)
+    DLLM.set_geom(wing_param)
     DLLM.comp_R(iAoA)
     DLLM.set_direct_computed()
     DLLM.run_post()

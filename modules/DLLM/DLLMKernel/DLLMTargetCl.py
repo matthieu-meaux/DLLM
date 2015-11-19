@@ -28,12 +28,12 @@ from MDOTools.Solvers.newton_raphson_problem import NewtonRaphsonProblem
 
 class DLLMTargetCl(DLLMSolver):
     ERROR_MSG='ERROR in DLLMTargetCl.'
-    def __init__(self, tag,  wing_param, OC, verbose = 0):
+    def __init__(self, tag,  geom, OC, verbose = 0):
         self.__verbose = verbose
-        DLLMSolver.__init__(self, tag, wing_param, OC, verbose = self.__verbose)
+        DLLMSolver.__init__(self, tag, geom, OC, verbose = self.__verbose)
         
-        self.__N            = self.get_wing_param().get_n_sect()
-        self.__ndv          = self.get_wing_param().get_ndv()
+        self.__N            = self.get_geom().get_n_sect()
+        self.__ndv          = self.get_geom().get_ndv()
         
         self.__R_TCl         = numpy.zeros(self.__N+1)
         self.__dpR_TCl_dpW   = numpy.zeros((self.__N+1,self.__N+1))

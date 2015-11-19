@@ -72,13 +72,13 @@ iAoA=DLLM.get_iAoA()
 
 def f(x):
     wing_param.update_from_x_list(x)
-    DLLM.set_wing_param(wing_param)
+    DLLM.set_geom(wing_param)
     func=DLLM.comp_R(iAoA)
     return func
 
 def df(x):
     wing_param.update_from_x_list(x)
-    DLLM.set_wing_param(wing_param)
+    DLLM.set_geom(wing_param)
     func=DLLM.comp_R(iAoA)
     func_grad=DLLM.comp_dpR_dpchi()
     return func_grad

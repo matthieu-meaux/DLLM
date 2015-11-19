@@ -31,7 +31,7 @@ from DLLM.DLLMKernel.DLLMAdjoint import DLLMAdjoint
 
 class DLLMSolver:
     ERROR_MSG='ERROR in DLLMSolver.'
-    def __init__(self, tag, wing_param, OC, verbose = 0):
+    def __init__(self, tag, geom, OC, verbose = 0):
         '''
         Constructor for wings based on lifting line theory
         @param wing_geom : the wing geometry
@@ -44,7 +44,7 @@ class DLLMSolver:
         self.__verbose = verbose
 
         
-        self.__wing_param = wing_param
+        self.__geom = geom
         self.__OC         = OC
         
         self.__Lref       = 0.
@@ -64,26 +64,26 @@ class DLLMSolver:
     def get_tag(self):
         return self.__tag
     
-    def get_wing_param(self):
-        return self.__wing_param
+    def get_geom(self):
+        return self.__geom
     
     def get_airfoils(self):
-        return self.get_wing_param().get_linked_airfoils()
+        return self.get_geom().get_linked_airfoils()
     
     def get_OC(self):
         return self.__OC
     
     def get_Lref(self):
-        return self.__wing_param.get_Lref()
+        return self.__geom.get_Lref()
     
     def get_Lref_grad(self):
-        return self.__wing_param.get_Lref_grad()
+        return self.__geom.get_Lref_grad()
     
     def get_Sref(self):
-        return self.__wing_param.get_Sref()
+        return self.__geom.get_Sref()
     
     def get_Sref_grad(self):
-        return self.__wing_param.get_Sref_grad()
+        return self.__geom.get_Sref_grad()
     
     def get_DLLMMesh(self):
         return self.__DLLMMesh
@@ -198,13 +198,8 @@ class DLLMSolver:
         self.__OC = OC
         self.__reinit_modules()
         
-    def set_wing_param(self, wing_param):
-        self.__wing_param  = wing_param
-        self.__DLLMMesh.recompute()
-        self.__reinit_modules()
-        
-    def set_airfoil(self, airfoils):
-        self.__airfoils = airfoils
+    def set_geom(self, geom):
+        self.__geom  = geom
         self.__DLLMMesh.recompute()
         self.__reinit_modules()
         

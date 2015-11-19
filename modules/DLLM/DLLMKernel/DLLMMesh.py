@@ -34,7 +34,7 @@ class DLLMMesh:
     def __init__(self, LLW,verbose = 0):
         self.__LLW = LLW
         self.__verbose = verbose
-        self.__ndv = self.get_wing_param().get_ndv()
+        self.__ndv = self.get_geom().get_ndv()
         self.__N       = None
         self.__K       = None
         self.__dK_dchi = None
@@ -47,8 +47,8 @@ class DLLMMesh:
     def get_tag(self):
         return self.__LLW.get_tag()
     
-    def get_wing_param(self):
-        return self.__LLW.get_wing_param()
+    def get_geom(self):
+        return self.__LLW.get_geom()
     
     def get_OC(self):
         return self.__LLW.get_OC()
@@ -61,7 +61,7 @@ class DLLMMesh:
     
     #-- Methods
     def recompute(self):
-        self.__N   = self.get_wing_param().get_n_sect()
+        self.__N   = self.get_geom().get_n_sect()
         
         # Set computational geometry
         self.__K       = None 
@@ -73,8 +73,8 @@ class DLLMMesh:
         Sets the geometry of the wing, builds the lifting line metric matrix
         '''
         #V   = self.get_OC().get_V()
-        eta = self.get_wing_param().get_eta()[1,:]
-        y   = self.get_wing_param().get_XYZ()[1,:]
+        eta = self.get_geom().get_eta()[1,:]
+        y   = self.get_geom().get_XYZ()[1,:]
         
         YminEta=transpose(outer(ones([self.__N+1]),y))-outer(ones([self.__N]),eta)
         Kmetric=divide(ones([self.__N,self.__N+1]),YminEta)
@@ -86,8 +86,8 @@ class DLLMMesh:
         DdGammaDy_DGamma[1:self.__N+1,:]-= diag(ones([self.__N]))
         self.__K = - dot(Kmetric,DdGammaDy_DGamma)
         
-        eta_grad = self.get_wing_param().get_eta_grad()[1,:,:]
-        y_grad   = self.get_wing_param().get_XYZ_grad()[1,:,:]
+        eta_grad = self.get_geom().get_eta_grad()[1,:,:]
+        y_grad   = self.get_geom().get_XYZ_grad()[1,:,:]
         
         YminEta_grad=zeros((self.__N,self.__N+1,self.__ndv))
         for n in xrange(self.__ndv):

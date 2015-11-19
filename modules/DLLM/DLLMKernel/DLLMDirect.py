@@ -54,8 +54,8 @@ class DLLMDirect:
     def get_tag(self):
         return self.__LLW.get_tag()
 
-    def get_wing_param(self):
-        return self.__LLW.get_wing_param()
+    def get_geom(self):
+        return self.__LLW.get_geom()
 
     def get_airfoils(self):
         return self.__LLW.get_airfoils()
@@ -67,10 +67,10 @@ class DLLMDirect:
         return self.__LLW.get_dK_dchi()
 
     def get_N(self):
-        return self.get_wing_param().get_n_sect()
+        return self.get_geom().get_n_sect()
 
     def get_ndv(self):
-        return self.get_wing_param().get_ndv()
+        return self.get_geom().get_ndv()
 
     def get_OC(self):
         return self.__LLW.get_OC()
@@ -261,8 +261,8 @@ class DLLMDirect:
 
     def __compute_dplocalAoA_dpchi(self):
         N = self.get_N()
-        twist_grad = self.get_wing_param().get_twist_grad()
-        AoA_grad = self.get_wing_param().get_AoA_grad()
+        twist_grad = self.get_geom().get_twist_grad()
+        AoA_grad = self.get_geom().get_AoA_grad()
         if AoA_grad is None:
             self.__dplocalAoA_dpchi =  twist_grad
         else:
@@ -292,9 +292,9 @@ class DLLMDirect:
 
     def __compute_localAoA(self):
         N = self.get_N()
-        Thetay = self.get_wing_param().get_thetaY()
-        twist = self.get_wing_param().get_twist()
-        AoA = self.get_wing_param().get_AoA()
+        Thetay = self.get_geom().get_thetaY()
+        twist = self.get_geom().get_twist()
+        AoA = self.get_geom().get_AoA()
         if AoA is None:
             AoA = self.get_OC().get_AoA_rad()
         else:
@@ -353,7 +353,7 @@ class DLLMDirect:
         '''
         Writes the circulation repartition in a file
         '''
-        y = self.get_wing_param().get_XYZ()[1, :]
+        y = self.get_geom().get_XYZ()[1, :]
         if self.__gamma_f_name is None:
             gamma_f_name = 'gamma.dat'
         else:

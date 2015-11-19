@@ -22,6 +22,7 @@
 # @author : Matthieu Meaux
 
 import unittest
+import numpy as np
 from numpy import zeros, array
 
 from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
@@ -94,19 +95,20 @@ class TestDLLMSimpleR(unittest.TestCase):
         x0=wing_param.get_dv_array()
         def f2(x):
             wing_param.update_from_x_list(x)
-            DLLM.set_wing_param(wing_param)
+            DLLM.set_geom(wing_param)
             func=DLLM.comp_R(iAoA)
             return func
         
         def df2(x):
             wing_param.update_from_x_list(x)
-            DLLM.set_wing_param(wing_param)
+            DLLM.set_geom(wing_param)
             func=DLLM.comp_R(iAoA)
             func_grad=DLLM.comp_dpR_dpchi()
             return func_grad
         
         val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-8)
-        ok2,df_fd2,df2=val_grad2.compare(x0,treshold=1.e-6,return_all=True)
+        ok2,df_fd2,df2=val_grad2.compare(x0,treshold=1.e-5,return_all=True)
+            
         assert(ok2)
         
     def test_DLLM_valid_dpR_dpthetaY(self):
