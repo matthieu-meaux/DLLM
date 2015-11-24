@@ -53,6 +53,9 @@ class DLLMDirect:
     #-- Accessors
     def get_tag(self):
         return self.__LLW.get_tag()
+    
+    def get_grad_active(self):
+        return self.__LLW.get_grad_active()
 
     def get_geom(self):
         return self.__LLW.get_geom()
@@ -146,16 +149,19 @@ class DLLMDirect:
 
     #-- Computation related methods
     def run(self):
+        grad_active = self.get_grad_active()
         self.__NRPb.solve()
         self.set_computed(True)
         self.write_gamma_to_file()
-        self.comp_dpR_dpchi()
+        if grad_active:
+            self.comp_dpR_dpchi()
 
     def __init_local_variables(self):
         # Initializing local variables for lifting line computations
         # Residual variables
         N = self.get_N()
         ndv = self.get_ndv()
+        grad_active = self.get_grad_active()
         self.__R = zeros([N])
         self.__dpR_dpiAoA = None
         self.__dpR_dpchi = None
@@ -169,12 +175,18 @@ class DLLMDirect:
             ones(
                 [N]))  # This is a constant matrix
         self.__dplocalAoA_dpAoA = ones(N)
-        self.__dplocalAoA_dpchi = zeros([N, ndv])
+        if grad_active:
+            self.__dplocalAoA_dpchi = zeros([N, ndv])
+        else:
+            self.__dplocalAoA_dpchi = None
 
         # Induced angle of attack variables
         self.__iAoA = None
         self.__iAoANew = None
-        self.__dpiAoAnew_dpchi = zeros([N, ndv])
+        if grad_active:
+            self.__dpiAoAnew_dpchi = zeros([N, ndv])
+        else:
+            self.__dpiAoAnew_dpchi = None
         self.__dpiAoAnew_dpiAoA = None
 
         # Circulation variables
@@ -183,8 +195,11 @@ class DLLMDirect:
         self.__dpgamma_dpthetaY = None
         self.__dpgamma_dpAoA = None
         self.__dpgamma_dplocalAoA = zeros([N, N])
-        self.__dpgamma_dpchi = zeros([N, ndv])
-
+        if grad_active:
+            self.__dpgamma_dpchi = zeros([N, ndv])
+        else:
+            self.__dpgamma_dpchi = None
+            
     #-- Residual related methods
     def comp_R(self, iAoA):
         self.__iAoA = iAoA

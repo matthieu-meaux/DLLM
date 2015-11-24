@@ -36,12 +36,14 @@ class DLLM_Geom(object):
     ERROR_MSG = 'ERROR in DLLM_Geom.'
     POS_DISTRIB = ['linear', 'cos_law']
     
-    def __init__(self, tag, n_sect=20):
+    def __init__(self, tag, n_sect=20, grad_active=False):
         """
         Constructor
         """
-        self.__tag        = tag
+        self.__tag         = tag
 
+        self.__grad_active = grad_active
+        
         #-- Necessary inputs for DLLM
         self.__n_sect              = None
         self.set_n_sect(n_sect)
@@ -99,6 +101,9 @@ class DLLM_Geom(object):
     # -- Accessors
     def get_tag(self):
         return self.__tag
+    
+    def get_grad_active(self):
+        return self.__grad_active
     
     def get_n_sect(self):
         return self.__n_sect
@@ -189,6 +194,9 @@ class DLLM_Geom(object):
     #-- Setters
     def set_tag(self, tag):
         self.__tag = tag
+        
+    def set_grad_active(self, grad_active):
+        self.__grad_active = grad_active
         
     def set_n_sect(self, n_sect):
         ERROR_MSG = self.ERROR_MSG + '.set_n_sect: ' + str(self.__tag) + ': '
@@ -326,37 +334,41 @@ class DLLM_Geom(object):
         N = self.get_n_sect()
         ndv = self.get_ndv()
         self.__XYZ      = np.zeros((3,N))
-        self.__XYZ_grad = np.zeros((3,N,ndv))
         self.__chords      = np.zeros(N)
-        self.__chords_grad = np.zeros((N,ndv))
         self.__rel_thicks      = np.zeros(N)
-        self.__rel_thicks_grad = np.zeros((N,ndv))
         self.__sweep      = np.zeros(N)
-        self.__sweep_grad = np.zeros((N,ndv))
         
         self.__XYZ[:,:] = 0.5*(self.__eta[:,:-1]+self.__eta[:,1:])
-        self.__XYZ_grad[:,:,:] = 0.5*(self.__eta_grad[:,:-1,:]+self.__eta_grad[:,1:,:])
-        
         self.__chords[:] = 0.5*(self.__chords_eta[:-1]+self.__chords_eta[1:])
-        self.__chords_grad[:,:] = 0.5*(self.__chords_grad_eta[:-1,:]+self.__chords_grad_eta[1:,:])
-        
         self.__rel_thicks[:] = 0.5*(self.__rel_thicks_eta[:-1]+self.__rel_thicks_eta[1:])
-        self.__rel_thicks_grad[:,:] = 0.5*(self.__rel_thicks_grad_eta[:-1]+self.__rel_thicks_grad_eta[1:]) 
-        
         self.__sweep[:]      = 0.5*(self.__sweep_eta[:-1]+self.__sweep_eta[1:])
-        self.__sweep_grad[:] = 0.5*(self.__sweep_grad_eta[:-1,:]+self.__sweep_grad_eta[1:,:])
+        
+        grad_active = self.get_grad_active()
+        if grad_active:
+            ndv = self.get_ndv()
+            self.__XYZ_grad = np.zeros((3,N,ndv))
+            self.__chords_grad = np.zeros((N,ndv))
+            self.__rel_thicks_grad = np.zeros((N,ndv))
+            self.__sweep_grad = np.zeros((N,ndv))
+            self.__XYZ_grad[:,:,:] = 0.5*(self.__eta_grad[:,:-1,:]+self.__eta_grad[:,1:,:])
+            self.__chords_grad[:,:] = 0.5*(self.__chords_grad_eta[:-1,:]+self.__chords_grad_eta[1:,:])
+            self.__rel_thicks_grad[:,:] = 0.5*(self.__rel_thicks_grad_eta[:-1]+self.__rel_thicks_grad_eta[1:]) 
+            self.__sweep_grad[:] = 0.5*(self.__sweep_grad_eta[:-1,:]+self.__sweep_grad_eta[1:,:])
 
     def __link_airfoils_to_geom(self):
+        grad_active = self.get_grad_active()
         self.__linked_airfoils = []
         for i in range(self.__n_sect):
             LLoc, LLoc_grad, SLoc, SLoc_grad = self.__compute_local_info(i)
             linked_af = self.__airfoils[i].get_scaled_copy(Sref=SLoc, Lref=LLoc)
-            linked_af.set_Sref_grad(SLoc_grad)
-            linked_af.set_Lref_grad(LLoc_grad)
-            linked_af.set_rel_thick_grad(self.__rel_thicks_grad[i])
             linked_af.set_rel_thick(self.__rel_thicks[i])
             linked_af.set_sweep(self.__sweep[i])
-            linked_af.set_sweep_grad(self.__sweep_grad[i])
+            if grad_active:
+                linked_af.set_Sref_grad(SLoc_grad)
+                linked_af.set_Lref_grad(LLoc_grad)
+                linked_af.set_rel_thick_grad(self.__rel_thicks_grad[i])
+                linked_af.set_sweep_grad(self.__sweep_grad[i])
+
             self.__linked_airfoils.append(linked_af)
             
     #-- Private methods
@@ -376,10 +388,17 @@ class DLLM_Geom(object):
 
     def __compute_local_info(self, i):
         LLoc = self.__chords[i]
-        LLoc_grad = self.__chords_grad[i]
         SLoc = LLoc * (self.__eta[1, i + 1] - self.__eta[1, i])
-        SLoc_grad = LLoc_grad * (self.__eta[1, i + 1] - self.__eta[1, i]) + \
-            LLoc * (self.__eta_grad[1, i + 1, :] - self.__eta_grad[1, i, :])
+            
+        grad_active = self.get_grad_active()
+        if grad_active:
+            LLoc_grad = self.__chords_grad[i]
+            SLoc_grad = LLoc_grad * (self.__eta[1, i + 1] - self.__eta[1, i]) + \
+                LLoc * (self.__eta_grad[1, i + 1, :] - self.__eta_grad[1, i, :])
+        else:
+            LLoc_grad = None
+            SLoc_grad = None
+            
         return LLoc, LLoc_grad, SLoc, SLoc_grad
     
     def __compute_Sref_Lref_AR_fuel(self):
@@ -389,33 +408,37 @@ class DLLM_Geom(object):
         N = self.get_n_sect()
 
         span      = self.__eta[1,-1]-self.__eta[1,0]
-        span_grad = self.__eta_grad[1,-1,:]-self.__eta_grad[1,0,:]
 
         self.__Sref = 0.
         self.__Lref = 0.
         self.__fuel = 0.
-        self.__Sref_grad = zeros(self.__ndv)
-        self.__Lref_grad = zeros(self.__ndv)
-        self.__fuel_grad = zeros(self.__ndv)
 
         for i, af in enumerate(self.__linked_airfoils):
             self.__Sref += af.get_Sref()
             self.__Lref += af.get_Lref()
             self.__fuel += self.__rel_thicks[i] * \
                 self.__chords[i] * af.get_Sref() * 0.5
-            self.__Sref_grad += af.get_Sref_grad()
-            self.__Lref_grad += af.get_Lref_grad()
-            self.__fuel_grad += self.__rel_thicks_grad[i] * self.__chords[i] * af.get_Sref() * 0.5\
-                + self.__rel_thicks[i] * self.__chords_grad[i] * af.get_Sref() * 0.5\
-                + self.__rel_thicks[i] * self.__chords[i] * af.get_Sref_grad() * 0.5\
 
         self.__Lref /= N
-        self.__Lref_grad /= N
-
         self.__AR = span**2 / self.__Sref
-        self.__AR_grad = (2. * span * span_grad *
+                 
+        grad_active = self.get_grad_active()
+        if grad_active:
+            ndv=self.get_ndv()
+            span_grad = self.__eta_grad[1,-1,:]-self.__eta_grad[1,0,:]
+            self.__Sref_grad = zeros(ndv)
+            self.__Lref_grad = zeros(ndv)
+            self.__fuel_grad = zeros(ndv)
+            for i, af in enumerate(self.__linked_airfoils):
+                self.__Sref_grad += af.get_Sref_grad()
+                self.__Lref_grad += af.get_Lref_grad()
+                self.__fuel_grad += self.__rel_thicks_grad[i] * self.__chords[i] * af.get_Sref() * 0.5\
+                    + self.__rel_thicks[i] * self.__chords_grad[i] * af.get_Sref() * 0.5\
+                    + self.__rel_thicks[i] * self.__chords[i] * af.get_Sref_grad() * 0.5
+                self.__Lref_grad /= N
+                self.__AR_grad = (2. * span * span_grad *
                           self.__Sref - span**2 * self.__Sref_grad) / self.__Sref**2
-
+            
     def __repr__(self):
         info_string = '\n*** Wing Geom Information ***'
         info_string += '\n  n_sect       : ' + str(self.get_n_sect())

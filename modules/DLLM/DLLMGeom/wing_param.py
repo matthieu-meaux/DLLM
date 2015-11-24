@@ -49,7 +49,7 @@ class Wing_param(DLLM_Geom):
         """
         Constructor: set main attributes
         """
-        DLLM_Geom.__init__(self, tag, n_sect=n_sect)
+        DLLM_Geom.__init__(self, tag, n_sect=n_sect, grad_active=True)
         
         self.__geom_type = None
         self.__BC_manager = BCManager()

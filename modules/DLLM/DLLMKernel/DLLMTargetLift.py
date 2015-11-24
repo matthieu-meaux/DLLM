@@ -27,9 +27,9 @@ from MDOTools.Solvers.newton_raphson_problem import NewtonRaphsonProblem
 
 class DLLMTargetLift(DLLMSolver):
     ERROR_MSG='ERROR in DLLMTargetLift.'
-    def __init__(self, tag, geom, OC,verbose = 0):
+    def __init__(self, tag, geom, OC,verbose = 0, grad_active=True):
         self.__verbose = verbose
-        DLLMSolver.__init__(self, tag, geom, OC, verbose = self.__verbose)
+        DLLMSolver.__init__(self, tag, geom, OC, verbose = self.__verbose, grad_active=grad_active)
         
         self.__N            = self.get_geom().get_n_sect()
         self.__ndv          = self.get_geom().get_ndv()
@@ -155,5 +155,6 @@ class DLLMTargetLift(DLLMSolver):
         self.__NRPb.solve()
         DLLMDirect.set_computed(True)
         DLLMDirect.write_gamma_to_file()
-        DLLMDirect.comp_dpR_dpchi()
+        if self.get_grad_active():
+            DLLMDirect.comp_dpR_dpchi()
        

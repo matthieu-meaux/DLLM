@@ -31,7 +31,7 @@ from DLLM.DLLMKernel.DLLMAdjoint import DLLMAdjoint
 
 class DLLMSolver:
     ERROR_MSG='ERROR in DLLMSolver.'
-    def __init__(self, tag, geom, OC, verbose = 0):
+    def __init__(self, tag, geom, OC, verbose = 0, grad_active=True):
         '''
         Constructor for wings based on lifting line theory
         @param wing_geom : the wing geometry
@@ -39,23 +39,25 @@ class DLLMSolver:
         @param relaxFactor : relaxation factor for induced angles computation
         @param stopCriteria : the stop criteria for the iterative method for computing the wing circulation.
         '''
-        self.__tag        = tag
+        self.__tag         = tag
 
-        self.__verbose = verbose
+        self.__verbose     = verbose
+        self.__grad_active = grad_active 
 
         
-        self.__geom = geom
-        self.__OC         = OC
+        self.__geom        = geom
+        self.__OC          = OC
         
-        self.__Lref       = 0.
-        self.__Sref       = 0.
-        self.__Lref_grad  = None
-        self.__Sref_grad  = None
+        self.__Lref        = 0.
+        self.__Sref        = 0.
+        self.__Lref_grad   = None
+        self.__Sref_grad   = None
         
-        self.__DLLMMesh   = DLLMMesh(self, verbose = self.__verbose)
-        self.__DLLMDirect = DLLMDirect(self, verbose = self.__verbose)
-        self.__DLLMPost   = DLLMPost(self, verbose = self.__verbose)
-        self.__DLLMAdjoint= DLLMAdjoint(self, verbose = self.__verbose)
+        self.__DLLMMesh    = DLLMMesh(self, verbose = self.__verbose)
+        self.__DLLMDirect  = DLLMDirect(self, verbose = self.__verbose)
+        self.__DLLMPost    = DLLMPost(self, verbose = self.__verbose)
+        if grad_active:
+            self.__DLLMAdjoint = DLLMAdjoint(self, verbose = self.__verbose)
 
         self.set_OC(OC)
         
@@ -63,6 +65,9 @@ class DLLMSolver:
     #-- Accessors
     def get_tag(self):
         return self.__tag
+    
+    def get_grad_active(self):
+        return self.__grad_active
     
     def get_geom(self):
         return self.__geom
@@ -192,7 +197,8 @@ class DLLMSolver:
     def __reinit_modules(self):
         self.__DLLMDirect.set_computed(False)
         self.__DLLMPost.set_computed(False)
-        self.__DLLMAdjoint.set_computed(False)
+        if self.get_grad_active():
+            self.__DLLMAdjoint.set_computed(False)
         
     def set_OC(self, OC):
         self.__OC = OC
@@ -235,8 +241,11 @@ class DLLMSolver:
             
     def run_adjoint(self):
         ERROR_MSG=self.ERROR_MSG+'run_adjoint: '
-        if self.is_post_computed():
-            self.__DLLMAdjoint.run()
+        if self.get_grad_active():
+            if self.is_post_computed():
+                self.__DLLMAdjoint.run()
+            else:
+                print ERROR_MSG+'Cannot run adjoint if post-processing is not computed'
         else:
-            print ERROR_MSG+'Cannot run adjoint if post-processing is not computed'       
+            print ERROR_MSG+'Cannot run adjoint if gradient is not active'
     

@@ -53,6 +53,9 @@ class DLLMMesh:
     def get_OC(self):
         return self.__LLW.get_OC()
     
+    def get_grad_active(self):
+        return self.__LLW.get_grad_active()
+    
     def get_K(self):
         return self.__K
     
@@ -86,27 +89,29 @@ class DLLMMesh:
         DdGammaDy_DGamma[1:self.__N+1,:]-= diag(ones([self.__N]))
         self.__K = - dot(Kmetric,DdGammaDy_DGamma)
         
-        eta_grad = self.get_geom().get_eta_grad()[1,:,:]
-        y_grad   = self.get_geom().get_XYZ_grad()[1,:,:]
         
-        YminEta_grad=zeros((self.__N,self.__N+1,self.__ndv))
-        for n in xrange(self.__ndv):
-            YminEta_grad[:,:,n] = transpose(outer(ones([self.__N+1]),y_grad[:,n]))-outer(ones([self.__N]),eta_grad[:,n])
-        
-        dKmetric_dchi=zeros((self.__N,self.__N+1,self.__ndv))
-#         for n in xrange(self.__ndv):
-#             for j in xrange(self.__N+1):
-#                 for i in xrange(self.__N):
-#                     dKmetric_dchi[i,j,n]=-YminEta_grad[i,j,n]/YminEta[i,j]**2
-#                     
-        for n in xrange(self.__ndv):
-            dKmetric_dchi[:,:,n]=-YminEta_grad[:,:,n]/YminEta[:,:]**2
-        dKmetric_dchi/=4.*numpy.pi
-        
-        self.__dK_dchi = zeros((self.__N,self.__N,self.__ndv))
-        for n in xrange(self.__ndv):
-            self.__dK_dchi[:,:,n]=-dot(dKmetric_dchi[:,:,n],DdGammaDy_DGamma)
-              
+        if self.get_grad_active():
+            eta_grad = self.get_geom().get_eta_grad()[1,:,:]
+            y_grad   = self.get_geom().get_XYZ_grad()[1,:,:]
+            
+            YminEta_grad=zeros((self.__N,self.__N+1,self.__ndv))
+            for n in xrange(self.__ndv):
+                YminEta_grad[:,:,n] = transpose(outer(ones([self.__N+1]),y_grad[:,n]))-outer(ones([self.__N]),eta_grad[:,n])
+            
+            dKmetric_dchi=zeros((self.__N,self.__N+1,self.__ndv))
+    #         for n in xrange(self.__ndv):
+    #             for j in xrange(self.__N+1):
+    #                 for i in xrange(self.__N):
+    #                     dKmetric_dchi[i,j,n]=-YminEta_grad[i,j,n]/YminEta[i,j]**2
+    #                     
+            for n in xrange(self.__ndv):
+                dKmetric_dchi[:,:,n]=-YminEta_grad[:,:,n]/YminEta[:,:]**2
+            dKmetric_dchi/=4.*numpy.pi
+            
+            self.__dK_dchi = zeros((self.__N,self.__N,self.__ndv))
+            for n in xrange(self.__ndv):
+                self.__dK_dchi[:,:,n]=-dot(dKmetric_dchi[:,:,n],DdGammaDy_DGamma)
+                  
 
 #     def __setGeomWeissinger(self):
 #         '''
