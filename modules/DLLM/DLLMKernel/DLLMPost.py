@@ -26,6 +26,7 @@
 import string
 from numpy import zeros, dot
 from numpy import sin, cos
+import matplotlib.pylab as plt
 
 class DLLMPost:
 
@@ -65,6 +66,11 @@ class DLLMPost:
         self.__Lift_distrib_res = None
         self.__dpLift_distrib_res_dpiAoA = None
         self.__dpLift_distrib_res_dpAoA = None
+        
+        self.__Drag_distrib_res = None
+        self.__Cdi_distrib_res = None
+        self.__Cdw_distrib_res = None
+        self.__Cdf_distrib_res = None
 
         self.__computed = False
         self.__target_loads = None
@@ -174,7 +180,7 @@ class DLLMPost:
 
         if 'target_loads' not in self.__F_list_names:
             self.__F_list_names.append('target_loads')
-
+    
     #-- Run method
     def __init_run(self):
         N = self.get_N()
@@ -235,7 +241,8 @@ class DLLMPost:
             self.__F_list_calc[i] = val
 
         # Adjoint analysis
-        if self.__verbose > 0 : print "Post : adjoint analysis"
+        if len(self.__F_list_names) > 0 and self.__verbose > 0 and self.get_grad_active():
+            print "Post : adjoint analysis"
         for i, F_name in enumerate(self.__F_list_names):
             if F_name == 'Cl':
                 val = self.__Cl(distrib=True)
@@ -348,6 +355,10 @@ class DLLMPost:
             self.__dpF_list_dpthetaY[i,:] = dpFdpthetaY[:]
 
         self.__Lift_distrib_res = self.__Lift_distrib(distrib=True)
+        self.__Drag_distrib_res = self.__Drag_distrib(distrib=True)
+        self.__Cdi_distrib_res = self.__Cdi_distrib(distrib=True)
+        self.__Cdw_distrib_res = self.__Cdw_distrib(distrib=True)
+        self.__Cdf_distrib_res = self.__Cdf_distrib(distrib=True)
 
         if self.__verbose > 0 :
             self.__display_info()
@@ -475,6 +486,84 @@ class DLLMPost:
 
     def comp_dpDrag_distrib_dpchi(self):
         return self.__dpDrag_distrib_dpchi()
+    
+    def __Cdi_distrib(self, distrib=False):
+        N        = self.get_N() 
+        Pdyn     = self.get_OC().get_Pdyn()
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        airfoils = self.get_airfoils()
+        Cd_distrib=zeros(N) 
+        
+        for i in xrange(N):
+            af  = airfoils[i]
+            Cdi = -af.Cl( localAoA[i],Mach)*sin(iAoA[i])
+            Cd_distrib[i] = Cdi 
+            
+        if distrib:
+            #print 'CHECK Drag = ',sum(Drag_distrib)-self.__Drag()
+            y   = self.get_geom().get_XYZ()[1,:]
+            fid=open(self.get_tag()+'_Cdi_distrib.dat','w')
+            line="#Slice\t%24s"%"y"+"\t%24s"%"Cdi"+"\n"
+            fid.write(line)
+            for i in xrange(N):
+                line=str(i)+"\t%24.16e"%y[i]+"\t%24.16e"%Cd_distrib[i]+"\n"
+                fid.write(line)
+            fid.close()
+        return Cd_distrib
+    
+    def __Cdw_distrib(self, distrib=False):
+        N        = self.get_N() 
+        Pdyn     = self.get_OC().get_Pdyn()
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        airfoils = self.get_airfoils()
+        Cd_distrib=zeros(N) 
+        
+        for i in xrange(N):
+            af  = airfoils[i]
+            Cdw =  af.Cdp(localAoA[i],Mach)
+            Cd_distrib[i] = Cdw 
+            
+        if distrib:
+            #print 'CHECK Drag = ',sum(Drag_distrib)-self.__Drag()
+            y   = self.get_geom().get_XYZ()[1,:]
+            fid=open(self.get_tag()+'_Cdw_distrib.dat','w')
+            line="#Slice\t%24s"%"y"+"\t%24s"%"Cdw"+"\n"
+            fid.write(line)
+            for i in xrange(N):
+                line=str(i)+"\t%24.16e"%y[i]+"\t%24.16e"%Cd_distrib[i]+"\n"
+                fid.write(line)
+            fid.close()
+        return Cd_distrib
+    
+    def __Cdf_distrib(self, distrib=False):
+        N        = self.get_N() 
+        Pdyn     = self.get_OC().get_Pdyn()
+        Mach     = self.get_OC().get_Mach()
+        localAoA = self.get_localAoA()
+        iAoA     = self.get_iAoA()
+        airfoils = self.get_airfoils()
+        Cd_distrib=zeros(N) 
+        
+        for i in xrange(N):
+            af  = airfoils[i]
+            Cdf =  af.Cdf(localAoA[i],Mach)
+            Cd_distrib[i] = Cdf 
+            
+        if distrib:
+            #print 'CHECK Drag = ',sum(Drag_distrib)-self.__Drag()
+            y   = self.get_geom().get_XYZ()[1,:]
+            fid=open(self.get_tag()+'_Cdf_distrib.dat','w')
+            line="#Slice\t%24s"%"y"+"\t%24s"%"Cdf"+"\n"
+            fid.write(line)
+            for i in xrange(N):
+                line=str(i)+"\t%24.16e"%y[i]+"\t%24.16e"%Cd_distrib[i]+"\n"
+                fid.write(line)
+            fid.close()
+        return Cd_distrib
      
     def __Drag_distrib(self, distrib=False):
         N        = self.get_N() 
@@ -496,14 +585,14 @@ class DLLMPost:
             #print 'CHECK Drag = ',sum(Drag_distrib)-self.__Drag()
             y   = self.get_geom().get_XYZ()[1,:]
             fid=open(self.get_tag()+'_Drag_distrib.dat','w')
-            line="#Slice\t%24s"%"y"+"\t%24s"%"Lift"+"\n"
+            line="#Slice\t%24s"%"y"+"\t%24s"%"Drag"+"\n"
             fid.write(line)
             for i in xrange(N):
                 line=str(i)+"\t%24.16e"%y[i]+"\t%24.16e"%Drag_distrib[i]+"\n"
                 fid.write(line)
             fid.close()
         return Drag_distrib
-  
+
     def __dpDrag_distrib_dpiAoA(self):
         N        = self.get_N()
         Pdyn     = self.get_OC().get_Pdyn()
@@ -1414,15 +1503,90 @@ class DLLMPost:
     def comp_dpLoD_dpiAoA(self):   
         return self.__dpLoD_dpiAoA()
     
+    #-- Export methods
+    def export_F_list(self, filename=None):    
+        if filename is None:
+            filename = self.get_tag()+'_F_list.dat'
+        
+        fid = open(filename,'w')
+        for i,F_name in enumerate(self.__F_list_names_calc):
+            unit=None
+            if   F_name[0:4] in ['Lift','Drag']:
+                unit = 'N'
+            elif F_name[0:4]=='Sref':
+                unit = 'm**2'
+            else:
+                unit = '-'
+            line = F_name+' = '+str(self.__F_list_calc[i])+' ('+unit+') \n'
+            fid.write(line)
+        fid.close()
+    
     #-- Display methods
+    def plot(self):
+        name = self.get_tag()
+        Y_list = self.get_geom().get_XYZ()[1,:]
+        
+        #-- Plot Lift distrib
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.ylim(1.1*min(self.__Lift_distrib_res), 1.1*max(self.__Lift_distrib_res))
+        plt.xlabel('y')
+        plt.ylabel('Local Lift')
+        plt.plot(Y_list,self.__Lift_distrib_res)
+        plt.rc("font", size=14)
+        plt.savefig(name+"_Lift_distrib.png",format='png')
+        plt.close()
+        
+        #-- Plot Drag distrib
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.ylim(0.9*min(self.__Drag_distrib_res), 1.1*max(self.__Drag_distrib_res))
+        plt.xlabel('y')
+        plt.ylabel('Local Drag')
+        plt.plot(Y_list,self.__Drag_distrib_res)
+        plt.rc("font", size=14)
+        plt.savefig(name+"_Drag_distrib.png",format='png')
+        plt.close()
+        
+        #-- Plot Cdi distrib
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.ylim(0.9*min(self.__Cdi_distrib_res), 1.1*max(self.__Cdi_distrib_res))
+        plt.xlabel('y')
+        plt.ylabel('Local Cdi')
+        plt.plot(Y_list,self.__Cdi_distrib_res)
+        plt.rc("font", size=14)
+        plt.savefig(name+"_Cdi_distrib.png",format='png')
+        plt.close()
+        
+        #-- Plot Cdw distrib
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.ylim(0.9*min(self.__Cdw_distrib_res), 1.1*max(self.__Cdw_distrib_res))
+        plt.xlabel('y')
+        plt.ylabel('Local Cdw')
+        plt.plot(Y_list,self.__Cdw_distrib_res)
+        plt.rc("font", size=14)
+        plt.savefig(name+"_Cdw_distrib.png",format='png')
+        plt.close()
+        
+        #-- Plot Cdf distrib
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.ylim(0.9*min(self.__Cdf_distrib_res), 1.1*max(self.__Cdf_distrib_res))
+        plt.xlabel('y')
+        plt.ylabel('Local Cdf')
+        plt.plot(Y_list,self.__Cdf_distrib_res)
+        plt.rc("font", size=14)
+        plt.savefig(name+"_Cdf_distrib.png",format='png')
+        plt.close()
+    
     def __display_info(self):
         print self.get_OC()
         print '\n*** aerodynamic functions and coefficients ***'
-        print '  Sref  = ', self.get_Sref()
-        print '  Lref  = ', self.get_Lref()
+        print '  Sref  = ', self.get_Sref() ,'(m**2)'
+        print '  Lref  = ', self.get_Lref() , '(m)'
         for i, func in enumerate(self.__F_list_names_calc):
-            if func in ['Lift', 'Drag']:
+            if func [0:4] in ['Lift', 'Drag']:
                 unit = '(N)'
             else:
-                unit = ''
-            print '  ' + self.__F_list_names_calc[i] + '\t=\t' + str(self.__F_list_calc[i]) + ' ' + unit
+                unit = '(-)'
+            if func == 'Sref':
+                pass
+            else:
+                print '  ' + self.__F_list_names_calc[i] + '\t=\t' + str(self.__F_list_calc[i]) + ' ' + unit

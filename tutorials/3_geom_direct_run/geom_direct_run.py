@@ -24,10 +24,9 @@
 
 #-- Imports
 import numpy as np
-from DLLM.DLLMGeom.wing_param import Wing_param
+from MDOTools.OC.operating_condition import OperatingCondition
 from DLLM.DLLMGeom.DLLM_Geom import DLLM_Geom
 from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
-from MDOTools.OC.operating_condition import OperatingCondition
 
 #-- Build Operating conditions
 OC=OperatingCondition('cond1',atmospheric_model='ISA')
@@ -43,7 +42,7 @@ OC.compute_atmosphere()
 span  = 40.
 sweep = 34.
 
-wing_geom = DLLM_Geom('test_geom',n_sect=20, grad_active=False)
+wing_geom = DLLM_Geom('tuto3_geom',n_sect=20, grad_active=False)
 #-- initialize arrays
 wing_geom.build_r_lists()
 r_list = wing_geom.get_r_list_eta()
@@ -71,9 +70,12 @@ wing_geom.set_eta(eta)
 wing_geom.build_linear_airfoil(OC, AoA0=0.0, Cm0=-0.1, set_as_ref=True)
 wing_geom.build_airfoils_from_ref()
 wing_geom.update()  
-
+wing_geom.plot()
 print wing_geom
 
-DLLM = DLLMSolver('test', wing_geom, OC, verbose=1, grad_active=False)
+DLLM = DLLMSolver('tuto3', wing_geom, OC, verbose=1, grad_active=False)
 DLLM.run_direct()
 DLLM.run_post()
+DLLM.plot()
+DLLM.export_F_list()
+

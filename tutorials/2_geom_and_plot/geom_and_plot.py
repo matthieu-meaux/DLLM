@@ -1,5 +1,5 @@
 # -*-mode: python; py-indent-offset: 4; tab-width: 8; coding: iso-8859-1 -*-
-#  DLLM (non-linear Differentiated Lifting Line Model, open source software)
+#  MDOTools (Multi-disciplinary Optimization Tools, open source software)
 # 
 #  Copyright (C) 2013-2015 Airbus Group SAS
 # 
@@ -17,20 +17,17 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
-#  https://github.com/matthieu-meaux/DLLM.git
+#  http://github.com/TBD
 #
-#  @author : Matthieu MEAUX
-#
+#  @author : Matthieu Meaux
 
 #-- Imports
 import numpy as np
-from DLLM.DLLMGeom.wing_param import Wing_param
-from DLLM.DLLMGeom.DLLM_Geom import DLLM_Geom
-from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
 from MDOTools.OC.operating_condition import OperatingCondition
+from DLLM.DLLMGeom.DLLM_Geom import DLLM_Geom
 
 #-- Build Operating conditions
-OC=OperatingCondition('cond1',atmospheric_model='ISA')
+OC=OperatingCondition('cond_tuto',atmospheric_model='ISA')
 OC.set_Mach(0.8)
 OC.set_AoA(3.5)
 OC.set_altitude(10000.)
@@ -43,7 +40,7 @@ OC.compute_atmosphere()
 span  = 40.
 sweep = 34.
 
-wing_geom = DLLM_Geom('test_geom',n_sect=20, grad_active=False)
+wing_geom = DLLM_Geom('tuto2_geom',n_sect=20, grad_active=False)
 #-- initialize arrays
 wing_geom.build_r_lists()
 r_list = wing_geom.get_r_list_eta()
@@ -70,10 +67,8 @@ wing_geom.set_rel_thicks_eta(rel_thicks_eta)
 wing_geom.set_eta(eta)
 wing_geom.build_linear_airfoil(OC, AoA0=0.0, Cm0=-0.1, set_as_ref=True)
 wing_geom.build_airfoils_from_ref()
-wing_geom.update()  
+wing_geom.update() 
 
 print wing_geom
 
-DLLM = DLLMSolver('test', wing_geom, OC, verbose=1, grad_active=False)
-DLLM.run_direct()
-DLLM.run_post()
+wing_geom.plot() 

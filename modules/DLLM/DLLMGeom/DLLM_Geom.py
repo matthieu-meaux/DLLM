@@ -31,6 +31,7 @@ from DLLM.polarManager.MetaAirfoil import MetaAirfoil
 from numpy import zeros
 from numpy import pi, sqrt, cos, sin
 from copy import deepcopy
+import matplotlib.pylab as plt
 
 class DLLM_Geom(object):
     ERROR_MSG = 'ERROR in DLLM_Geom.'
@@ -271,7 +272,10 @@ class DLLM_Geom(object):
             self.__airfoils = airfoils
 
     #-- Methods     
-    def build_r_lists(self):
+    def build_r_lists(self, n_sect=None):
+        if n_sect is not None:
+            self.set_n_sect(n_sect)
+            
         N = self.get_n_sect()
 
         if self.__distrib_type == 'linear':
@@ -322,7 +326,122 @@ class DLLM_Geom(object):
         self.__check_airfoils_inputs()
         self.__link_airfoils_to_geom()
         self.__compute_Sref_Lref_AR_fuel() 
-    
+        
+    def plot(self, prefix=None):
+        N = self.get_n_sect()
+        
+        if prefix is None:  
+            name = self.get_tag()
+        else:
+            name = prefix+'_'+self.get_tag()
+        
+        #-- Planform mehses plot
+        Y_list =   self.__eta[1,:]
+        X_list = - self.__eta[0,:]
+        
+        Yp_list =   self.__XYZ[1,:]
+        Xp_list = - self.__XYZ[0,:]
+        
+        # set limits to the graph
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.ylim(1.1*Y_list[0], 1.1*Y_list[-1])
+        
+        # set graph labels (aero axes)
+        plt.xlabel('y')
+        plt.ylabel('-x')
+        
+        # plot eta points
+        plt.plot(Y_list, X_list,'ro',markersize=3.0)
+        
+        # plot Y points
+        plt.plot(Yp_list, Xp_list,'bo',markersize=3.0)
+
+        # compute X for LE_points and TE_points
+        X_LE_points = X_list[:] + 0.25*self.__chords_eta[:]
+        X_TE_points = X_list[:] - 0.75*self.__chords_eta[:]
+        
+        Xp_LE_points = Xp_list[:] + 0.25*self.__chords[:]
+        Xp_TE_points = Xp_list[:] - 0.75*self.__chords[:]
+        
+        plt.plot(Y_list, X_LE_points,'-k')
+        plt.plot(Y_list, X_TE_points,'-k')
+        
+        for i in xrange(N+1):
+            plt.plot([Y_list[i],Y_list[i]],[X_LE_points[i],X_TE_points[i]],'-r')
+            
+        for i in xrange(N):
+            plt.plot([Yp_list[i],Yp_list[i]],[Xp_LE_points[i],Xp_TE_points[i]],'--b')    
+        
+
+        plt.rc("font", size=14)
+        plt.savefig(name+"_planform_meshes.png",format='png')
+        plt.close()
+        
+        #-- planform plot
+        # set limits to the graph
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.ylim(1.1*Y_list[0], 1.1*Y_list[-1])
+        
+        # set graph labels (aero axes)
+        plt.xlabel('y')
+        plt.ylabel('-x')
+        
+        # compute X for LE_points and TE_points
+        X_LE_points = X_list[:] + 0.25*self.__chords_eta[:]
+        X_TE_points = X_list[:] - 0.75*self.__chords_eta[:]
+        
+        plt.plot(Y_list, X_LE_points,'-k')
+        plt.plot(Y_list, X_TE_points,'-k')
+        plt.plot([Y_list[0],Y_list[0]],[X_LE_points[0],X_TE_points[0]],'-k')
+        plt.plot([Y_list[-1],Y_list[-1]],[X_LE_points[-1],X_TE_points[-1]],'-k')     
+ 
+        plt.rc("font", size=14)
+        plt.savefig(name+"_planform.png",format='png')
+        plt.close()
+        
+        
+        #-- Toc plot
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.ylim(0., 1.1*self.__rel_thicks_eta[-1])
+        plt.xlabel('y')
+        plt.ylabel('toc')
+        plt.plot(Y_list,self.__rel_thicks_eta)
+        plt.rc("font", size=14)
+        plt.savefig(name+"_toc.png",format='png')
+        plt.close()
+        
+        #-- Chords plot
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.ylim(0., 1.1*max(self.__chords_eta))
+        plt.xlabel('y')
+        plt.ylabel('chords')
+        plt.plot(Y_list,self.__chords_eta)
+        plt.rc("font", size=14)
+        plt.savefig(name+"_chords_distrib.png",format='png')
+        plt.close()
+        
+        #-- Heights plot
+        heights = self.__chords_eta*self.__rel_thicks_eta
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.ylim(0., 1.1*max(heights))
+        plt.xlabel('y')
+        plt.ylabel('heights')
+        plt.plot(Y_list,heights)
+        plt.rc("font", size=14)
+        plt.savefig(name+"_heights_distrib.png",format='png')
+        plt.close()
+        
+        #-- twist plot
+        heights = self.__chords_eta*self.__rel_thicks_eta
+        plt.xlim(1.1*Yp_list[0], 1.1*Yp_list[-1])
+        plt.ylim(0., 1.1*max(self.__twist))
+        plt.xlabel('y')
+        plt.ylabel('twist (deg)')
+        plt.plot(Yp_list,self.__twist*180./np.pi)
+        plt.rc("font", size=14)
+        plt.savefig(name+"_twist_distrib.png",format='png')
+        plt.close()
+        
     def __check_thetaY(self):
         # 6 dimensions for structural displacement:
         # dx,dy,dz,dthetax,dthetay,dthetaz at each section

@@ -248,4 +248,20 @@ class DLLMSolver:
                 print ERROR_MSG+'Cannot run adjoint if post-processing is not computed'
         else:
             print ERROR_MSG+'Cannot run adjoint if gradient is not active'
+            
+    #-- Export methods
+    def plot(self):
+        if self.__DLLMDirect.is_computed():
+            self.__DLLMDirect.plot()
+        if self.__DLLMPost.is_computed():
+            self.__DLLMPost.plot()
+    
+    def export_F_list(self, filename=None):
+        self.__DLLMPost.export_F_list(filename=filename)
+        
+    def export_dF_list_dchi(self, filename=None):
+        self.__DLLMAdjoint.export_dF_list_dchi(filename=filename)
+
+            
+        
     

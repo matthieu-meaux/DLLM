@@ -26,6 +26,7 @@
 import numpy
 from numpy import array, transpose, outer, ones, zeros, copy, divide, diag, dot
 from numpy.linalg import norm, solve
+import matplotlib.pylab as plt
 
 from MDOTools.Solvers.newton_raphson_problem import NewtonRaphsonProblem
 
@@ -396,3 +397,15 @@ class DLLMDirect:
                 i] + "\t%24.16e" % (self.__iAoA[i] * self.RAD_TO_DEG) + "\n"
             fid.write(line)
         fid.close()
+    
+    def plot(self):
+        name = self.get_tag()
+        Y_list = self.get_geom().get_XYZ()[1,:]
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.ylim(1.1*min(self.__gamma), 1.1*max(self.__gamma))
+        plt.xlabel('y')
+        plt.ylabel('gamma')
+        plt.plot(Y_list,self.__gamma)
+        plt.rc("font", size=14)
+        plt.savefig(name+"_gamma_distrib.png",format='png')
+        plt.close()

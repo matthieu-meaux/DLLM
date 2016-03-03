@@ -31,7 +31,7 @@ from MDOTools.Solvers.adjoint_problem import AdjointProblem
 class DLLMAdjoint:
     def __init__(self, LLW, verbose = 1):
         """
-        Adjoint module for the lifting line model
+        Adjoint module for the lifting line wing model
         """
         self.__LLW = LLW
         self.__verbose = verbose
@@ -112,3 +112,15 @@ class DLLMAdjoint:
             self.__dF_list_dchi.append(AdjPb.get_dFdchi())
             
             if self.__verbose > 0 : print '  - Convergence adjoint correction for '+str(F_name)+' = '+str(self.__adj_conv_corr_list[i])
+            
+    def export_dF_list_dchi(self, filename=None):    
+        if filename is None:
+            filename = self.get_tag()+'_dF_list_dchi.dat'
+        
+        F_list_names = self.get_F_list_names()
+        
+        fid = open(filename,'w')
+        for i,F_name in enumerate(F_list_names):
+            line = 'd'+F_name+'_dchi = '+str(self.__dF_list_dchi[i])+'\n'
+            fid.write(line)
+        fid.close()
