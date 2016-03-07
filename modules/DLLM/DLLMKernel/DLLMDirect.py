@@ -250,30 +250,19 @@ class DLLMDirect:
     def __compute_dpgamma_dpAoA(self):
         N = self.get_N()
         Mach = self.get_OC().get_Mach()
+        
         for i in xrange(N):
-            self.__dpgamma_dplocalAoA[
-                i,
-                i] = self.get_airfoils()[i].dpgamma_dpAoA(
-                self.__localAoA[i],
-                Mach)
+            self.__dpgamma_dplocalAoA[i,i] = self.get_airfoils()[i].dgamma_dAoA(self.__localAoA[i],Mach)
 
-        self.__dpgamma_dpAoA = dot(
-            self.__dpgamma_dplocalAoA,
-            self.__dplocalAoA_dpAoA)
+        self.__dpgamma_dpAoA = dot(self.__dpgamma_dplocalAoA,self.__dplocalAoA_dpAoA)
 
     def __compute_dpgamma_dpthetaY(self):
         N = self.get_N()
         Mach = self.get_OC().get_Mach()
         for i in xrange(N):
-            self.__dpgamma_dplocalAoA[
-                i,
-                i] = self.get_airfoils()[i].dpgamma_dpAoA(
-                self.__localAoA[i],
-                Mach)
+            self.__dpgamma_dplocalAoA[i,i] = self.get_airfoils()[i].dpgamma_dpAoA(self.__localAoA[i],Mach)
 
-        self.__dpgamma_dpthetaY = dot(
-            self.__dpgamma_dplocalAoA,
-            self.__dplocalAoA_dpthetaY)
+        self.__dpgamma_dpthetaY = dot(self.__dpgamma_dplocalAoA,self.__dplocalAoA_dpthetaY)
 
     def __compute_dplocalAoA_dpchi(self):
         N = self.get_N()
@@ -289,14 +278,9 @@ class DLLMDirect:
         N = self.get_N()
         Mach = self.get_OC().get_Mach()
         for i in xrange(N):
-            self.__dpgamma_dpchi[
-                i,
-                :] = self.get_airfoils()[i].dpgamma_dpchi(
-                self.__localAoA[i],
-                Mach)
+            self.__dpgamma_dpchi[i,:] = self.get_airfoils()[i].dgamma_dchi(self.__localAoA[i],Mach)
 
-        self.__dpgamma_dpchi = self.__dpgamma_dpchi + \
-            dot(self.__dpgamma_dplocalAoA, self.__dplocalAoA_dpchi)
+        self.__dpgamma_dpchi = self.__dpgamma_dpchi + dot(self.__dpgamma_dplocalAoA, self.__dplocalAoA_dpchi)
 
     def __compute_dpiAoAnew_dpchi(self):
         K = self.get_K()
@@ -333,23 +317,15 @@ class DLLMDirect:
         N = self.get_N()
         Mach = self.get_OC().get_Mach()
         for i in xrange(N):
-            self.__gamma[i] = self.get_airfoils()[i].gamma(
-                self.__localAoA[i],
-                Mach)
+            self.__gamma[i] = self.get_airfoils()[i].gamma(self.__localAoA[i],Mach)
 
     def __compute_dpgamma_dpiAoA(self):
         N = self.get_N()
         Mach = self.get_OC().get_Mach()
         for i in xrange(N):
-            self.__dpgamma_dplocalAoA[
-                i,
-                i] = self.get_airfoils()[i].dpgamma_dpAoA(
-                self.__localAoA[i],
-                Mach)
+            self.__dpgamma_dplocalAoA[i,i] = self.get_airfoils()[i].dgamma_dAoA(self.__localAoA[i],Mach)
 
-        self.__dpgamma_dpiAoA = dot(
-            self.__dpgamma_dplocalAoA,
-            self.__dplocalAoA_dpiAoA)
+        self.__dpgamma_dpiAoA = dot(self.__dpgamma_dplocalAoA, self.__dplocalAoA_dpiAoA)
 
     def __compute_iAoAnew(self):
         '''

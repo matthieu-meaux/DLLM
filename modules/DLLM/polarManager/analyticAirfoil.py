@@ -24,18 +24,15 @@
 #
 # - Local imports -
 import numpy as np
-from numpy import pi,cos, sin, sqrt
 from airfoil import Airfoil
 
 class AnalyticAirfoil(Airfoil):
     """
     An analytic airfoil based on linear theory
     """
-    THICKNESS_CORRECTION=0.7698
-    CLALPHA_BASE=2.*pi
-    POW_COS  = 1
+    THICKNESS_CORRECTION = 0.7698
     
-    def __init__(self, OC, AoA0=0., Cm0=0.0, Sref=1., Lref=1., rel_thick=0.0, sweep=0.0, Ka=0.95):
+    def __init__(self, OC, AoA0=0., Sref=1., Lref=1., rel_thick=0.0, sweep=0.0, pcop=0.25, Ka=0.95):
         '''
         Constructor for airfoils
         @param AoA0:angle of attack of null lift
@@ -45,151 +42,149 @@ class AnalyticAirfoil(Airfoil):
         @param Sref : reference surface
         @param Lref : reference length
         '''
-        if rel_thick<0. or rel_thick>0.25:
-            raise Exception, "Relative thickness must be >0. and <0.25"
+        if rel_thick<0. or rel_thick>0.30:
+            raise Exception, "Relative thickness must be >0. and <0.30"
         
-        Airfoil.__init__(self,OC, Sref,Lref,rel_thick,sweep)
-        self.__AoA0_deg = AoA0
-        self.__AoA0     = self.__AoA0_deg*np.pi/180.
-        self.__Cm0      = Cm0
-        self.__Ka        = Ka
+        Airfoil.__init__(self, OC, Sref, Lref)
         
-    #-- Cl related methods       
-    def Cl(self,alpha,Mach=0.0):
-        #print 'alpha = ',alpha
-        Cl=self.ClAlpha(alpha,Mach)*(alpha-self.__AoA0)
+        self.__AoA0_deg  = None
+        self.__AoA0      = None
+        self.set_AoA0(AoA0)
+        
+        self.__pcop      = None
+        self.set_pcop(pcop)
+        
+        self.__Ka        = None
+        self.set_Ka(Ka)
+
+        self.__rel_thick      = None
+        self.__rel_thick_grad = None
+        self.set_rel_thick(rel_thick)
+        
+        self.__sweep          = None
+        self.__sweep_grad     = None
+        self.set_sweep(sweep)
+        
+    #-- Setters
+    def set_AoA0(self, AoA0_deg):
+        self.__AoA0_deg = AoA0_deg
+        self.__AoA0     = AoA0_deg*np.pi/180.
+        
+    def set_pcop(self, pcop):
+        self.__pcop = pcop
+        
+    def set_Ka(self, Ka):
+        self.__Ka = Ka
+        
+    def set_rel_thick(self, rel_thick):
+        self.__rel_thick = rel_thick
+        
+    def set_rel_thick_grad(self, rel_thick_grad):
+        self.__rel_thick_grad = rel_thick_grad
+        
+    def set_sweep(self, sweep):
+        self.__sweep = sweep
+        
+    def set_sweep_grad(self, sweep_grad):
+        self.__sweep_grad = sweep_grad
+    
+    #-- Accessors
+    def get_rel_thick(self):
+        return self.__rel_thick
+    
+    def get_rel_thick_grad(self):
+        return self.__rel_thick_grad
+    
+    def get_sweep(self):
+        return self.__sweep
+    
+    def get_sweep_grad(self):
+        return self.__sweep_grad
+    
+    #-- Cl related methods
+    def Cl(self, AoA, Mach):
+        dCl_dAoA = self.dCl_dAoA(AoA, Mach)
+        Cl = dCl_dAoA*(AoA-self.__AoA0)
         return Cl
     
-    def ClAlpha(self, alpha, Mach):
-        sweep=self.get_sweep()
-        #Mach_normal = Mach*cos(sweep)
-        Mach_normal = Mach*cos(sweep)**self.POW_COS
-        prandlt_corr=self.__Prandtl_corr(Mach_normal)
-        thick_corr=self.__thick_corr()
-        #sweep_corr=cos(sweep)**2
-        sweep_corr = cos(sweep)**(2.*self.POW_COS)
+    def dCl_dAoA(self, AoA, Mach):
+        sweep = self.get_sweep()
+        toc   = self.get_rel_thick()
         
-        Clalpha=self.CLALPHA_BASE*prandlt_corr*thick_corr*sweep_corr
-        return Clalpha
-    
-    def dCl_dchi(self, alpha, Mach):
-        return self.__dClAlpha_dchi(alpha,Mach)*(alpha-self.__AoA0)
-    
-    def __dClAlpha_dchi(self, alpha, Mach):
-        sweep=self.get_sweep()
-        #Mach_normal= Mach*cos(sweep)
-        Mach_normal = Mach*cos(sweep)**self.POW_COS
-        prandlt_corr=self.__Prandtl_corr(Mach_normal)
-        thick_corr=self.__thick_corr()
-        #sweep_corr=cos(sweep)**2
-        sweep_corr = cos(sweep)**(2.*self.POW_COS)
+        Mach_normal = Mach*np.cos(sweep)
+        # Base slope with Prandtl correction
+        if Mach_normal<0.9:
+            base_slope=2.*np.pi/np.sqrt(1.-Mach_normal**2)
+        elif 0.9<=Mach_normal<=1.1:
+            s_sub = 2.*np.pi/np.sqrt(abs(1.-0.9**2))
+            s_sup = 4./np.sqrt(abs(1.1**2-1.))
+            fact = (1.1-Mach_normal)/0.2
+            base_slope = s_sub*fact+s_sup*(1.-fact)
+        else:
+            base_slope = 4./np.sqrt(Mach_normal**2-1.)
+            
+        # thickness correction
+        thick_corr = 1. + self.THICKNESS_CORRECTION*toc/np.cos(sweep)
         
-        dsweep=self.get_sweep_grad()
-        dprandlt_corr_dMn  = self.__dPrandtl_corr_dMach(Mach_normal)
-        #dprandlt_corr      = -dprandlt_corr_dMn*Mach*sin(sweep)*dsweep
-        dprandlt_corr      = -self.POW_COS*dprandlt_corr_dMn*Mach*sin(sweep)*dsweep*(cos(sweep))**(self.POW_COS-1.)
-        dthick_corr        = self.__dthick_corr_dchi()
-        #dsweep_corr        = -2.*sin(sweep)*cos(sweep)*dsweep
-        dsweep_corr        = -2.*self.POW_COS*sin(sweep)*dsweep*cos(sweep)**(2.*self.POW_COS-1.)
-
-        dClalpha_dchi = self.CLALPHA_BASE*dprandlt_corr*thick_corr*sweep_corr \
-                      + self.CLALPHA_BASE*prandlt_corr*dthick_corr*sweep_corr \
-                      + self.CLALPHA_BASE*prandlt_corr*thick_corr*dsweep_corr
+        # sweep correction
+        sweep_corr = np.cos(sweep)**2
+        
+        dCl_dAoA = base_slope*thick_corr*sweep_corr
+        
+        return dCl_dAoA
+    
+    def __d2Cl_dAoAdchi(self, AoA, Mach):
+        sweep  = self.get_sweep()
+        dsweep = self.get_sweep_grad()
+        
+        toc    = self.get_rel_thick()
+        dtoc   = self.get_rel_thick_grad()
+        
+        Mach_normal  = Mach*np.cos(sweep)
+        dMach_normal = -Mach*np.sin(sweep)*dsweep
+        
+        # Base slope with Prandtl correction
+        if Mach_normal<0.9:
+            base_slope = 2.*np.pi/np.sqrt(1.-Mach_normal**2)
+            dbase_slope = 2.*np.pi*(Mach_normal*dMach_normal)/((1.-Mach_normal**2)*np.sqrt(1.-Mach_normal**2))
+        elif 0.9<=Mach_normal<=1.1:
+            s_sub = 2.*np.pi/np.sqrt(abs(1.-0.9**2))
+            s_sup = 4./np.sqrt(abs(1.1**2-1.))
+            fact  = (1.1-Mach_normal)/0.2
+            dfact = -dMach_normal/0.2
+            base_slope  = s_sub*fact+s_sup*(1.-fact)
+            dbase_slope = s_sub*dfact+s_sup*(1.-dfact)
+        else:
+            base_slope  = 4./np.sqrt(Mach_normal**2-1.)
+            dbase_slope = -4.*(Mach_normal*dMach_normal)/((1.-Mach_normal**2)*np.sqrt(1.-Mach_normal**2))
+            
+        # thickness correction
+        thick_corr  = 1. + self.THICKNESS_CORRECTION*toc/np.cos(sweep)
+        dthick_corr = self.THICKNESS_CORRECTION*(dtoc*np.cos(sweep)+toc*np.sin(sweep)*dsweep)/np.cos(sweep)**2
+        
+        # sweep correction
+        sweep_corr  = np.cos(sweep)**2
+        dsweep_corr = -2.*np.sin(sweep)*np.cos(sweep)*dsweep
+        
+        
+        d2Cl_dAoAdchi = dbase_slope*thick_corr*sweep_corr\
+                      + base_slope*dthick_corr*sweep_corr\
+                      + base_slope*thick_corr*dsweep_corr
                       
-        return dClalpha_dchi
+        return d2Cl_dAoAdchi
+                      
+    def dCl_dchi(self, AoA, Mach):
+        d2Cl_dAoAdchi = self.__d2Cl_dAoAdchi(AoA, Mach)
+        dCl_dchi      =  d2Cl_dAoAdchi*(AoA-self.__AoA0)
+        return dCl_dchi
     
-    def __Prandtl_corr(self,Mach):
-        if Mach<0.:
-            raise Exception, "Mach number should be positive."
-        elif Mach<0.3:
-            corr=1.
-        elif Mach<1.:
-            corr=1./sqrt(abs(1.-Mach**2))
-        else:
-            raise Exception, 'ERROR: Analytic airfoil with Prandtl correction cannot be used for Mach >= 1.'
-        
-        return corr
-        
-    def __dPrandtl_corr_dMach(self, Mach):
-        if Mach<0.:
-            raise Exception, "Mach number should be positive."
-        elif Mach<0.3:
-            dcorr=0.
-        elif Mach<1.:
-            dcorr=Mach/(1.-Mach**2)**(1.5)
-        else:
-            raise Exception, 'ERROR: Analytic airfoil with Prandtl correction cannot be used for Mach >= 1.'
-        return dcorr
-    
-    def __thick_corr(self):
-        sweep=self.get_sweep()
-        thick_corr = 1. + self.THICKNESS_CORRECTION*self.get_rel_thick()/cos(sweep)
-        return thick_corr
-    
-    def __dthick_corr_dchi(self):
-        sweep=self.get_sweep()
-        dsweep=self.get_sweep_grad()
-        dthick_corr = self.THICKNESS_CORRECTION*(self.get_rel_thick_grad()*cos(sweep)+self.get_rel_thick()*sin(sweep)*dsweep)/cos(sweep)**2
-        return dthick_corr
-    
-    #-- Cd related methods
-    def Cd(self,alpha,Mach=0.0):
-        Cdw = self.__Cd_wave(alpha, Mach)
-        Cdf = self.__Cd_friction(alpha, Mach)
-        Cd  = Cdw+ Cdf
-        return Cd
-    
-    def CdAlpha(self,alpha,Mach):
-        dCdw = self.__dCd_wave_dAoA(alpha, Mach)
-        dCdf = self.__dCd_friction_dAoA(alpha, Mach)
-        dCd = dCdw+dCdf
-        return dCd
-    
-    def dCd_dchi(self, alpha, Mach):
-        dCdw = self.__dCd_wave_dchi(alpha, Mach)
-        dCdf = self.__dCd_friction_dchi(alpha, Mach)
-        dCd  = dCdw + dCdf
-        return dCd
-    
-    #-- Cdp related methods
-    def Cdp(self,alpha,Mach=0.0):
-        Cdw = self.__Cd_wave(alpha, Mach)
-        Cd  = Cdw
-        return Cd
-    
-    def CdpAlpha(self,alpha,Mach):
-        dCdw = self.__dCd_wave_dAoA(alpha, Mach)
-        dCd = dCdw
-        return dCd
-    
-    def dCdp_dchi(self, alpha, Mach):
-        dCdw = self.__dCd_wave_dchi(alpha, Mach)
-        dCd  = dCdw
-        return dCd
-    
-    #-- Cdf related methods
-    def Cdf(self,alpha,Mach=0.0):
-        Cdf = self.__Cd_friction(alpha, Mach)
-        Cd  = Cdf
-        return Cd
-    
-    def CdfAlpha(self,alpha,Mach):
-        dCdf = self.__dCd_friction_dAoA(alpha, Mach)
-        dCd = dCdf
-        return dCd
-    
-    def dCdf_dchi(self, alpha, Mach):
-        dCdf = self.__dCd_friction_dchi(alpha, Mach)
-        dCd  = dCdf
-        return dCd
-    
-        
-    def __Cd_wave(self, alpha, Mach):
+    #-- Cdw related methods
+    def Cdw(self, AoA, Mach):
         sweep  = self.get_sweep()
         toc    = self.get_rel_thick()
-        Cl     = self.Cl(alpha, Mach)
+        Cl     = self.Cl(AoA, Mach)
         
-        Mdd    = self.__Ka/cos(sweep) - toc/(cos(sweep))**2 - Cl/(10.*cos(sweep)**3)
+        Mdd    = self.__Ka/np.cos(sweep) - toc/(np.cos(sweep))**2 - Cl/(10.*np.cos(sweep)**3)
         Mcrit  = Mdd - (0.1/80)**(1./3.)
         if Mach < Mcrit:
             Cdw = 0.0
@@ -197,108 +192,152 @@ class AnalyticAirfoil(Airfoil):
             Cdw = 20.*(Mach-Mcrit)**4
         return Cdw
     
-    def __dCd_wave_dAoA(self, alpha, Mach):
+    def dCdw_dAoA(self, AoA, Mach):
         sweep  = self.get_sweep()
         toc    = self.get_rel_thick()
-        Cl     = self.Cl(alpha, Mach)
-        dCl    = self.ClAlpha(alpha, Mach)
+        Cl     = self.Cl(AoA, Mach)
+        dCl    = self.dCl_dAoA(AoA, Mach)
         
-        Mdd    = self.__Ka/cos(sweep) - toc/cos(sweep)**2 - Cl/(10.*cos(sweep)**3)
-        dMdd   = -dCl/(10.*cos(sweep)**3)
+        Mdd    = self.__Ka/np.cos(sweep) - toc/np.cos(sweep)**2 - Cl/(10.*np.cos(sweep)**3)
+        dMdd   = -dCl/(10.*np.cos(sweep)**3)
         Mcrit  = Mdd - (0.1/80)**(1./3.)
         dMcrit = dMdd
         
         if Mach < Mcrit:
-            dCdw = 0.0
+            dCdw_dAoA = 0.0
         else:
-            dCdw = -80.*(Mach-Mcrit)**3*dMcrit
-        return dCdw
+            dCdw_dAoA = -80.*(Mach-Mcrit)**3*dMcrit
+        return dCdw_dAoA
     
-    def __dCd_wave_dchi(self, alpha, Mach):
+    def dCdw_dchi(self, AoA, Mach):
         sweep  = self.get_sweep()
         dsweep = self.get_sweep_grad()
+        
         toc    = self.get_rel_thick()
         dtoc   = self.get_rel_thick_grad()
-        Cl     = self.Cl(alpha, Mach)
-        dCl    = self.dCl_dchi(alpha, Mach)
         
-        Mdd    = self.__Ka/cos(sweep) - toc/cos(sweep)**2 - Cl/(10.*cos(sweep)**3)
+        Cl     = self.Cl(AoA, Mach)
+        dCl    = self.dCl_dchi(AoA, Mach)
         
-        dMdd   = self.__Ka*sin(sweep)*dsweep/(cos(sweep))**2 \
-               - dtoc/(cos(sweep))**2 - toc*(2.*sin(sweep)*dsweep)/cos(sweep)**3 \
-               - dCl/(10.*cos(sweep)**3) - Cl*(3.*sin(sweep)*dsweep)/(10.*cos(sweep)**4)
+        Mdd    = self.__Ka/np.cos(sweep) - toc/np.cos(sweep)**2 - Cl/(10.*np.cos(sweep)**3)
+        
+        dMdd   = self.__Ka*np.sin(sweep)*dsweep/(np.cos(sweep))**2 \
+               - dtoc/(np.cos(sweep))**2 - toc*(2.*np.sin(sweep)*dsweep)/np.cos(sweep)**3 \
+               - dCl/(10.*np.cos(sweep)**3) - Cl*(3.*np.sin(sweep)*dsweep)/(10.*np.cos(sweep)**4)
                
         Mcrit  = Mdd - (0.1/80)**(1./3.)
         dMcrit = dMdd
         
         if Mach < Mcrit:
-            dCdw = 0.0
+            dCdw_dchi = 0.0
         else:
-            dCdw = -80.*(Mach-Mcrit)**3*dMcrit
+            dCdw_dchi = -80.*(Mach-Mcrit)**3*dMcrit
             
-        return dCdw
+        return dCdw_dchi
     
-    def __Cd_friction(self, alpha, Mach):
-        # Re= V_corr*Lref/nu=Mach*cos(sweep)*c*Lref/nu = Mach*cos(sweep)*c*Lref/nu
+    #-- Cdvp related methods
+    def Cdvp(self, AoA, Mach):
+        sweep = self.get_sweep()
+        Cl  = self.Cl(AoA, Mach)
+        Cdf = self.Cdf(AoA, Mach)
+        toc = self.get_rel_thick()/np.cos(sweep)
+        
+        Cdvp_min = 60.*toc**4*Cdf
+        
+        Cdvp = Cdvp_min + 2.*(Cdvp_min + Cdf)*Cl**2
+        return Cdvp
+    
+    def dCdvp_dAoA(self, AoA, Mach):
+        sweep = self.get_sweep()
+        Cl  = self.Cl(AoA, Mach)
+        Cdf = self.Cdf(AoA, Mach)
+        toc = self.get_rel_thick()/np.cos(sweep)
+        
+        dCl = self.dCl_dAoA(AoA, Mach)
+        
+        Cdvp_min = 60.*toc**4*Cdf
+        
+        dCdvp_dAoA = 4.*(Cdvp_min + Cdf)*Cl*dCl
+        return dCdvp_dAoA
+    
+    def dCdvp_dchi(self, AoA, Mach):
+        sweep  = self.get_sweep()
+        dsweep = self.get_sweep_grad()
+        
+        Cl  = self.Cl(AoA, Mach)
+        dCl = self.dCl_dchi(AoA, Mach)
+        
+        Cdf  = self.Cdf(AoA, Mach)
+        dCdf = self.dCdf_dchi(AoA, Mach)
+        
+        toc = self.get_rel_thick()/np.cos(sweep)
+        dtoc   = (self.get_rel_thick_grad()*np.cos(sweep)+self.get_rel_thick()*np.sin(sweep)*dsweep)/np.cos(sweep)**2
+        
+        Cdvp_min  = 60.*toc**4*Cdf
+        dCdvp_min = 60.*(4.*dtoc*toc**3*Cdf+toc**4*dCdf)
+        
+        dCdvp_dchi = dCdvp_min + 2.*(dCdvp_min+dCdf)*Cl**2+4.*(Cdvp_min+Cdf)*Cl*dCl
+        
+        return dCdvp_dchi
+    
+    #-- Cdf related methods
+    def Cdf(self, AoA, Mach):
         OC = self.get_OC()
         sweep  = self.get_sweep()
         c  = OC.get_c()
         nu = OC.get_nu()
         L  = self.get_Lref()
-        Re = Mach*cos(sweep)*c*L/nu
-        toc         = self.get_rel_thick()/cos(sweep)
+        Re = Mach*np.cos(sweep)*c*L/nu
+        toc         = self.get_rel_thick()/np.cos(sweep)
         thick_coeff = 1.+2.1*toc # a rough guess since 1.21 for 10% relative thickness
         if Re < 1.e-12:
             # Prevent division by 0. Drag is null at zero Re number anyway
             Cdf = 0.
         elif Re < 1.e5:
             # Laminar flow
-            Cdf=1.328/sqrt(Re)*thick_coeff
+            Cdf=1.328/np.sqrt(Re)*thick_coeff
         else:
             # Turbulent flow
             Cdf=0.074*Re**(-0.2)*thick_coeff
             
         return Cdf
     
-    def __dCd_friction_dAoA(self, alpha, Mach):
-        return 0.
+    def dCdf_dAoA(self, AoA, Mach):
+        dCdf_dAoA = 0.
+        return dCdf_dAoA
     
-    def __dCd_friction_dchi(self, alpha, Mach):
+    def dCdf_dchi(self, AoA, Mach):
         OC  = self.get_OC()
+        
         sweep  = self.get_sweep()
         dsweep = self.get_sweep_grad()
+        
         c   = OC.get_c()
         nu  = OC.get_nu()
+        
         L   = self.get_Lref()
         dL  = self.get_Lref_grad()
         
-        Re = Mach*cos(sweep)*c*L/nu
-        dRe = Mach*cos(sweep)*c*dL/nu-Mach*sin(sweep)*c*L/nu*dsweep
+        Re = Mach*np.cos(sweep)*c*L/nu
+        dRe = Mach*np.cos(sweep)*c*dL/nu-Mach*np.sin(sweep)*c*L/nu*dsweep
         
-        toc    = self.get_rel_thick()/cos(sweep)
-        dtoc   = (self.get_rel_thick_grad()*cos(sweep)+self.get_rel_thick()*sin(sweep)*dsweep)/cos(sweep)**2
+        toc    = self.get_rel_thick()/np.cos(sweep)
+        dtoc   = (self.get_rel_thick_grad()*np.cos(sweep)+self.get_rel_thick()*np.sin(sweep)*dsweep)/np.cos(sweep)**2
         
         thick_coeff = 1.+2.1*toc
         dthick_coeff = 2.1*dtoc
         
-        if Re < 1.e-6:
+        if Re < 1.e-12:
             # Prevent division by 0. Drag is null at zero Re number anyway
-            dCdf = 0.
+            dCdf_dchi = 0.
         elif Re < 1.e5:
             # Laminar flow
-            dCdf=-0.664/(Re**1.5)*dRe*thick_coeff+1.328/sqrt(Re)*dthick_coeff
+            dCdf_dchi=-0.664/(Re**1.5)*dRe*thick_coeff+1.328/np.sqrt(Re)*dthick_coeff
         else:
             # Turbulent flow
-            dCdf=-0.0148*Re**(-1.2)*dRe*thick_coeff+0.074*Re**(-0.2)*dthick_coeff
-        return dCdf
-    
-    #-- Cm related methods
-    def Cm(self,alpha,Mach=0.0):
-        return self.__Cm0
-    
-    def CmAlpha(self,alpha,Mach):
-        return 0.0
-    
+            dCdf_dchi=-0.0148*Re**(-1.2)*dRe*thick_coeff+0.074*Re**(-0.2)*dthick_coeff
+        return dCdf_dchi
+
     def get_scaled_copy(self, OC=None, Sref=None,Lref=None, rel_thick=None, sweep=None):
         if Sref is None:
             Sref=self.get_Sref()
@@ -310,4 +349,5 @@ class AnalyticAirfoil(Airfoil):
             sweep = self.get_sweep()
         if OC is None:
             OC = self.get_OC()
-        return AnalyticAirfoil(OC, self.__AoA0_deg, self.__Cm0, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep, Ka=self.__Ka)
+        return AnalyticAirfoil(OC, self.__AoA0_deg, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep, Ka=self.__Ka)
+

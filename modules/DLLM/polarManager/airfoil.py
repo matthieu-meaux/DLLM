@@ -23,111 +23,174 @@
 # @author : Matthieu Meaux
 
 # - Local imports -
-from differentiatedAeroShape import DifferentiatedAeroShape
-
-class Airfoil(DifferentiatedAeroShape):
+class Airfoil:
     '''
     Airfoil class for lifting line computations. 
-    Supports the computation of the circulation and the sensibility of moments to AoA.
+    Supports the computation of the circulation and all partial derivatives necessary for optimisation
     '''
     
-    def __init__(self, OC, Sref, Lref, rel_thick=0.0, sweep=0.0, camber=0.0):
+    def __init__(self, OC, Lref=0., Sref=0.):
         '''
         Constructor
-        @param Sref : reference surface
-        @param Lref : reference length
+        @param OC        : Operating condition object to access fluid properties
+        @param Sref      : reference surface
+        @param Lref      : reference length
         '''
-        DifferentiatedAeroShape.__init__(self,Sref,Lref)
         self.__OC = OC
         
-        self.__rel_thick = rel_thick
-        self.__rel_thick_grad = 0.
+        self.__Lref      = Lref
+        self.__Lref_grad = None
         
-        self.__camber      = camber
-        self.__camber_grad = 0.
+        self.__Sref      = Sref
+        self.__Sref_grad = None
         
-        self.__sweep      = sweep
-        self.__sweep_grad = 0.
+        # Airfoil aerodynamic coefficients and gradient
+#         self.__Cl         = None
+#         self.__dCl_dAoA   = None
+#         self.__dCl_dchi   = None
+#         
+#         self.__Cdw        = None
+#         self.__dCdw_dAoA  = None
+#         self.__dCdw_dchi  = None
+#         
+#         self.__Cdvp       = None
+#         self.__dCdvp_dAoA = None
+#         self.__dCdvp_dchi = None
         
-    def set_OC(self, OC):
-        self.__OC = OC
+    
+    #-- Setters
+    def set_Lref(self, Lref):
+        self.__Lref = Lref
+    
+    def set_Lref_grad(self, Lref_grad):
+        self.__Lref_grad = Lref_grad
+    
+    def set_Sref(self, Sref):
+        self.__Sref = Sref
+        
+    def set_Sref_grad(self, Sref_grad):
+        self.__Sref_grad = Sref_grad
+        
+    #-- Accessors
+    def get_Lref(self):
+        return self.__Lref
+    
+    def get_Lref_grad(self):
+        return self.__Lref_grad
+    
+    def get_Sref(self):
+        return self.__Sref
+    
+    def get_Sref_grad(self):
+        return self.__Sref_grad
     
     def get_OC(self):
         return self.__OC
-        
-    def set_rel_thick(self, rel_thick):
-        self.__rel_thick = rel_thick
-        
-    def set_rel_thick_grad(self, rel_thick_grad):
-        self.__rel_thick_grad = rel_thick_grad
-        
-    def get_rel_thick(self):
-        return self.__rel_thick
     
-    def get_rel_thick_grad(self):
-        return self.__rel_thick_grad
-        
-    def set_camber(self, camber):
-        self.__camber = camber
-        
-    def set_camber_grad(self, camber_grad):
-        self.__camber_grad = camber_grad
-        
-    def get_camber(self):
-        return self.__camber
+    #-- Aerodynamic methods - to be overloaded by child classes
+    #-- Cl related mehods
+    def Cl(self, AoA, Mach):
+        return None
     
-    def get_camber_grad(self):
-        return self.__camber_grad
+    def dCl_dAoA(self, AoA, Mach):
+        return None
     
-    def set_sweep(self, sweep):
-        self.__sweep = sweep
+    def dCl_dchi(self, AoA, Mach):
+        return None
+    
+    #-- Cdw related methods
+    def Cdw(self, AoA, Mach):
+        return None
+    
+    def dCdw_dAoA(self, AoA, Mach):
+        return None
+    
+    def dCdw_dchi(self, AoA, Mach):
+        return None
+    
+    #-- Cdvp related methods
+    def Cdvp(self, AoA, Mach):
+        return None
+    
+    def dCdvp_dAoA(self, AoA, Mach):
+        return None
+    
+    def dCdvp_dchi(self, AoA, Mach):
+        return None
+    
+    #-- Cdf related methods
+    def Cdf(self, AoA, Mach):
+        return None
+    
+    def dCdf_dAoA(self, AoA, Mach):
+        return None
+    
+    def dCdf_dchi(self, AoA, Mach):
+        return None
+    
+    #-- Cd related methods
+    def Cd(self, AoA, Mach):
+        Cdw  = self.Cdw(AoA, Mach)
+        Cdvp = self.Cdvp(AoA, Mach)
+        Cdf  = self.Cdf(AoA, Mach)
+        Cd = Cdw + Cdvp + Cdf
+        return Cd
         
-    def set_sweep_grad(self, sweep_grad):
-        self.__sweep_grad = sweep_grad
+    def dCd_dAoA(self, AoA, Mach):
+        dCdw  = self.dCdw_dAoA(AoA, Mach)
+        dCdvp = self.dCdvp_dAoA(AoA, Mach)
+        dCdf  = self.dCdf_dAoA(AoA, Mach)
+        dCd   = dCdw + dCdvp + dCdf
+        return dCd
+    
+    def dCd_dchi(self, AoA, Mach):
+        dCdw  = self.dCdw_dchi(AoA, Mach)
+        dCdvp = self.dCdvp_dchi(AoA, Mach)
+        dCdf  = self.dCdf_dchi(AoA, Mach)
+        dCd   = dCdw + dCdvp + dCdf
+        return dCd
+    
+    #-- Cdp related methods
+    def Cdp(self, AoA, Mach):
+        Cdw  = self.Cdw(AoA, Mach)
+        Cdvp = self.Cdvp(AoA, Mach)
+        Cdp = Cdw + Cdvp
+        return Cdp
         
-    def get_sweep(self):
-        return self.__sweep
+    def dCdp_dAoA(self, AoA, Mach):
+        dCdw  = self.dCdw_dAoA(AoA, Mach)
+        dCdvp = self.dCdvp_dAoA(AoA, Mach)
+        dCdp  = dCdw + dCdvp
+        return dCdp
     
-    def get_sweep_grad(self):
-        return self.__sweep_grad
+    def dCdp_dchi(self, AoA, Mach):
+        dCdw  = self.dCdw_dchi(AoA, Mach)
+        dCdvp = self.dCdvp_dchi(AoA, Mach)
+        dCdp  = dCdw + dCdvp
+        return dCdp
     
-    def gamma(self,alpha,Mach=0.0):
-        #V= self.get_OC().get_V()
-        sweep=self.get_sweep()
-        L=self.get_Lref()
-        Cl=self.Cl(alpha,Mach=Mach)
-        gamma =  0.5*L*Cl
+    #-- gamma related methods
+    def gamma(self, AoA, Mach):
+        L     = self.get_Lref()
+        Cl    = self.Cl(AoA, Mach)
+        gamma = 0.5*L*Cl
         return gamma
     
-    def dCl_dchi(self,alpha,Mach=0.0):
-        return 0.0
+    def dgamma_dAoA(self, AoA, Mach):
+        L = self.get_Lref()
+        dCl_dAoA = self.dCl_dAoA(AoA, Mach)
+        dgamma_dAoA = 0.5*L*dCl_dAoA
+        return dgamma_dAoA
     
-    def dCd_dchi(self,alpha,Mach=0.0):
-        return 0.0    
- 
-    def dCm_dchi(self,alpha,Mach=0.0):
-        return 0.0  
-     
-    def dpgamma_dpAoA(self,alpha,Mach):
-        #V= self.get_OC().get_V()
-        sweep=self.get_sweep()
-        L=self.get_Lref()
-        dCl_dAoA=self.ClAlpha(alpha,Mach)
-        dpgamma_dpAoA = 0.5*L*dCl_dAoA
-        return dpgamma_dpAoA
+    def dgamma_dchi(self, AoA, Mach):
+        L   = self.get_Lref()
+        dL  = self.get_Lref_grad()
+        Cl  = self.Cl(AoA, Mach)
+        dCl = self.dCl_dchi(AoA, Mach)
+        dgamma_dchi =  0.5*dL*Cl+ 0.5*L*dCl 
+        return dgamma_dchi
     
-    def dpgamma_dpchi(self, alpha, Mach):
-        #V= self.get_OC().get_V()
-        L=self.get_Lref()
-        dL=self.get_Lref_grad()
-        Cl=self.Cl(alpha,Mach=Mach)
-        dCl=self.dCl_dchi(alpha,Mach)
-        sweep=self.get_sweep()
-        dsweep=self.get_sweep_grad()
-        dpgamma_dpchi =  0.5*dL*Cl+ 0.5*L*dCl 
-        return dpgamma_dpchi
-    
-    def get_scaled_copy(self,Sref, Lref, rel_thick=0.0, sweep=0.):
-        return Airfoil(Sref,Lref,rel_thick=rel_thick, sweep=sweep)
-    
-
+    #-- scaled copy (useless in this case)
+    def get_scaled_copy(self, Sref, Lref):
+        OC = self.get_OC()
+        return Airfoil(OC, Sref, Lref)  

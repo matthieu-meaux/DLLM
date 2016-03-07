@@ -295,17 +295,17 @@ class DLLM_Geom(object):
 
             self.set_airfoils(airfoils)
             
-    def build_linear_airfoil(self, OC, AoA0=0., Cm0=0., Sref=1.,
-                             Lref=1., rel_thick=0., sweep=0., Ka=0.95, set_as_ref=True):
+    def build_linear_airfoil(self, OC, AoA0=0., Sref=1.,
+                             Lref=1., rel_thick=0., sweep=0., pcop=0.25, Ka=0.95, set_as_ref=True):
         self.__airfoil_type = 'simple'
         airfoil = AnalyticAirfoil(
             OC,
             AoA0=AoA0,
-            Cm0=Cm0,
             Sref=Sref,
             Lref=Lref,
             rel_thick=rel_thick,
             sweep=sweep,
+            pcop=pcop,
             Ka=Ka)
         if set_as_ref:
             self.set_ref_aifoil(airfoil)
