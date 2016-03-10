@@ -261,7 +261,3 @@ class DLLMSolver:
         
     def export_dF_list_dchi(self, filename=None):
         self.__DLLMAdjoint.export_dF_list_dchi(filename=filename)
-
-            
-        
-    

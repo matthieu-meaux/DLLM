@@ -65,7 +65,7 @@ wing_geom.set_sweep_eta(sweep_eta)
 wing_geom.set_chords_eta(chords_eta)
 wing_geom.set_rel_thicks_eta(rel_thicks_eta)
 wing_geom.set_eta(eta)
-wing_geom.build_linear_airfoil(OC, AoA0=0.0, Cm0=-0.1, set_as_ref=True)
+wing_geom.build_linear_airfoil(OC, AoA0=0.0, set_as_ref=True)
 wing_geom.build_airfoils_from_ref()
 wing_geom.update() 
 

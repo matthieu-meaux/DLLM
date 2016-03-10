@@ -36,15 +36,16 @@ class MetaAirfoil(Airfoil):
     """
     POW_COS  = 1.0
     
-    def __init__(self, OC, surrogate_model, relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=0., surrogate_fcs=None):
+    def __init__(self, OC, surrogate_model, relative_thickness=.12, camber=0., Sref=1., Lref=1., sweep=0., surrogate_fcs=None, grad_active=True):
 
-        Airfoil.__init__(self, OC, Sref, Lref, relative_thickness, sweep, camber)
+        Airfoil.__init__(self, OC, Sref, Lref, relative_thickness, sweep, camber, grad_active=grad_active)
         if not surrogate_fcs:
             self.__coefs = SurrogateCoefs(surrogate_model)
         else:
             self.__coefs = surrogate_fcs
         self.__surrogate_model = surrogate_model
         
+    #-- Note: to be updated with new way of working
     def Cl(self, alpha, Mach):
         sweep=self.get_sweep()
         Mach_normal = Mach*np.cos(sweep)**self.POW_COS

@@ -38,7 +38,7 @@ OC.set_humidity(0.)
 OC.compute_atmosphere()
 
 
-wing_param=Wing_param('test_param',geom_type='Broken',n_sect=30)
+wing_param=Wing_param('test_param',geom_type='Broken',n_sect=30, grad_active=False)
 wing_param.build_wing()
 wing_param.set_value('span',34.1)
 wing_param.set_value('sweep',34.)
@@ -63,7 +63,7 @@ wing_param.build_airfoils_from_ref()
 wing_param.update()
 wing_param.plot()
 
-DLLM = DLLMSolver('test', wing_param, OC, verbose=1)
+DLLM = DLLMSolver('test', wing_param, OC, verbose=1, grad_active=False)
 DLLM.run_direct()
 DLLM.run_post()
 DLLM.plot()

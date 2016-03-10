@@ -40,7 +40,9 @@ OC.compute_atmosphere()
 
 #-- Build Geom class
 span  = 40.
-sweep = 34.
+sweep = 30.
+
+sweep_rad = sweep*np.pi/180.
 
 wing_geom = DLLM_Geom('tuto3_geom',n_sect=20, grad_active=False)
 #-- initialize arrays
@@ -56,18 +58,18 @@ eta            = np.zeros((3,N+1))
 twist[:]          = 0. # 0. twist for all sections
 chords_eta[:]     = 5. # 5m chord for all sections
 rel_thicks_eta[:] = 0.15 # same rel_thick for all sections
+sweep_eta[:]      = sweep_rad
 for i, r in enumerate(r_list):
     abs_r = abs(r)
-    eta[0, i] = abs_r * span * np.sin(sweep) + 0.25 * chords_eta[i]
+    eta[0, i] = abs_r * span * np.sin(sweep_rad) + 0.25 * chords_eta[i]
     eta[1, i] = r * span
-
 
 wing_geom.set_twist(twist)
 wing_geom.set_sweep_eta(sweep_eta)
 wing_geom.set_chords_eta(chords_eta)
 wing_geom.set_rel_thicks_eta(rel_thicks_eta)
 wing_geom.set_eta(eta)
-wing_geom.build_linear_airfoil(OC, AoA0=0.0, Cm0=-0.1, set_as_ref=True)
+wing_geom.build_linear_airfoil(OC, AoA0=0.0, set_as_ref=True)
 wing_geom.build_airfoils_from_ref()
 wing_geom.update()  
 wing_geom.plot()

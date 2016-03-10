@@ -306,7 +306,7 @@ class DLLM_Geom(object):
             rel_thick=rel_thick,
             sweep=sweep,
             pcop=pcop,
-            Ka=Ka)
+            Ka=Ka, grad_active=self.__grad_active)
         if set_as_ref:
             self.set_ref_aifoil(airfoil)
         return airfoil
@@ -402,7 +402,6 @@ class DLLM_Geom(object):
         
         #-- Toc plot
         plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
-        plt.ylim(0., 1.1*self.__rel_thicks_eta[-1])
         plt.xlabel('y')
         plt.ylabel('toc')
         plt.plot(Y_list,self.__rel_thicks_eta)
@@ -412,7 +411,6 @@ class DLLM_Geom(object):
         
         #-- Chords plot
         plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
-        plt.ylim(0., 1.1*max(self.__chords_eta))
         plt.xlabel('y')
         plt.ylabel('chords')
         plt.plot(Y_list,self.__chords_eta)
@@ -423,7 +421,6 @@ class DLLM_Geom(object):
         #-- Heights plot
         heights = self.__chords_eta*self.__rel_thicks_eta
         plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
-        plt.ylim(0., 1.1*max(heights))
         plt.xlabel('y')
         plt.ylabel('heights')
         plt.plot(Y_list,heights)
@@ -434,7 +431,6 @@ class DLLM_Geom(object):
         #-- twist plot
         heights = self.__chords_eta*self.__rel_thicks_eta
         plt.xlim(1.1*Yp_list[0], 1.1*Yp_list[-1])
-        plt.ylim(0., 1.1*max(self.__twist))
         plt.xlabel('y')
         plt.ylabel('twist (deg)')
         plt.plot(Yp_list,self.__twist*180./np.pi)

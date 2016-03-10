@@ -29,7 +29,7 @@ class Airfoil:
     Supports the computation of the circulation and all partial derivatives necessary for optimisation
     '''
     
-    def __init__(self, OC, Lref=0., Sref=0.):
+    def __init__(self, OC, Lref=0., Sref=0., grad_active=True):
         '''
         Constructor
         @param OC        : Operating condition object to access fluid properties
@@ -44,20 +44,33 @@ class Airfoil:
         self.__Sref      = Sref
         self.__Sref_grad = None
         
-        # Airfoil aerodynamic coefficients and gradient
-#         self.__Cl         = None
-#         self.__dCl_dAoA   = None
-#         self.__dCl_dchi   = None
-#         
-#         self.__Cdw        = None
-#         self.__dCdw_dAoA  = None
-#         self.__dCdw_dchi  = None
-#         
-#         self.__Cdvp       = None
-#         self.__dCdvp_dAoA = None
-#         self.__dCdvp_dchi = None
+        self.__grad_active = grad_active
         
-    
+        # Airfoil aerodynamic coefficients and gradient
+        self.Cl          = None
+        self.dCl_dAoA    = None
+        self.dCl_dchi    = None
+         
+        self.Cdw         = None
+        self.dCdw_dAoA   = None
+        self.dCdw_dchi   = None
+         
+        self.Cdvp        = None
+        self.dCdvp_dAoA  = None
+        self.dCdvp_dchi  = None
+        
+        self.Cdf         = None
+        self.dCdf_dAoA   = None
+        self.dCdf_dchi   = None
+        
+        self.pcop        = None
+        self.dpcop_dAoA  = None
+        self.dpcop_dchi  = None
+        
+        self.gamma       = None
+        self.dgamma_dAoA = None
+        self.dgamma_dchi = None
+        
     #-- Setters
     def set_Lref(self, Lref):
         self.__Lref = Lref
@@ -70,6 +83,9 @@ class Airfoil:
         
     def set_Sref_grad(self, Sref_grad):
         self.__Sref_grad = Sref_grad
+        
+    def set_grad_active(self, grad_active):
+        self.__grad_active = grad_active
         
     #-- Accessors
     def get_Lref(self):
@@ -87,110 +103,42 @@ class Airfoil:
     def get_OC(self):
         return self.__OC
     
+    def is_grad_active(self):
+        return self.__grad_active
+    
     #-- Aerodynamic methods - to be overloaded by child classes
-    #-- Cl related mehods
-    def Cl(self, AoA, Mach):
-        return None
+    #-- Compute the aerodynamic coefficients and partial derivatives
+    def compute(self, AoA, Mach):
+        self.comp_aero_coeffs(AoA, Mach)
+        self.comp_gamma_infos()
     
-    def dCl_dAoA(self, AoA, Mach):
-        return None
+    def comp_aero_coeffs(self, AoA, Mach):
+        """
+        method to compute aero coefficients to be overloaded in sub classes
+        """
+        pass
     
-    def dCl_dchi(self, AoA, Mach):
-        return None
-    
-    #-- Cdw related methods
-    def Cdw(self, AoA, Mach):
-        return None
-    
-    def dCdw_dAoA(self, AoA, Mach):
-        return None
-    
-    def dCdw_dchi(self, AoA, Mach):
-        return None
-    
-    #-- Cdvp related methods
-    def Cdvp(self, AoA, Mach):
-        return None
-    
-    def dCdvp_dAoA(self, AoA, Mach):
-        return None
-    
-    def dCdvp_dchi(self, AoA, Mach):
-        return None
-    
-    #-- Cdf related methods
-    def Cdf(self, AoA, Mach):
-        return None
-    
-    def dCdf_dAoA(self, AoA, Mach):
-        return None
-    
-    def dCdf_dchi(self, AoA, Mach):
-        return None
-    
-    #-- Cd related methods
-    def Cd(self, AoA, Mach):
-        Cdw  = self.Cdw(AoA, Mach)
-        Cdvp = self.Cdvp(AoA, Mach)
-        Cdf  = self.Cdf(AoA, Mach)
-        Cd = Cdw + Cdvp + Cdf
-        return Cd
-        
-    def dCd_dAoA(self, AoA, Mach):
-        dCdw  = self.dCdw_dAoA(AoA, Mach)
-        dCdvp = self.dCdvp_dAoA(AoA, Mach)
-        dCdf  = self.dCdf_dAoA(AoA, Mach)
-        dCd   = dCdw + dCdvp + dCdf
-        return dCd
-    
-    def dCd_dchi(self, AoA, Mach):
-        dCdw  = self.dCdw_dchi(AoA, Mach)
-        dCdvp = self.dCdvp_dchi(AoA, Mach)
-        dCdf  = self.dCdf_dchi(AoA, Mach)
-        dCd   = dCdw + dCdvp + dCdf
-        return dCd
-    
-    #-- Cdp related methods
-    def Cdp(self, AoA, Mach):
-        Cdw  = self.Cdw(AoA, Mach)
-        Cdvp = self.Cdvp(AoA, Mach)
-        Cdp = Cdw + Cdvp
-        return Cdp
-        
-    def dCdp_dAoA(self, AoA, Mach):
-        dCdw  = self.dCdw_dAoA(AoA, Mach)
-        dCdvp = self.dCdvp_dAoA(AoA, Mach)
-        dCdp  = dCdw + dCdvp
-        return dCdp
-    
-    def dCdp_dchi(self, AoA, Mach):
-        dCdw  = self.dCdw_dchi(AoA, Mach)
-        dCdvp = self.dCdvp_dchi(AoA, Mach)
-        dCdp  = dCdw + dCdvp
-        return dCdp
-    
-    #-- gamma related methods
-    def gamma(self, AoA, Mach):
-        L     = self.get_Lref()
-        Cl    = self.Cl(AoA, Mach)
-        gamma = 0.5*L*Cl
-        return gamma
-    
-    def dgamma_dAoA(self, AoA, Mach):
+    def comp_gamma_infos(self):
+        """
+        Compute gamma and gamma derivatives
+        """
         L = self.get_Lref()
-        dCl_dAoA = self.dCl_dAoA(AoA, Mach)
-        dgamma_dAoA = 0.5*L*dCl_dAoA
-        return dgamma_dAoA
-    
-    def dgamma_dchi(self, AoA, Mach):
-        L   = self.get_Lref()
-        dL  = self.get_Lref_grad()
-        Cl  = self.Cl(AoA, Mach)
-        dCl = self.dCl_dchi(AoA, Mach)
-        dgamma_dchi =  0.5*dL*Cl+ 0.5*L*dCl 
-        return dgamma_dchi
+        self.gamma       = 0.5*L*self.Cl
+        self.dgamma_dAoA = 0.5*L*self.dCl_dAoA
+        if self.is_grad_active():
+            dL = self.get_Lref_grad()
+            self.dgamma_dchi = 0.5*(dL*self.Cl+L*self.dCl_dchi)
     
     #-- scaled copy (useless in this case)
     def get_scaled_copy(self, Sref, Lref):
         OC = self.get_OC()
-        return Airfoil(OC, Sref, Lref)  
+        return Airfoil(OC, Sref, Lref, grad_active=self.__grad_active)  
+    
+    def print_coeffs(self):
+        print '\n*** Airfoil aerodynamic oefficients ***'
+        print '  Cl   = ', self.Cl , '[-]'
+        print '  Cdw  = ', self.Cdw, '[-]'
+        print '  Cdvp = ', self.Cdvp, '[-]'
+        print '  Cdf  = ', self.Cdf, '[-]'
+
+

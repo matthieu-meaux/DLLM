@@ -45,11 +45,11 @@ class Wing_param(DLLM_Geom):
         'break_height',
         'tip_height']
 
-    def __init__(self, tag, geom_type='Broken', n_sect=20):
+    def __init__(self, tag, geom_type='Broken', n_sect=20, grad_active=True):
         """
         Constructor: set main attributes
         """
-        DLLM_Geom.__init__(self, tag, n_sect=n_sect, grad_active=True)
+        DLLM_Geom.__init__(self, tag, n_sect=n_sect, grad_active=grad_active)
         
         self.__geom_type = None
         self.__BC_manager = BCManager()

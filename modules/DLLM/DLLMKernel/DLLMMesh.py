@@ -89,7 +89,6 @@ class DLLMMesh:
         DdGammaDy_DGamma[1:self.__N+1,:]-= diag(ones([self.__N]))
         self.__K = - dot(Kmetric,DdGammaDy_DGamma)
         
-        
         if self.get_grad_active():
             eta_grad = self.get_geom().get_eta_grad()[1,:,:]
             y_grad   = self.get_geom().get_XYZ_grad()[1,:,:]
@@ -99,11 +98,7 @@ class DLLMMesh:
                 YminEta_grad[:,:,n] = transpose(outer(ones([self.__N+1]),y_grad[:,n]))-outer(ones([self.__N]),eta_grad[:,n])
             
             dKmetric_dchi=zeros((self.__N,self.__N+1,self.__ndv))
-    #         for n in xrange(self.__ndv):
-    #             for j in xrange(self.__N+1):
-    #                 for i in xrange(self.__N):
-    #                     dKmetric_dchi[i,j,n]=-YminEta_grad[i,j,n]/YminEta[i,j]**2
-    #                     
+                   
             for n in xrange(self.__ndv):
                 dKmetric_dchi[:,:,n]=-YminEta_grad[:,:,n]/YminEta[:,:]**2
             dKmetric_dchi/=4.*numpy.pi
@@ -113,37 +108,4 @@ class DLLMMesh:
                 self.__dK_dchi[:,:,n]=-dot(dKmetric_dchi[:,:,n],DdGammaDy_DGamma)
                   
 
-#     def __setGeomWeissinger(self):
-#         '''
-#         Sets the geometry of the wing, builds the stiffness geometry matrix
-#         '''
-#         eta=self.get_wing_geom().get_eta()[:,1]
-#         self.__K=zeros([self.__N,self.__N+1])
-#         
-#         x=self.get_wing_geom().get_XYZ()[:,0]
-#         y=self.get_wing_geom().get_XYZ()[:,1]
-#         
-#         for i in range(self.__N):
-#             for j in range(self.__N+1):
-#                 #Weissinger
-#                 self.__K[i,j]=(1.+sqrt(1.+((y[i]-eta[j])/x[i])**2))/(y[i]-eta[j])
-#  
-#         self.__K/=4.*math.pi        
-#         
-#     def __setGeomWeissinger2(self):
-#         '''
-#         Sets the geometry of the wing, builds the stiffness geometry matrix
-#         '''
-#         eta=self.get_wing_geom().get_eta()[:,1]
-#         
-#         x=self.get_wing_geom().get_XYZ()[:,0]
-#         y=self.get_wing_geom().get_XYZ()[:,1]
-#         
-#         self.__K=zeros([self.__N,self.__N+1])
-#         for i in range(self.__N):
-#             for j in range(self.__N+1):
-#                 #Weissinger
-#                 self.__K[i,j]=(1./(y[i]-eta[j,0])**2)*(1.+(x[i]-eta[j,1])/sqrt((x[i]-eta[j,1])**2+(y[i]-eta[j,0])**2))
-#  
-#         self.__K/=4.*math.pi
     

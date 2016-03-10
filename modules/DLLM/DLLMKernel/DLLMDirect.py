@@ -23,7 +23,7 @@
 # @author : Matthieu MEAUX
 #
 
-import numpy
+import numpy as np
 from numpy import array, transpose, outer, ones, zeros, copy, divide, diag, dot
 from numpy.linalg import norm, solve
 import matplotlib.pylab as plt
@@ -35,8 +35,8 @@ class DLLMDirect:
     """
     Direct solver for the lifting line wing model
     """
-    DEG_TO_RAD = numpy.pi / 180.
-    RAD_TO_DEG = 180. / numpy.pi
+    DEG_TO_RAD = np.pi / 180.
+    RAD_TO_DEG = 180. / np.pi
 
     def __init__(self, LLW, verbose = 0):
         self.__LLW = LLW
@@ -156,6 +156,9 @@ class DLLMDirect:
         self.write_gamma_to_file()
         if grad_active:
             self.comp_dpR_dpchi()
+            
+        for airfoil in self.get_airfoils():
+            airfoil.print_coeffs()
 
     def __init_local_variables(self):
         # Initializing local variables for lifting line computations
@@ -172,9 +175,7 @@ class DLLMDirect:
         # Angle of attack variables
         self.__localAoA = zeros([N])
         self.__dplocalAoA_dpiAoA = diag(ones([N]))  # This is a constant matrix
-        self.__dplocalAoA_dpthetaY = diag(
-            ones(
-                [N]))  # This is a constant matrix
+        self.__dplocalAoA_dpthetaY = diag(ones([N]))  # This is a constant matrix
         self.__dplocalAoA_dpAoA = ones(N)
         if grad_active:
             self.__dplocalAoA_dpchi = zeros([N, ndv])
@@ -221,7 +222,7 @@ class DLLMDirect:
         self.__compute_dpgamma_dpiAoA()
         self.__compute_dpiAoAnew_dpiAoA()
 
-        self.__dpR_dpiAoA = numpy.diag(ones([N])) - self.__dpiAoAnew_dpiAoA
+        self.__dpR_dpiAoA = np.diag(ones([N])) - self.__dpiAoAnew_dpiAoA
 
         return self.__dpR_dpiAoA
 
@@ -249,10 +250,9 @@ class DLLMDirect:
 
     def __compute_dpgamma_dpAoA(self):
         N = self.get_N()
-        Mach = self.get_OC().get_Mach()
         
         for i in xrange(N):
-            self.__dpgamma_dplocalAoA[i,i] = self.get_airfoils()[i].dgamma_dAoA(self.__localAoA[i],Mach)
+            self.__dpgamma_dplocalAoA[i,i] = self.get_airfoils()[i].dgamma_dAoA
 
         self.__dpgamma_dpAoA = dot(self.__dpgamma_dplocalAoA,self.__dplocalAoA_dpAoA)
 
@@ -276,9 +276,8 @@ class DLLMDirect:
 
     def __compute_dpgamma_dpchi(self):
         N = self.get_N()
-        Mach = self.get_OC().get_Mach()
         for i in xrange(N):
-            self.__dpgamma_dpchi[i,:] = self.get_airfoils()[i].dgamma_dchi(self.__localAoA[i],Mach)
+            self.__dpgamma_dpchi[i,:] = self.get_airfoils()[i].dgamma_dchi
 
         self.__dpgamma_dpchi = self.__dpgamma_dpchi + dot(self.__dpgamma_dplocalAoA, self.__dplocalAoA_dpchi)
 
@@ -298,17 +297,15 @@ class DLLMDirect:
         if AoA is None:
             AoA = self.get_OC().get_AoA_rad()
         else:
-            self.get_OC().set_AoA(AoA * 180. / numpy.pi)
+            self.get_OC().set_AoA(AoA * 180. / np.pi)
 
         # Why this formula ? twist increases the local airfoil angle of attack normally...
         # self.__localAoA=alpha-iaOa-self.get_wing_geom().get_twist()
         self.__localAoA = AoA + twist + self.__iAoA + Thetay
 
         for i in xrange(N):
-            if self.__localAoA[i] > numpy.pi / \
-                    2. or self.__localAoA[i] < -numpy.pi / 2.:
-                raise Exception(
-                    "Local angle of attack out of bounds [-pi/2, pi/2]")
+            if self.__localAoA[i] > np.pi / 2. or self.__localAoA[i] < -np.pi / 2.:
+                raise Exception("Local angle of attack out of bounds [-pi/2, pi/2]")
 
     def __compute_gamma(self):
         """
@@ -317,13 +314,13 @@ class DLLMDirect:
         N = self.get_N()
         Mach = self.get_OC().get_Mach()
         for i in xrange(N):
-            self.__gamma[i] = self.get_airfoils()[i].gamma(self.__localAoA[i],Mach)
+            self.get_airfoils()[i].compute(self.__localAoA[i],Mach)
+            self.__gamma[i] = self.get_airfoils()[i].gamma
 
     def __compute_dpgamma_dpiAoA(self):
         N = self.get_N()
-        Mach = self.get_OC().get_Mach()
         for i in xrange(N):
-            self.__dpgamma_dplocalAoA[i,i] = self.get_airfoils()[i].dgamma_dAoA(self.__localAoA[i],Mach)
+            self.__dpgamma_dplocalAoA[i,i] = self.get_airfoils()[i].dgamma_dAoA
 
         self.__dpgamma_dpiAoA = dot(self.__dpgamma_dplocalAoA, self.__dplocalAoA_dpiAoA)
 
@@ -378,10 +375,17 @@ class DLLMDirect:
         name = self.get_tag()
         Y_list = self.get_geom().get_XYZ()[1,:]
         plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
-        plt.ylim(1.1*min(self.__gamma), 1.1*max(self.__gamma))
         plt.xlabel('y')
         plt.ylabel('gamma')
         plt.plot(Y_list,self.__gamma)
         plt.rc("font", size=14)
         plt.savefig(name+"_gamma_distrib.png",format='png')
+        plt.close()
+        
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.xlabel('y')
+        plt.ylabel('iAoA')
+        plt.plot(Y_list,self.__iAoA*self.RAD_TO_DEG)
+        plt.rc("font", size=14)
+        plt.savefig(name+"_iAoA_distrib.png",format='png')
         plt.close()
