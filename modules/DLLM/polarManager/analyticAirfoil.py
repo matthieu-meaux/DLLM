@@ -45,7 +45,7 @@ class AnalyticAirfoil(Airfoil):
         if rel_thick<0. or rel_thick>0.30:
             raise Exception, "Relative thickness must be >0. and <0.30"
         
-        Airfoil.__init__(self, OC, Sref, Lref, grad_active=grad_active)
+        Airfoil.__init__(self, OC, Lref=Lref, Sref=Sref, grad_active=grad_active)
         
         self.__AoA0_deg  = None
         self.__AoA0      = None
@@ -153,7 +153,6 @@ class AnalyticAirfoil(Airfoil):
                           
         #-- Compute Cl
         self.Cl = self.dCl_dAoA*(AoA-self.__AoA0)
-        print 'Cl = ', self.Cl
         
         #-- Compute dCl_dchi
         if self.is_grad_active():
@@ -231,7 +230,7 @@ class AnalyticAirfoil(Airfoil):
             dCdvp_min= 60.*(4.*dtoc2*toc2**3*self.Cdf+toc**4*self.dCdf_dchi)
             self.dCdvp_dchi = dCdvp_min + 2.*(dCdvp_min+self.dCdf_dchi)*self.Cl**2+4.*(Cdvp_min + self.Cdf)*self.Cl*self.dCl_dchi
             
-    def get_scaled_copy(self, OC=None, Sref=None,Lref=None, rel_thick=None, sweep=None, grad_active=True):
+    def get_scaled_copy(self, OC=None, Sref=None, Lref=None, rel_thick=None, sweep=None, grad_active=True):
         if Sref is None:
             Sref=self.get_Sref()
         if Lref is None:

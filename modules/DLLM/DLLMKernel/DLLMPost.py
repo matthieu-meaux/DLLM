@@ -565,9 +565,6 @@ class DLLMPost:
             self.Cdvp += af.Cdvp * surf_fact
             self.Cdf  += af.Cdf  * surf_fact
             
-            print 'Cdw=',self.Cdw
-            print 'Cdvp=',self.Cdvp
-            print 'Cdf=',self.Cdf
             # Partial derivatives with respect to iAoA
             dlocCd_dAoA = -af.dCl_dAoA*sin(iAoA[i])+af.dCdw_dAoA+af.dCdvp_dAoA+af.dCdf_dAoA
             self.dpCl_dpiAoA[i]  -= af.Cl * sin(iAoA[i]) * surf_fact
@@ -603,7 +600,7 @@ class DLLMPost:
             self.dpCdw_dpthethaY  += af.dCdw_dAoA  * dplocalAoA_dpthetaY[i,:] * surf_fact
             self.dpCdvp_dpthethaY += af.dCdvp_dAoA * dplocalAoA_dpthetaY[i,:] * surf_fact
             self.dpCdf_dpthethaY  += af.dCdf_dAoA  * dplocalAoA_dpthetaY[i,:] * surf_fact
-            self.dpLift_distrib_dpthethaY[i,:] = Pdyn*af.get_Sref()*af.dCl_dAoA *cos(iAoA[i])*dplocalAoA_dpthetaY[i,:]
+            self.dpLift_distrib_dpthethaY[i,:] = Pdyn*af.get_Sref()*af.dCl_dAoA*cos(iAoA[i])*dplocalAoA_dpthetaY[i,:]
             self.dpDrag_distrib_dpthethaY[i,:] = Pdyn*af.get_Sref()*dlocCd_dAoA*dplocalAoA_dpthetaY[i,:]
             
             # Partial derivatives with respect to chi
@@ -613,10 +610,10 @@ class DLLMPost:
                 self.dpCdw_dpchi  += (af.dCdw_dAoA*dlAoAdchi[i, :]*surf_fact+af.dCdw_dchi*surf_fact+af.Cdw*dsurf_fact)
                 self.dpCdvp_dpchi += (af.dCdvp_dAoA*dlAoAdchi[i, :]*surf_fact+af.dCdvp_dchi*surf_fact+af.Cdvp*dsurf_fact)
                 self.dpCdf_dpchi  += (af.dCdf_dAoA*dlAoAdchi[i, :]*surf_fact+af.dCdf_dchi*surf_fact+af.Cdf*dsurf_fact)
-                self.dpLift_distrib_dpthethaY[i,:] = Pdyn*cos(iAoA[i])(af.get_Sref()*af.dCl_dAoA *dlAoAdchi[i,:]+af.get_Sref()*af.dCl_dchi+af.get_Sref_grad()*af.Cl)
+                self.dpLift_distrib_dpchi[i,:] = Pdyn*cos(iAoA[i])*(af.get_Sref()*af.dCl_dAoA *dlAoAdchi[i,:]+af.get_Sref()*af.dCl_dchi+af.get_Sref_grad()*af.Cl)
 
                 dlocCd_dchi = -af.dCl_dchi*sin(iAoA[i])+af.dCdw_dchi+af.dCdvp_dchi+af.dCdf_dchi
-                self.dpDrag_distrib_dpthethaY[i,:] = Pdyn*(af.get_Sref()*dlocCd_dAoA*dlAoAdchi[i, :]+af.get_Sref()*dlocCd_dchi+af.get_Sref_grad()*locCd)
+                self.dpDrag_distrib_dpchi[i,:] = Pdyn*(af.get_Sref()*dlocCd_dAoA*dlAoAdchi[i, :]+af.get_Sref()*dlocCd_dchi+af.get_Sref_grad()*locCd)
 
     #-- Export methods
     def export_F_list(self, filename=None):    

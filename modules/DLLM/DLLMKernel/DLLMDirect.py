@@ -157,9 +157,6 @@ class DLLMDirect:
         if grad_active:
             self.comp_dpR_dpchi()
             
-        for airfoil in self.get_airfoils():
-            airfoil.print_coeffs()
-
     def __init_local_variables(self):
         # Initializing local variables for lifting line computations
         # Residual variables
