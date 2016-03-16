@@ -25,7 +25,7 @@ from DLLM.DLLMGeom.wing_param import Wing_param
 from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
 from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
 from MDOTools.OC.operating_condition import OperatingCondition
-import numpy
+import numpy as np
 
 OC=OperatingCondition('cond1')
 OC.set_Mach(0.8)
@@ -56,7 +56,7 @@ wing_param.convert_to_design_variable('tip_chord',(1.,2.))
 wing_param.convert_to_design_variable('root_height',(1.,1.5))
 wing_param.convert_to_design_variable('break_height',(0.8,1.2))
 wing_param.convert_to_design_variable('tip_height',(0.2,0.5))
-wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
+wing_param.build_linear_airfoil(OC, AoA0=-2., set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()
 
@@ -91,6 +91,18 @@ def df(x):
 
 val_grad=FDValidGrad(2,f,df,fd_step=1.e-8)
 ok,df_fd,df=val_grad.compare(x0,treshold=1.e-6,split_out=True,return_all=True)
+
+# for i in xrange(len(df_fd)):
+#     nfd= np.linalg.norm(df_fd[i,:])
+#     diff = (df_fd[i]-df[i])/nfd
+#     ndiff = np.linalg.norm(diff)
+#     name = DLLM.get_F_list_names()[i]
+#     if name =='Cdvp':
+#         print name
+# #         print df_fd[i]
+# #         print df[i]
+# #        print 'diff=',diff
+#         print np.linalg.norm(diff)
 
 print '\n****************************************************'
 if ok:

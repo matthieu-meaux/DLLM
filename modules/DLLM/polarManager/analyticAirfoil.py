@@ -221,13 +221,12 @@ class AnalyticAirfoil(Airfoil):
         #-- compute Cdvp
         Cdvp_min = 60.*toc2**4*self.Cdf
         self.Cdvp = Cdvp_min + 2.*(Cdvp_min + self.Cdf)*self.Cl**2
-        
         #-- compute dCdvp_dAoA
         # dCdvp_min_dAoA = 0. since dCdf_dAoA = 0. 
         self.dCdvp_dAoA = 4.*(Cdvp_min + self.Cdf)*self.Cl*self.dCl_dAoA
-    
+        
         if self.is_grad_active():
-            dCdvp_min= 60.*(4.*dtoc2*toc2**3*self.Cdf+toc**4*self.dCdf_dchi)
+            dCdvp_min= 60.*(4.*dtoc2*toc2**3*self.Cdf+toc2**4*self.dCdf_dchi)
             self.dCdvp_dchi = dCdvp_min + 2.*(dCdvp_min+self.dCdf_dchi)*self.Cl**2+4.*(Cdvp_min + self.Cdf)*self.Cl*self.dCl_dchi
             
     def get_scaled_copy(self, OC=None, Sref=None, Lref=None, rel_thick=None, sweep=None, grad_active=True):

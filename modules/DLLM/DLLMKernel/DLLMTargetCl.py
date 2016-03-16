@@ -41,7 +41,7 @@ class DLLMTargetCl(DLLMSolver):
         
         self.__dpF_list_dpW = None 
         
-        self.__target_Cl    = 0.5
+        self.__target_Cl    = 0.0
 
         # initialize the Newton-Raphson problem
         self.__NRPb = None 
@@ -85,10 +85,10 @@ class DLLMTargetCl(DLLMSolver):
         OC.set_AoA_rad(AoA)
         
         R    = DLLMDirect.comp_R(iAoA)
-        Cl   = DLLMPost.comp_Cl()
-
+        DLLMPost.run(F_list_names=['Cl'])
+       
         self.__R_TCl[:self.__N] = R[:]
-        self.__R_TCl[self.__N]  = Cl - self.__target_Cl
+        self.__R_TCl[self.__N]  = DLLMPost.Cl - self.__target_Cl
         
         return self.__R_TCl
     
@@ -101,11 +101,14 @@ class DLLMTargetCl(DLLMSolver):
         AoA  = W[self.__N]
         OC.set_AoA_rad(AoA)
         
+        # Init information
+        DLLMDirect.comp_R(iAoA)
         dpR_dpiAoA  = DLLMDirect.comp_dpR_dpiAoA(iAoA)
-        dpCl_dpiAoA = DLLMPost.comp_dpCl_dpiAoA()
-        
         dpR_dpAoA   = DLLMDirect.comp_dpR_dpAoA()
-        dpCl_dpAoA  = DLLMPost.dpCl_dpAoA()        
+        
+        DLLMPost.run(F_list_names=['Cl'])
+        dpCl_dpiAoA = DLLMPost.dpCl_dpiAoA
+        dpCl_dpAoA  = DLLMPost.dpCl_dpAoA        
         
         self.__dpR_TCl_dpW[0:self.__N,0:self.__N] = dpR_dpiAoA[:,:]
         self.__dpR_TCl_dpW[self.__N,0:self.__N]   = dpCl_dpiAoA[:]
@@ -125,7 +128,7 @@ class DLLMTargetCl(DLLMSolver):
         DLLMDirect = self.get_DLLMDirect()
         DLLMPost   = self.get_DLLMPost()
         dpR_dpchi  = DLLMDirect.get_dpR_dpchi()
-        dpCl_dpchi = DLLMPost.dpCl_dpchi()
+        dpCl_dpchi = DLLMPost.dpCl_dpchi
         
         self.__dpR_TCl_dpchi[:self.__N,:] = dpR_dpchi[:,:]
         self.__dpR_TCl_dpchi[self.__N,:]  = dpCl_dpchi[:]

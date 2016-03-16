@@ -54,7 +54,7 @@ wing_param.convert_to_design_variable('tip_chord',(1.,2.))
 wing_param.convert_to_design_variable('root_height',(1.,1.5))
 wing_param.convert_to_design_variable('break_height',(0.8,1.2))
 wing_param.convert_to_design_variable('tip_height',(0.2,0.5))
-wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
+wing_param.build_linear_airfoil(OC, AoA0=-2., set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()
 

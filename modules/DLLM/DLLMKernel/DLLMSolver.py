@@ -232,7 +232,7 @@ class DLLMSolver:
     def run_direct(self):
         self.__DLLMDirect.run()
         
-    def run_post(self,F_list_names=None):
+    def run_post(self, F_list_names=None):
         ERROR_MSG=self.ERROR_MSG+'run_post: '
         if self.is_direct_computed():
             self.__DLLMPost.run(F_list_names=F_list_names)

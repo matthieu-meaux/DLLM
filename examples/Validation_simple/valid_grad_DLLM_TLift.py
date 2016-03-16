@@ -25,7 +25,7 @@ from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
 from DLLM.DLLMGeom.wing_param import Wing_param
 from DLLM.DLLMKernel.DLLMTargetLift import DLLMTargetLift
 from MDOTools.OC.operating_condition import OperatingCondition
-import numpy
+import numpy as np
 import sys
 
 OC=OperatingCondition('cond1')
@@ -57,47 +57,55 @@ wing_param.convert_to_design_variable('tip_chord',(1.,2.))
 wing_param.convert_to_design_variable('root_height',(1.,1.5))
 wing_param.convert_to_design_variable('break_height',(0.8,1.2))
 wing_param.convert_to_design_variable('tip_height',(0.2,0.5))
-wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
+wing_param.build_linear_airfoil(OC, AoA0=-2., set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()
 
 print wing_param
 
 x0=wing_param.get_dv_array()
-print 'dv array shape',x0.shape
-print 'dv_array=',x0
 
-F_list_names = ['Drag','Drag_Pressure','Drag_Induced','Drag_Wave','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdi', 'Cdw', 'Cdf', 'LoD']
+DLLM = DLLMTargetLift('Simple',wing_param,OC)
+DLLM.set_target_Lift(769200.)
+DLLM.run_direct()
+DLLM.run_post()
+Ref_F = DLLM.get_F_list()
 
 def f(x):
     wing_param.update_from_x_list(x)
     DLLM = DLLMTargetLift('Simple',wing_param,OC)
     DLLM.set_target_Lift(769200.)
-    DLLM.set_F_list_names(F_list_names)
     DLLM.run_direct()
     DLLM.run_post()
-    func=DLLM.get_F_list()
+    func=DLLM.get_F_list()/Ref_F
     return func
 
 def df(x):
     wing_param.update_from_x_list(x)
     DLLM = DLLMTargetLift('Simple',wing_param,OC)
     DLLM.set_target_Lift(769200.)
-    DLLM.set_F_list_names(F_list_names)
     DLLM.run_direct()
     DLLM.run_post()
     DLLM.run_adjoint()
-    func_grad=numpy.array(DLLM.get_dF_list_dchi())
-    return func_grad
+    func_grad=np.array(DLLM.get_dF_list_dchi())
+    N = func_grad.shape[0]
+    ndv = func_grad.shape[1]
+    out_grad = np.zeros((N,ndv))
+    for i in xrange(N):
+        out_grad[i,:] = func_grad[i,:]/Ref_F[i]
+    return out_grad
 
 val_grad=FDValidGrad(2,f,df,fd_step=1.e-8)
-ok,df_fd,df=val_grad.compare(x0,treshold=1.e-6,split_out=True,return_all=True)
+ok,df_fd,df=val_grad.compare(x0,treshold=1.e-5,split_out=True,return_all=True)
 
 for j in xrange(len(df[:,0])):
+    #print 'index =',j,DLLM.get_F_list_names()[j]
     fid=open('gradient_file'+str(j)+'.dat','w')
     for i in xrange(len(x0)):
         fid.write(str(i)+' '+str(df_fd[j,i])+' '+str(df[j,i])+'\n')
     fid.close()
+
+print 'target lift  = ',DLLM.get_DLLMPost().Lift, 'target =',769200.
 
 print '\n****************************************************'
 if ok:

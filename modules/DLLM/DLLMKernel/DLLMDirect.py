@@ -128,10 +128,7 @@ class DLLMDirect:
         iAoA0 = zeros(N)
         self.comp_R(iAoA0)
         self.comp_dpR_dpiAoA(iAoA0)
-        self.__NRPb = NewtonRaphsonProblem(
-            iAoA0,
-            self.comp_R,
-            self.comp_dpR_dpiAoA,verbose = self.__verbose)
+        self.__NRPb = NewtonRaphsonProblem(iAoA0,self.comp_R,self.comp_dpR_dpiAoA,verbose = self.__verbose)
         self.__NRPb.set_relax_factor(0.99)
         self.__NRPb.set_stop_residual(1.e-9)
         self.__NRPb.set_max_iterations(100)
@@ -255,9 +252,8 @@ class DLLMDirect:
 
     def __compute_dpgamma_dpthetaY(self):
         N = self.get_N()
-        Mach = self.get_OC().get_Mach()
         for i in xrange(N):
-            self.__dpgamma_dplocalAoA[i,i] = self.get_airfoils()[i].dpgamma_dpAoA(self.__localAoA[i],Mach)
+            self.__dpgamma_dplocalAoA[i,i] = self.get_airfoils()[i].dgamma_dAoA
 
         self.__dpgamma_dpthetaY = dot(self.__dpgamma_dplocalAoA,self.__dplocalAoA_dpthetaY)
 

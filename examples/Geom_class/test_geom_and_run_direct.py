@@ -41,7 +41,7 @@ OC.compute_atmosphere()
 
 #-- Build Geom class
 span  = 40.
-sweep = 34.
+sweep = 34.*np.pi/180.
 
 wing_geom = DLLM_Geom('test_geom',n_sect=20, grad_active=False)
 #-- initialize arrays
@@ -57,6 +57,7 @@ eta            = np.zeros((3,N+1))
 twist[:]          = 0. # 0. twist for all sections
 chords_eta[:]     = 5. # 5m chord for all sections
 rel_thicks_eta[:] = 0.15 # same rel_thick for all sections
+sweep_eta[:] = sweep
 for i, r in enumerate(r_list):
     abs_r = abs(r)
     eta[0, i] = abs_r * span * np.sin(sweep) + 0.25 * chords_eta[i]

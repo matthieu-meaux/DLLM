@@ -40,7 +40,7 @@ class DLLMTargetLift(DLLMSolver):
         
         self.__dpF_list_dpW = None 
         
-        self.__target_Lift    = 10000.
+        self.__target_Lift    = 0.
 
         # initialize the Newton-Raphson problem
         self.__NRPb = None 
@@ -84,10 +84,10 @@ class DLLMTargetLift(DLLMSolver):
         OC.set_AoA_rad(AoA)
         
         R    = DLLMDirect.comp_R(iAoA)
-        Lift = DLLMPost.comp_Lift()
+        DLLMPost.run(F_list_names=['Lift'])
 
         self.__R_TL[:self.__N] = R[:]
-        self.__R_TL[self.__N]  = Lift - self.__target_Lift
+        self.__R_TL[self.__N]  = DLLMPost.Lift- self.__target_Lift
         
         return self.__R_TL
     
@@ -100,12 +100,15 @@ class DLLMTargetLift(DLLMSolver):
         AoA  = W[self.__N]
         OC.set_AoA_rad(AoA)
         
-        dpR_dpiAoA    = DLLMDirect.comp_dpR_dpiAoA(iAoA)
-        dpLift_dpiAoA = DLLMPost.comp_dpLift_dpiAoA()
-        
+        # Init information
+        DLLMDirect.comp_R(iAoA)
+        dpR_dpiAoA  = DLLMDirect.comp_dpR_dpiAoA(iAoA)
         dpR_dpAoA   = DLLMDirect.comp_dpR_dpAoA()
-        dpLift_dpAoA  = DLLMPost.dpLift_dpAoA()        
         
+        DLLMPost.run(F_list_names=['Lift'])
+        dpLift_dpiAoA = DLLMPost.dpLift_dpiAoA
+        dpLift_dpAoA  = DLLMPost.dpLift_dpAoA
+      
         self.__dpR_TL_dpW[0:self.__N,0:self.__N] = dpR_dpiAoA[:,:]
         self.__dpR_TL_dpW[self.__N,0:self.__N]   = dpLift_dpiAoA[:]
         
@@ -124,7 +127,7 @@ class DLLMTargetLift(DLLMSolver):
         DLLMDirect = self.get_DLLMDirect()
         DLLMPost   = self.get_DLLMPost()
         dpR_dpchi    = DLLMDirect.get_dpR_dpchi()
-        dpLift_dpchi = DLLMPost.dpLift_dpchi()
+        dpLift_dpchi = DLLMPost.dpLift_dpchi
         
         self.__dpR_TL_dpchi[:self.__N,:] = dpR_dpchi[:,:]
         self.__dpR_TL_dpchi[self.__N,:]  = dpLift_dpchi[:]
@@ -157,4 +160,3 @@ class DLLMTargetLift(DLLMSolver):
         DLLMDirect.write_gamma_to_file()
         if self.get_grad_active():
             DLLMDirect.comp_dpR_dpchi()
-       

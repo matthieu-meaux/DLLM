@@ -22,7 +22,7 @@
 # @author : Matthieu Meaux
 
 import unittest
-from numpy import array
+import numpy as np
 
 from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
 from DLLM.DLLMGeom.wing_param import Wing_param
@@ -62,7 +62,7 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
         wing_param.convert_to_design_variable('root_height',(1.,1.5))
         wing_param.convert_to_design_variable('break_height',(0.8,1.2))
         wing_param.convert_to_design_variable('tip_height',(0.2,0.5))
-        wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
+        wing_param.build_linear_airfoil(OC, AoA0=-2., set_as_ref=True)
         wing_param.build_airfoils_from_ref()
         wing_param.update()
         
@@ -73,7 +73,6 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
         DLLM = DLLMTargetCl('Simple',wing_param,OC)
 #         F_list=DLLM.get_F_list()
         F_list_names=DLLM.get_F_list_names()
-        print F_list_names
         DLLM.set_target_Cl(0.5)
         DLLM.run_direct()
         DLLM.run_post()
@@ -86,7 +85,13 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
     def test_DLLM_valid_grad_TCl(self):
         OC,wing_param = self.__init_wing_param()
         x0=wing_param.get_dv_array()
-           
+        
+        DLLM = DLLMTargetCl('Simple',wing_param,OC)
+        DLLM.set_target_Cl(0.5)
+        DLLM.run_direct()
+        DLLM.run_post()
+        Ref_list=DLLM.get_F_list()
+        
         def f1(x):
             wing_param.update_from_x_list(x)
             DLLM = DLLMTargetCl('Simple',wing_param,OC)
@@ -94,7 +99,7 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
             DLLM.run_direct()
             DLLM.run_post()
             func=DLLM.get_F_list()
-            return func
+            return func/Ref_list
            
         def df1(x):
             wing_param.update_from_x_list(x)
@@ -103,11 +108,16 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
             DLLM.run_direct()
             DLLM.run_post()
             DLLM.run_adjoint()
-            func_grad=array(DLLM.get_dF_list_dchi())
-            return func_grad
+            func_grad=np.array(DLLM.get_dF_list_dchi())
+            N = func_grad.shape[0]
+            ndv = func_grad.shape[1]
+            out_grad = np.zeros((N,ndv))
+            for i in xrange(N):
+                out_grad[i,:] = func_grad[i,:]/Ref_list[i]
+            return out_grad
            
         val_grad1=FDValidGrad(2,f1,df1,fd_step=1.e-8)
-        ok1,df_fd1,df1=val_grad1.compare(x0,treshold=1.e-6,split_out=True,return_all=True)
+        ok1,df_fd1,df1=val_grad1.compare(x0,treshold=1.e-5,split_out=True,return_all=True)
         assert(ok1)
         
     def test_DLLM_valid_TLift(self):
@@ -115,7 +125,6 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
         DLLM = DLLMTargetLift('Simple',wing_param,OC)
 #         F_list=DLLM.get_F_list()
         F_list_names=DLLM.get_F_list_names()
-        print F_list_names
         DLLM.set_target_Lift(769200.)
         DLLM.run_direct()
         DLLM.run_post()
@@ -129,33 +138,39 @@ class TestDLLMSimpleTClTLift(unittest.TestCase):
     def test_DLLM_valid_grad_TLift(self):
         OC,wing_param = self.__init_wing_param()
         x0=wing_param.get_dv_array()
+        
         DLLM = DLLMTargetLift('Simple',wing_param,OC)
-        F_list_names = DLLM.get_DLLMPost().DEF_F_LIST_NAMES
-#        F_list_names.remove('Lift')
+        DLLM.set_target_Lift(769200.)
+        DLLM.run_direct()
+        DLLM.run_post()
+        Ref_list=DLLM.get_F_list()
   
         def f2(x):
             wing_param.update_from_x_list(x)
             DLLM = DLLMTargetLift('Simple',wing_param,OC)
             DLLM.set_target_Lift(769200.)
-            DLLM.set_F_list_names(F_list_names)
             DLLM.run_direct()
             DLLM.run_post()
             func=DLLM.get_F_list()
-            return func
+            return func/Ref_list
           
         def df2(x):
             wing_param.update_from_x_list(x)
             DLLM = DLLMTargetLift('Simple',wing_param,OC)
             DLLM.set_target_Lift(769200.)
-            DLLM.set_F_list_names(F_list_names)
             DLLM.run_direct()
             DLLM.run_post()
             DLLM.run_adjoint()
-            func_grad=array(DLLM.get_dF_list_dchi())
-            return func_grad
+            func_grad=np.array(DLLM.get_dF_list_dchi())
+            N = func_grad.shape[0]
+            ndv = func_grad.shape[1]
+            out_grad = np.zeros((N,ndv))
+            for i in xrange(N):
+                out_grad[i,:] = func_grad[i,:]/Ref_list[i]
+            return out_grad
       
-        val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-6)
-        ok2,df_fd2,df2=val_grad2.compare(x0,treshold=1.e-2,split_out=True,return_all=True)
+        val_grad2=FDValidGrad(2,f2,df2,fd_step=1.e-8)
+        ok2,df_fd2,df2=val_grad2.compare(x0,treshold=1.e-5,split_out=True,return_all=True)
         assert(ok2)
         
 if __name__ == '__main__':

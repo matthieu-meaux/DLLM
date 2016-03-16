@@ -266,6 +266,7 @@ class DLLMPost:
         ERROR_MSG = self.ERROR_MSG + 'run: '
         N = self.get_N()
         grad_active = self.get_grad_active()
+            
         self.__init_run()
         self.__basic_analysis()
 
@@ -275,7 +276,11 @@ class DLLMPost:
         if grad_active:
             Sref_grad = self.get_Sref_grad()
             
-        for i, F_name in enumerate(self.__F_list_names_calc):
+        if F_list_names is None:
+            F_names_list = self.__F_list_names_calc
+        else: 
+            F_names_list = F_list_names
+        for i, F_name in enumerate(F_names_list):
             if F_name == 'Cl':
                 val = self.Cl
             elif F_name == 'Cdi':
@@ -321,7 +326,11 @@ class DLLMPost:
                 print "Post : partial derivatives for gradient assembly"
             else:
                 print "Post : partial derivatives for other applications"
-        for i, F_name in enumerate(self.__F_list_names):
+        if F_list_names is None:
+            F_names_list = self.__F_list_names
+        else: 
+            F_names_list = F_list_names
+        for i, F_name in enumerate(F_names_list):
             if F_name == 'Cl':
                 val = self.Cl
                 dpFdpiAoA   = self.dpCl_dpiAoA
