@@ -48,7 +48,7 @@ wing_param.set_value('tip_chord',1.0)
 wing_param.set_value('root_height',0.15)
 wing_param.set_value('break_height',0.15)
 wing_param.set_value('tip_height',0.15)
-wing_param.build_linear_airfoil(OC, AoA0=0., Cm0=0.0, set_as_ref=True)
+wing_param.build_linear_airfoil(OC, AoA0=0., set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()
 

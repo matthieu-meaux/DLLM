@@ -84,10 +84,9 @@ def run(AoA):
     return F_list
 
 fid=open('polar_meta.dat','w')
-for i in range(-10,10):
-    AoA=float(i)
-    F_list=run(i)
-    fid.write(str(F_list[0])+' '+str(F_list[1])+' '+str(F_list[2])+' '+str(F_list[3])+'\n')
+for AoA in np.linspace(-10.,10.,30):
+    F_list=run(AoA)
+    fid.write(str(AoA)+' '+str(F_list[0])+' '+str(F_list[1])+' '+str(F_list[2])+' '+str(F_list[3])+'\n')
 fid.close()
 
 

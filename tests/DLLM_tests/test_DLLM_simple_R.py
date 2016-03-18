@@ -156,7 +156,6 @@ class TestDLLMSimpleR(unittest.TestCase):
         val_grad4=FDValidGrad(2,f4,df4,fd_step=1.e-8)
         ok4,df_fd4,df4=val_grad4.compare([AoA0],treshold=1.e-6,return_all=True)
         assert(ok4)
-
            
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestDLLMSimpleR)

@@ -21,7 +21,7 @@
 #
 #  @author : Matthieu MEAUX
 #
-
+import numpy as np
 from DLLM.DLLMEval.DLLMWrapper import DLLMWrapper
 
 def run(AoA):
@@ -36,7 +36,6 @@ def run(AoA):
     config_dict['cond1.param.n_sect']=20
     config_dict['cond1.param.airfoil.type']='simple'
     config_dict['cond1.param.airfoil.AoA0']=-2.
-    config_dict['cond1.param.airfoil.Cm0']=-0.1
     # config_dict['cond1.param.airfoil.type']='meta'
     # config_dict['cond1.param.airfoil.surrogate_model']='../MetaModelCleaning.xml'
     config_dict['cond1.param.desc.span.type']='DesignVariable'
@@ -75,7 +74,7 @@ def run(AoA):
     config_dict['cond1.DLLM.max_iterations']=100
     config_dict['cond1.DLLM.gamma_file_name']='gamma.dat'
     #config_dict['cond1.DLLM.F_list_names']=['Lift','Drag','Drag_Pressure','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdf', 'LoD']
-    config_dict['cond1.DLLM.F_list_names']=['Lift','Drag','Drag_Wave','LoD']
+    config_dict['cond1.DLLM.F_list_names']=['Lift','Drag','LoD']
     #config_dict['cond1.DLLM.target_Cl']=0.5
     #config_dict['cond1.DLLM.target_Lift']=769200.
     
@@ -86,10 +85,9 @@ def run(AoA):
     return F_list
 
 fid=open('polar_simple.dat','w')
-for i in range(-10,10):
-    AoA=float(i)
-    F_list=run(i)
-    fid.write(str(F_list[0])+' '+str(F_list[1])+' '+str(F_list[2])+' '+str(F_list[3])+'\n')
+for AoA in np.linspace(-10.,10.,30):
+    F_list=run(AoA)
+    fid.write(str(AoA)+' '+str(F_list[0])+' '+str(F_list[1])+' '+str(F_list[2])+'\n')
 fid.close()
 
 

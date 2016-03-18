@@ -246,7 +246,7 @@ class Wing_param(DLLM_Geom):
     def __config_airfoils(self, OC, config_dict):
         in_keys_list = config_dict.keys()
 
-        airfoil_type_key = self.__tag + '.airfoil.type'
+        airfoil_type_key = self.get_tag() + '.airfoil.type'
         if airfoil_type_key in in_keys_list:
             airfoil_type = config_dict[airfoil_type_key]
         else:
@@ -255,19 +255,13 @@ class Wing_param(DLLM_Geom):
         self.set_airfoil_type(airfoil_type)
         
         if airfoil_type == 'simple':
-            AoA0_key = self.__tag + '.airfoil.AoA0'
+            AoA0_key = self.get_tag() + '.airfoil.AoA0'
             if AoA0_key in in_keys_list:
                 AoA0 = config_dict[AoA0_key]
             else:
                 AoA0 = 0.
 
-            Cm0_key = self.__tag + '.airfoil.Cm0'
-            if Cm0_key in in_keys_list:
-                Cm0 = config_dict[Cm0_key]
-            else:
-                Cm0 = 0.
-
-            self.build_linear_airfoil(OC, AoA0=AoA0, Cm0=Cm0, set_as_ref=True)
+            self.build_linear_airfoil(OC, AoA0=AoA0, set_as_ref=True)
 
         elif airfoil_type == 'meta':
             surrogate_model_key = self.__tag + '.airfoil.surrogate_model'
@@ -290,10 +284,10 @@ class Wing_param(DLLM_Geom):
             words=in_key.split('.')
             if len(words) >=4:
                 test=string.join(words[:-2],'.')
-                if test==self.__tag+'.desc':
+                if test==self.get_tag()+'.desc':
                     name=words[-2]
                     Id=name
-                    Id_in=self.__tag+'.desc.'+name
+                    Id_in=self.get_tag()+'.desc.'+name
                     type=config_dict[Id_in+'.type']
                     if Id not in existing_keys and Id not in added_list:
                         if   type == 'DesignVariable':
@@ -312,7 +306,7 @@ class Wing_param(DLLM_Geom):
         for existing_id in existing_keys:
             ex_words=existing_id.split('.')
             name=ex_words[-1]
-            Id_in=self.__tag+'.desc.'+name
+            Id_in=self.get_tag()+'.desc.'+name
             Id=name
             if Id_in+'.type' in in_keys_list:
                 type=config_dict[Id_in+'.type']
@@ -578,9 +572,13 @@ class Wing_param(DLLM_Geom):
         chords_eta = self.get_chords_eta()
         chords_grad_eta = self.get_chords_grad_eta()
         for i in xrange(N+1):
-            rel_thicks_eta[i] = heights_eta[i] / chords_eta[i]
-            rel_thicks_grad_eta[i,:] = (heights_grad_eta[i,:] * chords_eta[i] - heights_eta[i] * chords_grad_eta[i,:]) / \
-                                       (chords_eta[i])**2
+            if chords_eta[i] ==0.:
+                rel_thicks_eta[i] = 0.
+                rel_thicks_grad_eta[i,:] = 0.*chords_eta[i]
+            else:
+                rel_thicks_eta[i] = heights_eta[i] / chords_eta[i]
+                rel_thicks_grad_eta[i,:] = (heights_grad_eta[i,:] * chords_eta[i] - heights_eta[i] * chords_grad_eta[i,:]) / \
+                                           (chords_eta[i])**2
                                        
         self.set_rel_thicks_eta(rel_thicks_eta)
         self.set_rel_thicks_grad_eta(rel_thicks_grad_eta)          
@@ -626,6 +624,7 @@ class Wing_param(DLLM_Geom):
                                    self.__tip_height * self.__tip_chord_grad) / self.__tip_chord**2
                                    
     def __repr__(self):
+        DLLM_Geom.__repr__(self)
         info_string = '\n*** Wing param information ***'
         info_string += '\n  geom_type    : ' + str(self.__geom_type)
         info_string += '\n  n_sect       : ' + str(self.get_n_sect())

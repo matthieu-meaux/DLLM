@@ -56,7 +56,7 @@ wing_param.convert_to_design_variable('tip_chord',(1.,2.))
 wing_param.convert_to_design_variable('root_height',(1.,1.5))
 wing_param.convert_to_design_variable('break_height',(0.8,1.2))
 wing_param.convert_to_design_variable('tip_height',(0.2,0.5))
-wing_param.build_linear_airfoil(OC, AoA0=-2., Cm0=-0.1, set_as_ref=True)
+wing_param.build_linear_airfoil(OC, AoA0=-2., set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()
 
@@ -67,6 +67,7 @@ x0=wing_param.get_dv_array()
 DLLM = DLLMSolver('Simple',wing_param,OC)
 DLLM.run_direct()
 DLLM.run_post()
+Post=DLLM.get_DLLMPost()
 iAoA0=DLLM.get_iAoA()
 
 AoA0=OC.get_AoA_rad()
@@ -74,19 +75,15 @@ AoA0=OC.get_AoA_rad()
 def f(x):
     OC.set_AoA_rad(x[0])
     R=DLLM.comp_R(iAoA0)
-#     print 'x=',x
-#     print 'R=',R
-#     print 'iAoA updated?:',DLLM.get_iAoA()
-    Post=DLLM.get_DLLMPost()
-    func=Post.comp_Lift_distrib()
-#     print 'func=',func
+    Post.run()
+    func=Post.Lift_distrib
     return func
 
 def df(x):
     OC.set_AoA_rad(x[0])
     R=DLLM.comp_R(iAoA0)
-    Post=DLLM.get_DLLMPost()
-    func_grad=Post.comp_dpLift_distrib_dpAoA()
+    Post.run()
+    func_grad=Post.dpLift_distrib_dpAoA
     N=len(func_grad)
     np_func_grad=numpy.zeros((N,1))
     np_func_grad[:,0]=func_grad[:]

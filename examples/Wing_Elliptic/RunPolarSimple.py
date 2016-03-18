@@ -47,13 +47,14 @@ wing_param.set_distrib_type('cos_law')
 wing_param.build_wing()
 wing_param.set_value('span',40.)
 wing_param.set_value('root_chord',4.)
-wing_param.set_value('root_height',0.0)
-wing_param.set_value('tip_height',0.0)
-wing_param.build_linear_airfoil(OC, AoA0=0., Cm0=-0.1, set_as_ref=True)
+wing_param.set_value('root_height',0.1)
+wing_param.set_value('tip_height',0.01)
+wing_param.build_linear_airfoil(OC, AoA0=0., set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()
+wing_param.plot()
+print wing_param
 
-print 'AR=',wing_param.get_AR()
     
 def RunPolar(wing_param, OC, AoA_list, polar_name):
     

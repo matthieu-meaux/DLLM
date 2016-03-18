@@ -46,7 +46,6 @@ config_dict['Case.param.geom_type']='Broken'
 config_dict['Case.param.n_sect']=20
 config_dict['Case.param.airfoil.type']='simple'
 config_dict['Case.param.airfoil.AoA0']=-2.
-config_dict['Case.param.airfoil.Cm0']=-0.1
 # config_dict['Case.param.airfoil.type']='meta'
 # config_dict['Case.param.airfoil.surrogate_model']='../MetaModelCleaning.xml'
 config_dict['Case.param.desc.span.type']='DesignVariable'
@@ -94,23 +93,4 @@ MP=DLLMMP('Case')
 MP.configure(config_dict)
 MP.analysis()
 
-
-# # Parameterisation configuration
-
-# 
-# # DLLM configuration
-# config_dict['cond1.DLLM.type']='Solver'
-# config_dict['cond1.DLLM.method']='inhouse'
-# config_dict['cond1.DLLM.relax_factor']=0.99
-# config_dict['cond1.DLLM.stop_residual']=1e-9
-# config_dict['cond1.DLLM.max_iterations']=100
-# config_dict['cond1.DLLM.gamma_file_name']='gamma.dat'
-# #config_dict['cond1.DLLM.F_list_names']=['Lift','Drag','Drag_Pressure','Drag_Friction','Cl', 'Cd', 'Cdp', 'Cdf', 'LoD']
-# config_dict['cond1.DLLM.F_list_names']=['Lift','Drag','Drag_Pressure','Drag_Friction','LoD']
-# #config_dict['cond1.DLLM.target_Cl']=0.5
-# #config_dict['cond1.DLLM.target_Lift']=769200.
-# 
-# DLLMcond1=DLLMWrapper('cond1')
-# DLLMcond1.configure(config_dict)
-# DLLMcond1.analysis_and_grad()
 

@@ -204,6 +204,7 @@ class DLLMDirect:
         self.__compute_iAoAnew()
 
         self.__R = self.__iAoA - self.__iAoANew
+        
 
         return self.__R
 
@@ -309,6 +310,11 @@ class DLLMDirect:
         for i in xrange(N):
             self.get_airfoils()[i].compute(self.__localAoA[i],Mach)
             self.__gamma[i] = self.get_airfoils()[i].gamma
+            if np.isnan(self.get_airfoils()[i].gamma):
+                af = self.get_airfoils()[i]
+                print 'Lref = ',af.get_Lref()
+                print 'Sref = ',af.get_Sref()
+                print 'Cl = ',af.Cl
 
     def __compute_dpgamma_dpiAoA(self):
         N = self.get_N()

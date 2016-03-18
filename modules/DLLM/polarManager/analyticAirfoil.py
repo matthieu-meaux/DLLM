@@ -154,6 +154,12 @@ class AnalyticAirfoil(Airfoil):
         #-- Compute Cl
         self.Cl = self.dCl_dAoA*(AoA-self.__AoA0)
         
+        if np.isnan(self.Cl):
+            print 'dCl_dAoA = ',self.dCl_dAoA
+            print 'sweep_corr = ',sweep_corr
+            print 'thick_corr = ',thick_corr
+            print 'toc = ',toc
+        
         #-- Compute dCl_dchi
         if self.is_grad_active():
             self.dCl_dchi = d2Cl_dAoAdchi*(AoA-self.__AoA0)

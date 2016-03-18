@@ -70,6 +70,5 @@ DLLM.run_post()
 
 Post=DLLM.get_DLLMPost()
 
-dpLift_distrib_dpiAoA=Post.comp_dpLift_distrib_dpiAoA()
-print dpLift_distrib_dpiAoA
+print Post.dpLift_distrib_dpiAoA
 

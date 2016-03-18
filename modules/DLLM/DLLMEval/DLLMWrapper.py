@@ -123,19 +123,19 @@ class DLLMWrapper():
         
     def run(self, x):
         self.__wing_param.update_from_x_list(x)
-        self.__DLLM_solver.set_wing_param(self.__wing_param)
+        self.__DLLM_solver.set_geom(self.__wing_param)
         F_list=self.analysis()
         return F_list
     
     def run_grad(self, x):
         self.__wing_param.update_from_x_list(x)
-        self.__DLLM_solver.set_wing_param(self.__wing_param)
+        self.__DLLM_solver.set_geom(self.__wing_param)
         F_list_grad=self.analysis_grad()
         return F_list_grad
     
     def run_and_grad(self, x):
         self.__wing_param.update_from_x_list(x)
-        self.__DLLM_solver.set_wing_param(self.__wing_param)
+        self.__DLLM_solver.set_geom(self.__wing_param)
         F_list,F_list_grad = self.analysis_and_grad()
         return F_list,F_list_grad
     

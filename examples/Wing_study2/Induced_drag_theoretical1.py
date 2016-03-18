@@ -45,12 +45,13 @@ wing_param.set_value('tip_chord',1.5)
 wing_param.set_value('root_height',1.28)
 wing_param.set_value('break_height',0.97)
 wing_param.set_value('tip_height',0.33)
-wing_param.build_linear_airfoil(OC, AoA0=0., Cm0=-0.1, set_as_ref=True)
+wing_param.build_linear_airfoil(OC, AoA0=0., set_as_ref=True)
 wing_param.build_airfoils_from_ref()
 wing_param.update()
 
 airfoils=wing_param.get_linked_airfoils()
-Cla=airfoils[0].ClAlpha(0.0,0.3)
+airfoils[0].compute(0.,0.3)
+Cla=airfoils[0].dCl_dAoA
 
 print "Cla=",Cla
 

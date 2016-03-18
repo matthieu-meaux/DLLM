@@ -48,7 +48,6 @@ config_dict['Case.param.geom_type']='Broken'
 config_dict['Case.param.n_sect']=20
 config_dict['Case.param.airfoil.type']='simple'
 config_dict['Case.param.airfoil.AoA0']=-2.
-config_dict['Case.param.airfoil.Cm0']=-0.1
 # config_dict['Case.param.airfoil.type']='meta'
 # config_dict['Case.param.airfoil.surrogate_model']='../MetaModelCleaning.xml'
 config_dict['Case.param.desc.span.type']='DesignVariable'
