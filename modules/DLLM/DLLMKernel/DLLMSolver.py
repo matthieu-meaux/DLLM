@@ -29,6 +29,8 @@ from DLLM.DLLMKernel.DLLMDirect import DLLMDirect
 from DLLM.DLLMKernel.DLLMPost import DLLMPost
 from DLLM.DLLMKernel.DLLMAdjoint import DLLMAdjoint
 
+import numpy as np
+
 class DLLMSolver:
     ERROR_MSG='ERROR in DLLMSolver.'
     def __init__(self, tag, geom, OC, verbose = 0, grad_active=True):
@@ -47,6 +49,8 @@ class DLLMSolver:
         
         self.__geom        = geom
         self.__OC          = OC
+        
+        self.__xyz_ref     = np.array([0.,0.,0.])
         
         self.__Lref        = 0.
         self.__Sref        = 0.
@@ -89,6 +93,9 @@ class DLLMSolver:
     
     def get_Sref_grad(self):
         return self.__geom.get_Sref_grad()
+    
+    def get_xyz_ref(self):
+        return self.__xyz_ref
     
     def get_DLLMMesh(self):
         return self.__DLLMMesh
@@ -227,6 +234,9 @@ class DLLMSolver:
         
     def set_gamma_file_name(self, gamma_f_name):
         self.__DLLMDirect.set_gamma_file_name(gamma_f_name)
+        
+    def set_xyz_ref(self, xyz_ref):
+        self.__xyz_ref = xyz_ref
         
     #-- Run methods
     def run_direct(self):

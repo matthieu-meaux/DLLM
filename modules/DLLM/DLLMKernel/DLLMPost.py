@@ -24,8 +24,10 @@
 #
 
 import string
+import numpy as np
 from numpy import zeros, dot
 from numpy import sin, cos
+from scipy.optimize import fsolve
 import matplotlib.pylab as plt
 
 class DLLMPost:
@@ -46,6 +48,7 @@ class DLLMPost:
         'Drag_Pressure',
         'Drag',
         'LoD',
+        'Cmy',
         'Sref']
     
     ERROR_MSG = 'ERROR in DLLMPost.'
@@ -136,6 +139,19 @@ class DLLMPost:
         self.dpDrag_distrib_dpAoA      = None
         self.dpDrag_distrib_dpthethaY  = None
         self.dpDrag_distrib_dpchi      = None
+        
+        # Need gradients for moments?
+        self.Cm_ref              = None
+        self.dpCm_ref_dpiAoA     = None
+        self.dpCm_ref_dpAoA      = None
+        self.dpCm_ref_dpthethaY  = None
+        self.dpCm_ref_dpchi      = None
+        
+        #-- Center of Lift
+        self.CoL              = None
+        
+        #-- Center of Drag
+        self.CoD              = None
 
         self.__computed = False
         self.__target_loads = None
@@ -161,6 +177,9 @@ class DLLMPost:
 
     def get_ndv(self):
         return self.get_geom().get_ndv()
+    
+    def get_xyz_ref(self):
+        return self.__LLW.get_xyz_ref()
 
     def get_F_list_names(self):
         return self.__F_list_names
@@ -314,6 +333,8 @@ class DLLMPost:
                 Cd = (self.Cdi+self.Cdw+self.Cdvp+self.Cdf)
                 val = Cl/Cd
                 self.LoD = Cl/Cd
+            elif F_name == 'Cmy':
+                val = self.Cm_ref[1]
             elif F_name == 'Sref':
                 val = Sref
             else:
@@ -465,6 +486,14 @@ class DLLMPost:
                 if grad_active:
                     dpFdpchi  = self.dpLoD_dpchi 
                     
+            elif F_name == 'Cmy':
+                val = self.Cm_ref[1]
+                dpFdpiAoA = self.dpCm_ref_dpiAoA[1,:]
+                dpFdpAoA  = self.dpCm_ref_dpAoA[1]
+                dpFdpthetaY = self.dpCm_ref_dpthethaY[1,:]
+                if grad_active:
+                    dpFdpchi  = self.dpCm_ref_dpchi[1,:]
+                    
             elif F_name == 'Sref':
                 val = self.get_Sref()
                 dpFdpiAoA = zeros(N)
@@ -489,14 +518,19 @@ class DLLMPost:
     #-- basic analysis
     def __basic_analysis(self):
         grad_active = self.get_grad_active()
-        N          = self.get_N()  
-        iAoA       = self.get_iAoA()
-        airfoils   = self.get_airfoils()
+        Sref        = self.get_Sref()
+        N           = self.get_N()  
+        iAoA        = self.get_iAoA()
+        airfoils    = self.get_airfoils()
         dplocalAoA_dpiAoA   = self.get_dplocalAoA_dpiAoA()
         dplocalAoA_dpAoA    = self.get_dplocalAoA_dpAoA()
         dplocalAoA_dpthetaY = self.get_dplocalAoA_dpthetaY()
         Pdyn     = self.get_OC().get_Pdyn()
-        Sref     = self.get_Sref()
+        xyz_ref  = self.get_xyz_ref()
+        XYZ      = self.get_geom().get_XYZ()
+        XYZ_grad = self.get_geom().get_XYZ_grad()
+        chords      = self.get_geom().get_chords()
+        chords_grad = self.get_geom().get_chords_grad()
         
         if grad_active:
             ndv = self.get_ndv()
@@ -515,6 +549,11 @@ class DLLMPost:
         self.Cdw   = 0.0
         self.Cdvp  = 0.0
         self.Cdf   = 0.0
+        self.CoL   = 0.0
+        self.CoD   = 0.0
+        
+        self.CF     = zeros(3)
+        self.Cm_ref = zeros(3)
         
         self.dpCl_dpiAoA    = zeros(N)
         self.dpCdi_dpiAoA   = zeros(N)
@@ -523,6 +562,7 @@ class DLLMPost:
         self.dpCdf_dpiAoA   = zeros(N)
         self.dpLift_distrib_dpiAoA  = zeros((N,N))
         self.dpDrag_distrib_dpiAoA  = zeros((N,N))
+        self.dpCm_ref_dpiAoA        = zeros((3,N))
                   
         self.dpCl_dpAoA      = 0.0
         self.dpCdi_dpAoA     = 0.0
@@ -530,7 +570,8 @@ class DLLMPost:
         self.dpCdvp_dpAoA    = 0.0
         self.dpCdf_dpAoA     = 0.0
         self.dpLift_distrib_dpAoA    = zeros(N)
-        self.dpDrag_distrib_dpAoA    =zeros(N)
+        self.dpDrag_distrib_dpAoA    = zeros(N)
+        self.dpCm_ref_dpAoA          = zeros(3)
         
         self.dpCl_dpthethaY   = zeros(N)
         self.dpCdi_dpthethaY  = zeros(N)
@@ -539,6 +580,7 @@ class DLLMPost:
         self.dpCdf_dpthethaY  = zeros(N)
         self.dpLift_distrib_dpthethaY  = zeros((N,N))
         self.dpDrag_distrib_dpthethaY  = zeros((N,N))   
+        self.dpCm_ref_dpthethaY        = zeros((3,N))
         
         if grad_active:
             self.dpCl_dpchi   = zeros(ndv)
@@ -548,7 +590,8 @@ class DLLMPost:
             self.dpCdf_dpchi  = zeros(ndv)
             self.dpLift_distrib_dpchi = zeros((N,ndv))
             self.dpDrag_distrib_dpchi = zeros((N,ndv))
-
+            self.dpCm_ref_dpchi       = zeros((3,ndv))
+        
         #Note: all airfoils are computed already during direct run
         for i in xrange(N):
             af = airfoils[i]
@@ -556,6 +599,21 @@ class DLLMPost:
             if grad_active:
                 dsurf_fact = (af.get_Sref_grad()*Sref-af.get_Sref()*Sref_grad)/Sref**2
                 
+            # Recover airfoil xyz_cop
+            af_pcop = af.pcop
+            af_xyz_cop = np.zeros(3)
+            af_xyz_cop[0] = XYZ[0,i]+(af_pcop-0.25)*chords[i]
+            af_xyz_cop[1] = XYZ[1,i]
+            af_xyz_cop[2] = XYZ[2,i]
+            
+            # O = xyz_ref, Pi = af_xyz_cop
+            OPi = af_xyz_cop - xyz_ref
+            
+            if grad_active:
+                af_xyz_xop_grad      = XYZ_grad[:,i]
+                af_xyz_xop_grad[0,:] = af_xyz_xop_grad[0,:]+(af_pcop-0.25)*chords_grad[i,:]
+                OPi_grad= af_xyz_xop_grad
+            
             # Coefficients distributions
             self.Cl_distrib[i]   =  af.Cl * cos(iAoA[i])
             self.Cdi_distrib[i]  = -af.Cl * sin(iAoA[i])
@@ -563,9 +621,46 @@ class DLLMPost:
             self.Cdvp_distrib[i] =  af.Cdvp
             self.Cdf_distrib[i]  =  af.Cdf
             
-            self.Lift_distrib[i] = Pdyn*af.get_Sref()*af.Cl*cos(iAoA[i])
+            # data and partial derivatives needed
+            locCl =  af.Cl*cos(iAoA[i])
             locCd = -af.Cl*sin(iAoA[i])+af.Cdw+af.Cdvp+af.Cdf
+            dlocCl_dAoA    =  af.dCl_dAoA*cos(iAoA[i])
+            dlocCd_dAoA    = -af.dCl_dAoA*sin(iAoA[i])+af.dCdw_dAoA+af.dCdvp_dAoA+af.dCdf_dAoA
+            if grad_active:
+                dlocCl_dchi =  af.dCl_dchi*cos(iAoA[i])
+                dlocCd_dchi = -af.dCl_dchi*sin(iAoA[i])+af.dCdw_dchi+af.dCdvp_dchi+af.dCdf_dchi
+            
+            self.Lift_distrib[i] = Pdyn*af.get_Sref()*locCl
             self.Drag_distrib[i] = Pdyn*af.get_Sref()*locCd
+            
+            CFi    = np.zeros(3)
+            CFi[0] = locCd*af.get_Sref()
+            CFi[2] = locCl*af.get_Sref()
+            
+            dpCFi_dpiAoA = np.zeros((3,N))
+            dpCFi_dpiAoA[0,i] += -af.Cl*cos(iAoA[i])*af.get_Sref()
+            dpCFi_dpiAoA[0,:] += dlocCd_dAoA*af.get_Sref()*dplocalAoA_dpiAoA[i,:]
+            dpCFi_dpiAoA[2,i] += -af.Cl*sin(iAoA[i])*af.get_Sref()
+            dpCFi_dpiAoA[2,:] += dlocCl_dAoA*af.get_Sref()*dplocalAoA_dpiAoA[i,:]
+            
+            dpCFi_dpAoA    = np.zeros(3)
+            dpCFi_dpAoA[0] = dlocCd_dAoA*af.get_Sref()*dplocalAoA_dpAoA[i]
+            dpCFi_dpAoA[2] = dlocCl_dAoA*af.get_Sref()*dplocalAoA_dpAoA[i]
+            
+            dpCFi_dpthetaY    = np.zeros((3,N))
+            dpCFi_dpthetaY[0] = dlocCd_dAoA*af.get_Sref()*dplocalAoA_dpthetaY[i,:]
+            dpCFi_dpthetaY[2] = dlocCl_dAoA*af.get_Sref()*dplocalAoA_dpthetaY[i,:]
+            
+            if grad_active:
+                dpCFi_dpchi      = np.zeros((3,ndv))
+                dpCFi_dpchi[0,:] = dlocCd_dchi*af.get_Sref()+locCd*af.get_Sref_grad()+af.get_Sref()*dlocCd_dAoA*dlAoAdchi[i, :]
+                dpCFi_dpchi[2,:] = dlocCl_dchi*af.get_Sref()+locCl*af.get_Sref_grad()+af.get_Sref()*dlocCl_dAoA*dlAoAdchi[i, :]
+            
+            self.CoL += af_xyz_cop*locCl*af.get_Sref()
+            self.CoD += af_xyz_cop*locCd*af.get_Sref()
+            
+            self.CF += CFi
+            self.Cm_ref += np.cross(OPi,CFi)
             
             # Coefficients
             self.Cl   += af.Cl * cos(iAoA[i]) * surf_fact
@@ -575,7 +670,6 @@ class DLLMPost:
             self.Cdf  += af.Cdf  * surf_fact
             
             # Partial derivatives with respect to iAoA
-            dlocCd_dAoA = -af.dCl_dAoA*sin(iAoA[i])+af.dCdw_dAoA+af.dCdvp_dAoA+af.dCdf_dAoA
             self.dpCl_dpiAoA[i]  -= af.Cl * sin(iAoA[i]) * surf_fact
             self.dpCl_dpiAoA     += af.dCl_dAoA * cos(iAoA[i]) * dplocalAoA_dpiAoA[i,:] * surf_fact
             
@@ -588,11 +682,14 @@ class DLLMPost:
             
             self.dpCdf_dpiAoA    += af.dCdf_dAoA  * dplocalAoA_dpiAoA[i,:] * surf_fact
             
-            self.dpLift_distrib_dpiAoA[i,i] -= Pdyn*af.get_Sref()*af.Cl*sin(iAoA[i])
-            self.dpLift_distrib_dpiAoA[i,:] += Pdyn*af.get_Sref()*af.dCl_dAoA * cos(iAoA[i]) * dplocalAoA_dpiAoA[i,:]
+            self.dpLift_distrib_dpiAoA[i,i] += Pdyn*af.get_Sref()*(-af.Cl*sin(iAoA[i])) 
+            self.dpLift_distrib_dpiAoA[i,:] += Pdyn*af.get_Sref()*dlocCl_dAoA* dplocalAoA_dpiAoA[i,:]
             
-            self.dpDrag_distrib_dpiAoA[i,i] -= Pdyn*af.get_Sref()*af.Cl*cos(iAoA[i])
+            self.dpDrag_distrib_dpiAoA[i,i] += Pdyn*af.get_Sref()*(-af.Cl*cos(iAoA[i]))
             self.dpDrag_distrib_dpiAoA[i,:] += Pdyn*af.get_Sref()*dlocCd_dAoA*dplocalAoA_dpiAoA[i,:]
+            
+            for j in xrange(N):
+                self.dpCm_ref_dpiAoA[:,j] += np.cross(OPi,dpCFi_dpiAoA[:,j])
             
             # Partial derivative with respect to AoA
             self.dpCl_dpAoA   += af.dCl_dAoA * cos(iAoA[i]) * dplocalAoA_dpAoA[i] * surf_fact
@@ -602,6 +699,7 @@ class DLLMPost:
             self.dpCdf_dpAoA  += af.dCdf_dAoA * dplocalAoA_dpAoA[i] * surf_fact
             self.dpLift_distrib_dpAoA[i] = Pdyn*af.get_Sref()*af.dCl_dAoA *cos(iAoA[i])*dplocalAoA_dpAoA[i]
             self.dpDrag_distrib_dpAoA[i] = Pdyn*af.get_Sref()*dlocCd_dAoA*dplocalAoA_dpAoA[i]
+            self.dpCm_ref_dpAoA += np.cross(OPi,dpCFi_dpAoA)
             
             # Partial derivatives with respect to thetaY
             self.dpCl_dpthethaY   += af.dCl_dAoA * cos(iAoA[i]) * dplocalAoA_dpthetaY[i,:] * surf_fact
@@ -611,6 +709,8 @@ class DLLMPost:
             self.dpCdf_dpthethaY  += af.dCdf_dAoA  * dplocalAoA_dpthetaY[i,:] * surf_fact
             self.dpLift_distrib_dpthethaY[i,:] = Pdyn*af.get_Sref()*af.dCl_dAoA*cos(iAoA[i])*dplocalAoA_dpthetaY[i,:]
             self.dpDrag_distrib_dpthethaY[i,:] = Pdyn*af.get_Sref()*dlocCd_dAoA*dplocalAoA_dpthetaY[i,:]
+            for j in xrange(N):
+                self.dpCm_ref_dpthethaY[:,j] += np.cross(OPi,dpCFi_dpthetaY[:,j])
             
             # Partial derivatives with respect to chi
             if grad_active:
@@ -623,7 +723,28 @@ class DLLMPost:
 
                 dlocCd_dchi = -af.dCl_dchi*sin(iAoA[i])+af.dCdw_dchi+af.dCdvp_dchi+af.dCdf_dchi
                 self.dpDrag_distrib_dpchi[i,:] = Pdyn*(af.get_Sref()*dlocCd_dAoA*dlAoAdchi[i, :]+af.get_Sref()*dlocCd_dchi+af.get_Sref_grad()*locCd)
+                
+                for n in xrange(ndv):
+                    self.dpCm_ref_dpchi[:,n] +=  np.cross(OPi,dpCFi_dpchi[:,n])+np.cross(OPi_grad[:,n],CFi)
 
+        self.CF     = self.CF/Sref
+        bk_Cm       = self.Cm_ref
+        self.Cm_ref = self.Cm_ref/Sref
+        self.dpCm_ref_dpiAoA    = self.dpCm_ref_dpiAoA/Sref
+        self.dpCm_ref_dpAoA     = self.dpCm_ref_dpAoA/Sref
+        self.dpCm_ref_dpthethaY = self.dpCm_ref_dpthethaY/Sref
+        for n in xrange(ndv):
+            self.dpCm_ref_dpchi[:,n]     = (self.dpCm_ref_dpchi[:,n]*Sref-bk_Cm[:]*Sref_grad[n])/(Sref)**2
+        
+        Cd = self.Cdi+self.Cdf+self.Cdvp+self.Cdw
+        self.CoL = self.CoL/(self.Cl*Sref)
+        self.CoD = self.CoD/(Cd*Sref)
+#         print 'CoL=',self.CoL
+#         print 'CoD=',self.CoD
+#         print 'Cm_ref = ',self.Cm_ref
+#         
+#         print 'check transport = ',self.Cm_ref+np.cross((xyz_ref-self.CoL),self.CF)
+        
     #-- Export methods
     def export_F_list(self, filename=None):    
         if filename is None:
