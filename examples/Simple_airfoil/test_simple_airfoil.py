@@ -28,7 +28,7 @@ from MDOTools.OC.operating_condition import OperatingCondition
 
 OC=OperatingCondition('cond1',atmospheric_model='ISA')
 OC.set_Mach(0.8)
-OC.set_AoA(0.0)
+OC.set_AoA(3.0)
 OC.set_altitude(10000.)
 OC.set_T0_deg(15.)
 OC.set_P0(101325.)
