@@ -25,7 +25,7 @@ import unittest
 from numpy import zeros, array
 
 from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
-from DLLM.DLLMGeom.wing_param import Wing_param
+from DLLM.DLLMGeom.wing_broken import Wing_Broken
 from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
 from MDOTools.OC.operating_condition import OperatingCondition
 
@@ -41,27 +41,9 @@ class TestDLLMSimpleF(unittest.TestCase):
         OC.set_humidity(0.)
         OC.compute_atmosphere()
         
-        wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
-        wing_param.build_wing()
-        wing_param.set_value('span',34.1)
-        wing_param.set_value('sweep',34.)
-        wing_param.set_value('break_percent',33.)
-        wing_param.set_value('root_chord',6.1)
-        wing_param.set_value('break_chord',4.6)
-        wing_param.set_value('tip_chord',1.5)
-        wing_param.set_value('root_height',1.28)
-        wing_param.set_value('break_height',0.97)
-        wing_param.set_value('tip_height',0.33)
-        wing_param.convert_to_design_variable('span',(10.,50.))
-        wing_param.convert_to_design_variable('sweep',(0.,40.))
-        wing_param.convert_to_design_variable('break_percent',(20.,40.))
-        wing_param.convert_to_design_variable('root_chord',(5.,7.))
-        wing_param.convert_to_design_variable('break_chord',(3.,5.))
-        wing_param.convert_to_design_variable('tip_chord',(1.,2.))
-        wing_param.convert_to_design_variable('root_height',(1.,1.5))
-        wing_param.convert_to_design_variable('break_height',(0.8,1.2))
-        wing_param.convert_to_design_variable('tip_height',(0.2,0.5))
-        wing_param.build_linear_airfoil(OC, AoA0=-2., set_as_ref=True)
+        wing_param=Wing_Broken('broken_wing',n_sect=20)
+        wing_param.import_BC_from_file('input_parameters.par')
+        wing_param.build_linear_airfoil(OC, AoA0=0.0, set_as_ref=True)
         wing_param.build_airfoils_from_ref()
         wing_param.update()
         
