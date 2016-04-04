@@ -1,0 +1,20 @@
+# -----------------
+# Design Variables section
+# -----------------
+#                   Type                       Id                    value                   bounds
+          DesignVariable                     span   3.4100000000000001e+01             (10.0, 50.0)
+          DesignVariable                    sweep   3.4000000000000000e+01              (0.0, 40.0)
+          DesignVariable               root_chord   6.0999999999999996e+00               (5.0, 7.0)
+          DesignVariable              root_height   1.2800000000000000e+00               (1.0, 1.5)
+          DesignVariable               tip_height   3.3000000000000002e-01               (0.2, 0.5)
+          DesignVariable                   twist0   0.0000000000000000e+00            (-10.0, 10.0)
+          DesignVariable                   twist1   0.0000000000000000e+00            (-10.0, 10.0)
+          DesignVariable                   twist2   0.0000000000000000e+00            (-10.0, 10.0)
+          DesignVariable                   twist3   0.0000000000000000e+00            (-10.0, 10.0)
+          DesignVariable                   twist4   0.0000000000000000e+00            (-10.0, 10.0)
+          DesignVariable                   twist5   0.0000000000000000e+00            (-10.0, 10.0)
+          DesignVariable                   twist6   0.0000000000000000e+00            (-10.0, 10.0)
+          DesignVariable                   twist7   0.0000000000000000e+00            (-10.0, 10.0)
+          DesignVariable                   twist8   0.0000000000000000e+00            (-10.0, 10.0)
+          DesignVariable                   twist9   0.0000000000000000e+00            (-10.0, 10.0)
+

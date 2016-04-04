@@ -733,8 +733,9 @@ class DLLMPost:
         self.dpCm_ref_dpiAoA    = self.dpCm_ref_dpiAoA/Sref
         self.dpCm_ref_dpAoA     = self.dpCm_ref_dpAoA/Sref
         self.dpCm_ref_dpthethaY = self.dpCm_ref_dpthethaY/Sref
-        for n in xrange(ndv):
-            self.dpCm_ref_dpchi[:,n]     = (self.dpCm_ref_dpchi[:,n]*Sref-bk_Cm[:]*Sref_grad[n])/(Sref)**2
+        if grad_active:
+            for n in xrange(ndv):
+                self.dpCm_ref_dpchi[:,n]     = (self.dpCm_ref_dpchi[:,n]*Sref-bk_Cm[:]*Sref_grad[n])/(Sref)**2
         
         Cd = self.Cdi+self.Cdf+self.Cdvp+self.Cdw
         self.CoL = self.CoL/(self.Cl*Sref)

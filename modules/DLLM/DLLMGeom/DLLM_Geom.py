@@ -55,6 +55,7 @@ class DLLM_Geom(object):
         self.__r_list_eta          = None
         self.__ndv                 = None
         
+        self.__perc_chord          = 0.25
         
         self.__Lref                = None
         self.__Lref_grad           = None
@@ -218,6 +219,9 @@ class DLLM_Geom(object):
     def set_ndv(self, ndv):
         self.__ndv = ndv
         
+    def set_perc_chord(self, perc_chord):
+        self.__perc_chord = perc_chord
+        
     def set_AoA(self, AoA):
         self.__AoA = AoA
         
@@ -329,7 +333,7 @@ class DLLM_Geom(object):
         
     def plot(self, prefix=None):
         N = self.get_n_sect()
-        
+        fact = self.__perc_chord
         if prefix is None:  
             name = self.get_tag()
         else:
@@ -357,11 +361,11 @@ class DLLM_Geom(object):
         plt.plot(Yp_list, Xp_list,'bo',markersize=3.0)
 
         # compute X for LE_points and TE_points
-        X_LE_points = X_list[:] + 0.25*self.__chords_eta[:]
-        X_TE_points = X_list[:] - 0.75*self.__chords_eta[:]
+        X_LE_points = X_list[:] + fact*self.__chords_eta[:]
+        X_TE_points = X_list[:] - (1.-fact)*self.__chords_eta[:]
         
-        Xp_LE_points = Xp_list[:] + 0.25*self.__chords[:]
-        Xp_TE_points = Xp_list[:] - 0.75*self.__chords[:]
+        Xp_LE_points = Xp_list[:] + fact*self.__chords[:]
+        Xp_TE_points = Xp_list[:] - (1-fact)*self.__chords[:]
         
         plt.plot(Y_list, X_LE_points,'-k')
         plt.plot(Y_list, X_TE_points,'-k')
@@ -387,8 +391,8 @@ class DLLM_Geom(object):
         plt.ylabel('-x')
         
         # compute X for LE_points and TE_points
-        X_LE_points = X_list[:] + 0.25*self.__chords_eta[:]
-        X_TE_points = X_list[:] - 0.75*self.__chords_eta[:]
+        X_LE_points = X_list[:] + fact*self.__chords_eta[:]
+        X_TE_points = X_list[:] - (1.-fact)*self.__chords_eta[:]
         
         plt.plot(Y_list, X_LE_points,'-k')
         plt.plot(Y_list, X_TE_points,'-k')
@@ -398,7 +402,6 @@ class DLLM_Geom(object):
         plt.rc("font", size=14)
         plt.savefig(name+"_planform.png",format='png')
         plt.close()
-        
         
         #-- Toc plot
         plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])

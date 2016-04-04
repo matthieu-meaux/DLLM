@@ -25,7 +25,7 @@ import unittest
 from numpy import zeros, array
 
 from MDOTools.ValidGrad.FDValidGrad import FDValidGrad
-from DLLM.DLLMGeom.wing_param import Wing_param
+from DLLM.DLLMGeom.wing_broken import Wing_Broken
 from MDOTools.OC.operating_condition import OperatingCondition
 
 class TestWingParam(unittest.TestCase):
@@ -51,27 +51,9 @@ class TestWingParam(unittest.TestCase):
         OC.set_humidity(0.)
         OC.compute_atmosphere()
         
-        wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
-        wing_param.build_wing()
-        wing_param.set_value('span',34.1)
-        wing_param.set_value('sweep',32.)
-        wing_param.set_value('break_percent',33.)
-        wing_param.set_value('root_chord',6.1)
-        wing_param.set_value('break_chord',4.6)
-        wing_param.set_value('tip_chord',1.5)
-        wing_param.set_value('root_height',1.28)
-        wing_param.set_value('break_height',0.97)
-        wing_param.set_value('tip_height',0.33)
-        wing_param.convert_to_design_variable('span',(10.,50.))
-        wing_param.convert_to_design_variable('sweep',(0.,40.))
-        wing_param.convert_to_design_variable('break_percent',(20.,40.))
-        wing_param.convert_to_design_variable('root_chord',(5.,7.))
-        wing_param.convert_to_design_variable('break_chord',(3.,5.))
-        wing_param.convert_to_design_variable('tip_chord',(1.,2.))
-        wing_param.convert_to_design_variable('root_height',(1.,1.5))
-        wing_param.convert_to_design_variable('break_height',(0.8,1.2))
-        wing_param.convert_to_design_variable('tip_height',(0.2,0.5))
-        wing_param.build_linear_airfoil(OC, AoA0=-2., set_as_ref=True)
+        wing_param=Wing_Broken('broken_wing',n_sect=20)
+        wing_param.import_BC_from_file('input_parameters.par')
+        wing_param.build_linear_airfoil(OC, AoA0=0.0, set_as_ref=True)
         wing_param.build_airfoils_from_ref()
         wing_param.update()
         
@@ -81,88 +63,13 @@ class TestWingParam(unittest.TestCase):
         """
         test class instantiation
         """
-        wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
+        wing_param=Wing_Broken('broken_wing',n_sect=20)
         assert(wing_param is not None)
-        
-    def test_Wing_param_build_wing(self):
-        wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
-        try:
-            wing_param.build_wing()
-            ok=True
-        except:
-            ok=False
-        assert(ok)
-        
-    def test_Wing_param_set_value(self):
-        """
-        test set value for Wing_param
-        """
-        wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
-        wing_param.build_wing()
-        try:
-            wing_param.set_value('span',34.1)
-            wing_param.set_value('sweep',32.)
-            wing_param.set_value('break_percent',33.)
-            wing_param.set_value('root_chord',6.1)
-            wing_param.set_value('break_chord',4.6)
-            wing_param.set_value('tip_chord',1.5)
-            wing_param.set_value('root_height',1.28)
-            wing_param.set_value('break_height',0.97)
-            wing_param.set_value('tip_height',0.33)
-            ok=True
-        except:
-            ok=False
-        assert(ok)
-        
-    def test_Wing_param_convert(self):
-        wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
-        wing_param.build_wing()
-        wing_param.set_value('span',34.1)
-        wing_param.set_value('sweep',32.)
-        wing_param.set_value('break_percent',33.)
-        wing_param.set_value('root_chord',6.1)
-        wing_param.set_value('break_chord',4.6)
-        wing_param.set_value('tip_chord',1.5)
-        wing_param.set_value('root_height',1.28)
-        wing_param.set_value('break_height',0.97)
-        wing_param.set_value('tip_height',0.33)
-        try:
-            wing_param.convert_to_design_variable('span',(10.,50.))
-            wing_param.convert_to_design_variable('sweep',(0.,40.))
-            wing_param.convert_to_design_variable('break_percent',(20.,40.))
-            wing_param.convert_to_design_variable('root_chord',(5.,7.))
-            wing_param.convert_to_design_variable('break_chord',(3.,5.))
-            wing_param.convert_to_design_variable('tip_chord',(1.,2.))
-            wing_param.convert_to_design_variable('root_height',(1.,1.5))
-            wing_param.convert_to_design_variable('break_height',(0.8,1.2))
-            wing_param.convert_to_design_variable('tip_height',(0.2,0.5))
-            ok=True
-        except:
-            ok=False
-        assert(ok)
         
     def test_Wing_param_linear_airfoil(self):
         OC=self.__init_OC()
-        wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
-        wing_param.build_wing()
-        wing_param.set_value('span',34.1)
-        wing_param.set_value('sweep',32.)
-        wing_param.set_value('break_percent',33.)
-        wing_param.set_value('root_chord',6.1)
-        wing_param.set_value('break_chord',4.6)
-        wing_param.set_value('tip_chord',1.5)
-        wing_param.set_value('root_height',1.28)
-        wing_param.set_value('break_height',0.97)
-        wing_param.set_value('tip_height',0.33)
-        wing_param.convert_to_design_variable('span',(10.,50.))
-        wing_param.convert_to_design_variable('sweep',(0.,40.))
-        wing_param.convert_to_design_variable('break_percent',(20.,40.))
-        wing_param.convert_to_design_variable('root_chord',(5.,7.))
-        wing_param.convert_to_design_variable('break_chord',(3.,5.))
-        wing_param.convert_to_design_variable('tip_chord',(1.,2.))
-        wing_param.convert_to_design_variable('root_height',(1.,1.5))
-        wing_param.convert_to_design_variable('break_height',(0.8,1.2))
-        wing_param.convert_to_design_variable('tip_height',(0.2,0.5))
+        wing_param=Wing_Broken('broken_wing',n_sect=20)
+        wing_param.import_BC_from_file('input_parameters.par')
         try:
             wing_param.build_linear_airfoil(OC, AoA0=-2., set_as_ref=True)
             wing_param.build_airfoils_from_ref()
@@ -173,27 +80,9 @@ class TestWingParam(unittest.TestCase):
         
     def test_Wing_param_update(self):
         OC=self.__init_OC()
-        wing_param=Wing_param('test_param',geom_type='Broken',n_sect=20)
-        wing_param.build_wing()
-        wing_param.set_value('span',34.1)
-        wing_param.set_value('sweep',32.)
-        wing_param.set_value('break_percent',33.)
-        wing_param.set_value('root_chord',6.1)
-        wing_param.set_value('break_chord',4.6)
-        wing_param.set_value('tip_chord',1.5)
-        wing_param.set_value('root_height',1.28)
-        wing_param.set_value('break_height',0.97)
-        wing_param.set_value('tip_height',0.33)
-        wing_param.convert_to_design_variable('span',(10.,50.))
-        wing_param.convert_to_design_variable('sweep',(0.,40.))
-        wing_param.convert_to_design_variable('break_percent',(20.,40.))
-        wing_param.convert_to_design_variable('root_chord',(5.,7.))
-        wing_param.convert_to_design_variable('break_chord',(3.,5.))
-        wing_param.convert_to_design_variable('tip_chord',(1.,2.))
-        wing_param.convert_to_design_variable('root_height',(1.,1.5))
-        wing_param.convert_to_design_variable('break_height',(0.8,1.2))
-        wing_param.convert_to_design_variable('tip_height',(0.2,0.5))
-        wing_param.build_linear_airfoil(OC, AoA0=-2., set_as_ref=True)
+        wing_param=Wing_Broken('broken_wing',n_sect=20)
+        wing_param.import_BC_from_file('input_parameters.par')
+        wing_param.build_linear_airfoil(OC, AoA0=0.0, set_as_ref=True)
         wing_param.build_airfoils_from_ref()
         try:
             wing_param.update()
