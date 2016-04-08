@@ -87,6 +87,37 @@ class TestDLLMWrapper(unittest.TestCase):
         ok,df_fd,df=val_grad.compare(x0,treshold=1.e-5,split_out=True,return_all=True)
         assert(ok)
         
+    def test_DLLM_wrapper_json_valid_grad(self):
+        DLLMWrap = DLLMWrapper('test', verbose=0)
+        DLLMWrap.config_from_file('conf_file.json')
+        DLLMWrap.set_out_format('numpy')
+        DLLMWrap.set_grad_format('numpy')
+   
+        x0=DLLMWrap.get_x0()
+         
+        DLLMWrap.analysis()
+         
+        Ref_list=DLLMWrap.get_F_list()
+         
+        def f(x):
+            DLLMWrap.run(x)
+            func=DLLMWrap.get_F_list()
+            return func/Ref_list
+           
+        def df(x):
+            DLLMWrap.run_grad(x)
+            func_grad=np.array(DLLMWrap.get_F_list_grad())
+            N = func_grad.shape[0]
+            ndv = func_grad.shape[1]
+            out_grad = np.zeros((N,ndv))
+            for i in xrange(N):
+                out_grad[i,:] = func_grad[i,:]/Ref_list[i]
+            return out_grad
+       
+        val_grad=FDValidGrad(2,f,df,fd_step=1.e-8)
+        ok,df_fd,df=val_grad.compare(x0,treshold=1.e-5,split_out=True,return_all=True)
+        assert(ok)
+        
     def test_DLLM_wrapper_TCl(self):
         config_dict = self.__get_base_config_dict()
         config_dict['test.DLLM.type']='TargetCl'

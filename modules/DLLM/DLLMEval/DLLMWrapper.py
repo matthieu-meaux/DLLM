@@ -31,6 +31,7 @@ from DLLM.DLLMKernel.DLLMTargetCl import DLLMTargetCl
 from DLLM.DLLMKernel.DLLMTargetLift import DLLMTargetLift
 import numpy
 import cPickle
+import json
 
 class DLLMWrapper():
     ERROR_MSG = 'ERROR in DLLMWrapper.'
@@ -122,6 +123,18 @@ class DLLMWrapper():
         self.__grad_format = format
     
     #-- Public methods
+    def config_from_file(self, filename):
+        # Open file
+        f    = open(filename, "r")
+            
+        # Load input file into data dictionary
+        config_dict = json.loads(f.read())
+        
+        # Close input file
+        f.close()
+        
+        self.configure(config_dict)
+        
     def configure(self, config_dict):
         self.__config_dict = config_dict
         self.__config_OC()

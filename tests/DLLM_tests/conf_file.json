@@ -1,0 +1,17 @@
+{
+"test.OC.Mach" : 0.8,
+"test.OC.AoA": 3.5,
+"test.OC.altitude": 10000.0,
+"test.param.geom_type": "Broken",
+"test.param.n_sect": 20,
+"test.param.BCfilename": "input_parameters.par",
+"test.param.airfoil.type": "simple",
+"test.param.airfoil.AoA0": -2.0,
+"test.param.airfoil.Cm0": -0.1,
+"test.DLLM.type": "Solver",
+"test.DLLM.method": "inhouse",
+"test.DLLM.relax_factor" : 0.99,
+"test.DLLM.stop_residual" :1e-9,
+"test.DLLM.max_iterations" : 100,
+"test.DLLM.gamma_file_name" : "gamma.dat"
+}

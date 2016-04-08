@@ -25,6 +25,7 @@
 from DLLM.DLLMEval.DLLMWrapper import DLLMWrapper
 from copy import deepcopy
 import multiprocessing 
+import json
 import numpy
 import string
 import sys
@@ -108,6 +109,18 @@ class DLLMMP():
         self.__grad_format = format
         
     #-- Public methods
+    def config_from_file(self, filename):
+        # Open file
+        f    = open(self.__config_file, "r")
+            
+        # Load input file into data dictionary
+        config_dict = json.loads(f.read())
+        
+        # Close input file
+        f.close()
+        
+        self.configure(config_dict)
+        
     def configure(self, config_dict):
         self.__config_dict = config_dict
         self.__init_configure()
