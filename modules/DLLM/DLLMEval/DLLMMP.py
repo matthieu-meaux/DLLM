@@ -22,7 +22,6 @@
 # @author : Matthieu MEAUX
 #
 # - imports -
-from DLLM.DLLMGeom.wing_param import Wing_param
 from DLLM.DLLMEval.DLLMWrapper import DLLMWrapper
 from copy import deepcopy
 import multiprocessing 
@@ -38,11 +37,12 @@ class DLLMMP():
     MP_KEYS = ['nb_conditions','condition_name']
     
     #-- Constructor
-    def __init__(self, tag):
+    def __init__(self, tag, verbose = 0):
         """
         Multi-point class for the DLLMSolver
         """
         self.__tag            = tag
+        self.__verbose        = verbose
         
         self.__config_dict    = None
         self.__exclude_keys   = None
@@ -304,7 +304,7 @@ class DLLMMP():
         self.__wrapper_list=[]
         for i in xrange(self.__nb_cond):
             cond_name = self.__cond_name+str(i+1)
-            self.__wrapper_list.append(DLLMWrapper(self.__tag+'.'+cond_name))
+            self.__wrapper_list.append(DLLMWrapper(self.__tag+'.'+cond_name, verbose=self.__verbose))
             if self.__AoA_id_list is not None:
                 AoA_id = self.__AoA_id_list[i]
                 self.__wrapper_list[i].set_AoA_id(AoA_id)
@@ -319,11 +319,12 @@ class DLLMMP():
         self.__cond_name   = self.__config_dict[self.__tag+'.condition_name']
         if self.__tag+'.AoA_id_list' in config_keys:
             self.__AoA_id_list = self.__config_dict[self.__tag+'.AoA_id_list']
-        print '*** Multi-conditions information ***'
-        print '  Number of conditions = ',self.__nb_cond
-        print '  Base condition name  = ',self.__cond_name
-        print '  AoA_id list          = ',str(self.__AoA_id_list)
-        print '***                              ***'
+        if self.__verbose > 0:
+            print '*** Multi-conditions information ***'
+            print '  Number of conditions = ',self.__nb_cond
+            print '  Base condition name  = ',self.__cond_name
+            print '  AoA_id list          = ',str(self.__AoA_id_list)
+            print '***                              ***'
         
         self.__list_config_dict=[]
         self.__exclude_keys = deepcopy(self.MP_KEYS)

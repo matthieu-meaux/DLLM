@@ -39,7 +39,9 @@ class DLLM_param(DLLM_Geom):
         DLLM_Geom.__init__(self, tag, n_sect=n_sect, grad_active=grad_active)
         self.BC_manager = BCManager()
         
-        self.__AoA_id = 'AoA'
+        self.__AoA_id    = 'AoA'
+        
+        self.__common_OC = None
         
     #-- Accessors
     def get_dv_array(self):
@@ -61,11 +63,53 @@ class DLLM_param(DLLM_Geom):
     def set_value(self, Id, val):
         pt = self.__BC_manager.get_pt(Id)
         pt.set_value(val)
+        
+    def set_common_OC(self, OC):
+        self.__common_OC = OC
     
     #-- Methods
     def import_BC_from_file(self, filename):
         self.BC_manager.import_from_file(filename)
         self.BC_manager.update()
+        
+    def config_from_dict(self, config_dict):
+        config_dict_keys = config_dict.keys()
+        #-- Import BCManager from filename defined in config_dict
+        BC_filename_key=self.get_tag()+'.BCfilename'
+        if BC_filename_key in config_dict_keys:
+            BC_filename = config_dict[BC_filename_key]
+            self.import_BC_from_file(BC_filename)
+            
+        #TBC: to be update with new way of working
+        #-- Config airfoils
+        airfoil_type_key = self.get_tag() + '.airfoil.type'
+        if airfoil_type_key in config_dict_keys:
+            airfoil_type = config_dict[airfoil_type_key]
+        else:
+            airfoil_type = 'simple'
+             
+        self.set_airfoil_type(airfoil_type)
+         
+        if airfoil_type == 'simple':
+            AoA0_key = self.get_tag() + '.airfoil.AoA0'
+            if AoA0_key in config_dict_keys:
+                AoA0 = config_dict[AoA0_key]
+            else:
+                AoA0 = 0.
+ 
+            self.build_linear_airfoil(self.__common_OC, AoA0=AoA0, set_as_ref=True)
+ 
+        elif airfoil_type == 'meta':
+            surrogate_model_key = self.__tag + '.airfoil.surrogate_model'
+            if surrogate_model_key in config_dict_keys:
+                surrogate_model = config_dict[surrogate_model_key]
+            else:
+                surrogate_model = None
+ 
+            self.build_meta_airfoil(self.__common_OC, surrogate_model, set_as_ref=True)
+ 
+        self.build_airfoils_from_ref()
+        self.update()
     
     def update_from_x_list(self, x):
         # print 'update wing_param with x=',x
@@ -94,7 +138,7 @@ class DLLM_param(DLLM_Geom):
     def __update_AoA(self):
         Id = self.__AoA_id
         if Id in self.get_dv_id_list():
-            pt = self.__BC_manager.get_pt(Id)
+            pt = self.BC_manager.get_pt(Id)
             deg_to_rad = np.pi / 180.
             AoA = pt.get_value() * deg_to_rad
             AoA_grad = pt.get_gradient() * deg_to_rad
@@ -129,90 +173,3 @@ class DLLM_param(DLLM_Geom):
                     "%20s" % BC_Type + " %24s" % expr + "\n"
         info_string += '  -- end of parameters information section --\n'
         return info_string
-    
-#--   Methods to update with new way of working for parmaterization
-#     def config_from_dict(self, OC, config_dict):
-#         self.build_wing()
-#         self.__config_airfoils(OC, config_dict)
-#         self.__config_desc(config_dict)
-#         self.update()
-# 
-#     def __config_airfoils(self, OC, config_dict):
-#         in_keys_list = config_dict.keys()
-# 
-#         airfoil_type_key = self.get_tag() + '.airfoil.type'
-#         if airfoil_type_key in in_keys_list:
-#             airfoil_type = config_dict[airfoil_type_key]
-#         else:
-#             airfoil_type = 'simple'
-#             
-#         self.set_airfoil_type(airfoil_type)
-#         
-#         if airfoil_type == 'simple':
-#             AoA0_key = self.get_tag() + '.airfoil.AoA0'
-#             if AoA0_key in in_keys_list:
-#                 AoA0 = config_dict[AoA0_key]
-#             else:
-#                 AoA0 = 0.
-# 
-#             self.build_linear_airfoil(OC, AoA0=AoA0, set_as_ref=True)
-# 
-#         elif airfoil_type == 'meta':
-#             surrogate_model_key = self.__tag + '.airfoil.surrogate_model'
-#             if surrogate_model_key in in_keys_list:
-#                 surrogate_model = config_dict[surrogate_model_key]
-#             else:
-#                 surrogate_model = None
-# 
-#             self.build_meta_airfoil(OC, surrogate_model, set_as_ref=True)
-# 
-#         self.build_airfoils_from_ref()
-# 
-#     def __config_desc(self, config_dict):
-#         in_keys_list=sorted(config_dict.keys())
-#         existing_keys=deepcopy(self.__BC_manager.get_list_id())
-#         
-#         # Add user defined DesignVariable, Variable and Parameter
-#         added_list=[]        
-#         for in_key in in_keys_list:
-#             words=in_key.split('.')
-#             if len(words) >=4:
-#                 test=string.join(words[:-2],'.')
-#                 if test==self.get_tag()+'.desc':
-#                     name=words[-2]
-#                     Id=name
-#                     Id_in=self.get_tag()+'.desc.'+name
-#                     type=config_dict[Id_in+'.type']
-#                     if Id not in existing_keys and Id not in added_list:
-#                         if   type == 'DesignVariable':
-#                             bounds = config_dict[Id_in+'.bounds']
-#                             value  = config_dict[Id_in+'.value']
-#                             self.__BC_manager.create_design_variable(Id,value,(bounds[0],bounds[1]))
-#                         elif type == 'Variable':
-#                             value  = config_dict[Id_in+'.value']
-#                             self.__BC_manager.create_variable(Id,value)
-#                         elif type == 'Parameter':
-#                             fexpr = config_dict[Id_in+'.fexpr']
-#                             self.__BC_manager.create_parameter(Id,fexpr)
-#                         added_list.append(Id)
-#         
-#         # Convert pre-defined parameters
-#         for existing_id in existing_keys:
-#             ex_words=existing_id.split('.')
-#             name=ex_words[-1]
-#             Id_in=self.get_tag()+'.desc.'+name
-#             Id=name
-#             if Id_in+'.type' in in_keys_list:
-#                 type=config_dict[Id_in+'.type']
-#                 if   type == 'DesignVariable':
-#                     bounds = config_dict[Id_in+'.bounds']
-#                     value  = config_dict[Id_in+'.value']
-#                     self.set_value(Id,value)
-#                     self.convert_to_design_variable(Id,bounds)
-#                 elif type == 'Variable':
-#                     value  = config_dict[Id_in+'.value']
-#                     self.set_value(Id,value)
-#                     self.convert_to_variable(Id)
-#                 elif type == 'Parameter':
-#                     fexpr = config_dict[Id_in+'.fexpr']
-#                     self.convert_to_parameter(Id,fexpr)

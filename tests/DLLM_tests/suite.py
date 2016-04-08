@@ -40,7 +40,8 @@ from test_DLLM_simple_R import TestDLLMSimpleR
 from test_DLLM_simple_F import TestDLLMSimpleF
 from test_DLLM_simple_Loads import TestDLLMSimpleLoads
 from test_DLLM_simple_TCl_TLift import TestDLLMSimpleTClTLift
-from test_DLLM_meta import TestDLLMMeta
+from test_DLLM_wrapper import TestDLLMWrapper
+from test_DLLM_MP import TestDLLMMP
 
 def suite():
     suite = unittest.TestSuite()
@@ -50,6 +51,8 @@ def suite():
     suite.addTest(unittest.makeSuite(TestDLLMSimpleF))
     suite.addTest(unittest.makeSuite(TestDLLMSimpleLoads))
     suite.addTest(unittest.makeSuite(TestDLLMSimpleTClTLift))
+    suite.addTest(unittest.makeSuite(TestDLLMWrapper))
+    suite.addTest(unittest.makeSuite(TestDLLMMP))
     if run_meta:
         suite.addTest(unittest.makeSuite(TestDLLMMeta))
     return suite

@@ -24,7 +24,6 @@
 
 #-- Imports
 import numpy as np
-from DLLM.DLLMGeom.wing_param import Wing_param
 from DLLM.DLLMGeom.DLLM_Geom import DLLM_Geom
 from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
 from MDOTools.OC.operating_condition import OperatingCondition

@@ -23,7 +23,9 @@
 #
 # - imports -
 from MDOTools.OC.operating_condition import OperatingCondition
-from DLLM.DLLMGeom.wing_param import Wing_param
+from DLLM.DLLMGeom.wing_broken import Wing_Broken
+from DLLM.DLLMGeom.wing_elliptic import Wing_Elliptic
+from DLLM.DLLMGeom.wing_straight import Wing_Straight
 from DLLM.DLLMKernel.DLLMSolver import DLLMSolver
 from DLLM.DLLMKernel.DLLMTargetCl import DLLMTargetCl
 from DLLM.DLLMKernel.DLLMTargetLift import DLLMTargetLift
@@ -36,12 +38,13 @@ class DLLMWrapper():
     POS_SOLVER = ['Solver','TargetCl','TargetLift']
     POS_FMT = ['list','numpy']
 
-    def __init__(self, tag):
+    def __init__(self, tag, verbose=1):
         """
         Wrapper for the DLLM solver
         """
         self.__tag          = tag
 
+        self.__verbose      = verbose
         self.__OC           = None # Operating condition
         self.__wing_param   = None # Wing_param class
         self.__DLLM_solver  = None # DLLM Solver class
@@ -95,6 +98,10 @@ class DLLMWrapper():
     
     def get_F_list_and_grad(self):
         return self.__F_list, self.__F_list_grad
+    
+    def get_F_value(self, F_id):
+        index = self.get_F_list_names().index(F_id)
+        return self.get_F_list()[index]
         
     #-- Setters
     def set_AoA_id(self, AoA_id):
@@ -140,33 +147,40 @@ class DLLMWrapper():
         return F_list,F_list_grad
     
     def analysis(self):
-        print self.__wing_param
+        if self.__verbose > 0:
+            print self.__wing_param
         self.__DLLM_solver.run_direct()
         self.__DLLM_solver.run_post()
         F_list = self.__DLLM_solver.get_F_list()
+        self.__DLLM_solver.export_F_list()
         if self.__out_format == 'list':
             F_list=F_list.tolist()
         self.__F_list = F_list
         return F_list
     
     def analysis_grad(self):
-        print self.__wing_param
+        if self.__verbose > 0:
+            print self.__wing_param
         self.__DLLM_solver.run_direct()
         self.__DLLM_solver.run_post()
         self.__DLLM_solver.run_adjoint()
         F_list_grad=self.__DLLM_solver.get_dF_list_dchi()
+        self.__DLLM_solver.export_dF_list_dchi()
         if self.__grad_format == 'numpy':
             F_list_grad=numpy.array(F_list_grad)
         self.__F_list_grad = F_list_grad
         return F_list_grad
     
     def analysis_and_grad(self):
-        print self.__wing_param
+        if self.__verbose > 0:
+            print self.__wing_param
         self.__DLLM_solver.run_direct()
         self.__DLLM_solver.run_post()
         self.__DLLM_solver.run_adjoint()
         F_list = self.__DLLM_solver.get_F_list()
         F_list_grad=self.__DLLM_solver.get_dF_list_dchi()
+        self.__DLLM_solver.export_F_list()
+        self.__DLLM_solver.export_dF_list_dchi()
         if self.__out_format == 'list':
             F_list=F_list.tolist()
         if self.__grad_format == 'numpy':
@@ -190,10 +204,18 @@ class DLLMWrapper():
         
     #-- Private methods
     def __config_OC(self):
+        """
+        Set up the 
+        """
         self.__OC = OperatingCondition(self.__tag+'.OC')
         self.__OC.config_from_dict(self.__config_dict)
         
     def __config_param(self):
+        """
+        Set up the __wing_param attribute.
+        -The class associated to __wing_param depends on the chosen parameterization type
+        -The method needs to be updated if a new parameterization is implemented
+        """
         input_keys=self.__config_dict.keys()
         
         geom_type_key=self.__tag+'.param.geom_type'
@@ -207,29 +229,37 @@ class DLLMWrapper():
             n_sect = self.__config_dict[n_sect_key]
         else:
             n_sect = 20
+        
+        if   geom_type == 'Broken':
+            self.__wing_param = Wing_Broken(self.__tag+'.param', n_sect=n_sect)
+        elif geom_type == 'Elliptic':
+            self.__wing_param = Wing_Elliptic(self.__tag+'.param', n_sect=n_sect)
+        elif geom_type == 'Straight':
+            self.__wing_param = Wing_Straight(self.__tag+'.param', n_sect=n_sect)
             
-        self.__wing_param = Wing_param(self.__tag+'.param',geom_type=geom_type,n_sect=n_sect)
         self.__wing_param.set_AoA_id(self.__AoA_id)
-        self.__wing_param.config_from_dict(self.__OC, self.__config_dict)
+        self.__wing_param.set_common_OC(self.__OC)
+        self.__wing_param.config_from_dict(self.__config_dict)
         
     def __config_DLLM(self):
-        WARNING_MSG=self.WARNING_MSG+'__config_DLLM: '
+        ERROR_MSG=self.ERROR_MSG+'__config_DLLM: '
         input_keys=self.__config_dict.keys()
         type_key = self.__tag+'.DLLM.type'
-        type = self.__config_dict[type_key]
+        stype = self.__config_dict[type_key]
         
-        if type not in self.POS_SOLVER:
-            print WARNING_MSG+'solver_type = '+str(type)+' not in '+str(self.POS_SOLVER)+'. Set to default solver_type = Solver'
-            type='Solver'
-            
-        if   type == 'Solver':
+        if stype not in self.POS_SOLVER:
+            raise Exception,ERROR_MSG+'solver_type = '+str(type)+' not in '+str(self.POS_SOLVER)+'. Set to default solver_type = '+str(type)
+
+        if self.__verbose > 0:
+            print 'Solver type = ',stype            
+        if   stype == 'Solver':
             self.__DLLM_solver = DLLMSolver(self.__tag,self.__wing_param,self.__OC)          
-        elif type == 'TargetCl':
+        elif stype == 'TargetCl':
             self.__DLLM_solver = DLLMTargetCl(self.__tag,self.__wing_param,self.__OC)
             target_Cl_key = self.__tag+'.DLLM.target_Cl'
             target_Cl = self.__config_dict[target_Cl_key]
             self.__DLLM_solver.set_target_Cl(target_Cl)
-        elif type == 'TargetLift':
+        elif stype == 'TargetLift':
             self.__DLLM_solver = DLLMTargetLift(self.__tag,self.__wing_param,self.__OC)
             target_Lift_key = self.__tag+'.DLLM.target_Lift'
             target_Lift = self.__config_dict[target_Lift_key]

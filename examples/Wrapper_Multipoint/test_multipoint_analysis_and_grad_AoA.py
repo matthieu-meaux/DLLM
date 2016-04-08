@@ -19,7 +19,7 @@
 # 
 #  https://github.com/matthieu-meaux/DLLM.git
 #
-# @author : Matthieu MEAUX
+#  @author : Matthieu MEAUX
 #
 from DLLM.DLLMEval.DLLMMP import DLLMMP
 import os
@@ -28,6 +28,7 @@ from glob import glob
 config_dict={}
 config_dict['Case.nb_conditions']=3
 config_dict['Case.condition_name']='cond'
+config_dict['Case.AoA_id_list']=['AoA1','AoA2','AoA3']
 # cond1 Operating condition information
 config_dict['Case.cond1.OC.Mach']=0.8
 config_dict['Case.cond1.OC.AoA']=3.5
@@ -41,41 +42,15 @@ config_dict['Case.cond3.OC.Mach']=0.4
 config_dict['Case.cond3.OC.AoA']=6.
 config_dict['Case.cond3.OC.altitude']=1000.
 
-# Common parameterisation configuration
+# Parameterisation configuration
 config_dict['Case.param.geom_type']='Broken'
 config_dict['Case.param.n_sect']=20
+config_dict['Case.param.BCfilename']='input_parameters_AoA.par'
 config_dict['Case.param.airfoil.type']='simple'
 config_dict['Case.param.airfoil.AoA0']=-2.
-# config_dict['Case.param.airfoil.type']='meta'
-# config_dict['Case.param.airfoil.surrogate_model']='../MetaModelCleaning.xml'
-config_dict['Case.param.desc.span.type']='DesignVariable'
-config_dict['Case.param.desc.span.value']=34.1
-config_dict['Case.param.desc.span.bounds']=(10.,50.)
-config_dict['Case.param.desc.sweep.type']='DesignVariable'
-config_dict['Case.param.desc.sweep.value']=34.
-config_dict['Case.param.desc.sweep.bounds']=(0.,40.)
-config_dict['Case.param.desc.break_percent.type']='Variable'
-config_dict['Case.param.desc.break_percent.value']=33.
-#config_dict['cond1.param.desc.break_percent.bounds']=(20.,40.)
-config_dict['Case.param.desc.root_chord.type']='DesignVariable'
-config_dict['Case.param.desc.root_chord.value']=6.1
-config_dict['Case.param.desc.root_chord.bounds']=(5.,7.)
-config_dict['Case.param.desc.break_chord.type']='DesignVariable'
-config_dict['Case.param.desc.break_chord.value']=4.6
-config_dict['Case.param.desc.break_chord.bounds']=(3.,5.)
-config_dict['Case.param.desc.tip_chord.type']='DesignVariable'
-config_dict['Case.param.desc.tip_chord.value']=1.5
-config_dict['Case.param.desc.tip_chord.bounds']=(1.,2.)
-config_dict['Case.param.desc.root_height.type']='DesignVariable'
-config_dict['Case.param.desc.root_height.value']=1.28
-config_dict['Case.param.desc.root_height.bounds']=(1.,1.5)
-config_dict['Case.param.desc.break_height.type']='DesignVariable'
-config_dict['Case.param.desc.break_height.value']=0.97
-config_dict['Case.param.desc.break_height.bounds']=(0.8,1.2)
-config_dict['Case.param.desc.tip_height.type']='DesignVariable'
-config_dict['Case.param.desc.tip_height.value']=0.33
-config_dict['Case.param.desc.tip_height.bounds']=(0.2,0.5)
+config_dict['Case.param.airfoil.Cm0']=-0.1
 
+# DLLM configuration
 config_dict['Case.DLLM.type']='Solver'
 config_dict['Case.DLLM.method']='inhouse'
 config_dict['Case.DLLM.relax_factor']=0.99
@@ -91,6 +66,6 @@ for log in list_log:
 
 MP=DLLMMP('Case')
 MP.configure(config_dict)
-MP.analysis()
+F_list,F_list_grad=MP.analysis_and_grad()
 
 
