@@ -32,7 +32,7 @@ class AnalyticAirfoil(Airfoil):
     """
     THICKNESS_CORRECTION = 0.7698
     
-    def __init__(self, OC, AoA0=0., Sref=1., Lref=1., rel_thick=0.0, sweep=0.0, pcop=0.25, Ka=0.95, grad_active=True):
+    def __init__(self, OC, AoA0=0., Sref=1., Lref=1., rel_thick=0.0, pcop=0.25, Ka=0.95, grad_active=True):
         '''
         Constructor for airfoils
         @param AoA0:angle of attack of null lift
@@ -58,10 +58,6 @@ class AnalyticAirfoil(Airfoil):
         self.__rel_thick_grad = None
         self.set_rel_thick(rel_thick)
         
-        self.__sweep          = None
-        self.__sweep_grad     = None
-        self.set_sweep(sweep)
-        
         self.pcop        = pcop
         
     #-- Setters
@@ -77,12 +73,6 @@ class AnalyticAirfoil(Airfoil):
         
     def set_rel_thick_grad(self, rel_thick_grad):
         self.__rel_thick_grad = rel_thick_grad
-        
-    def set_sweep(self, sweep):
-        self.__sweep = sweep
-        
-    def set_sweep_grad(self, sweep_grad):
-        self.__sweep_grad = sweep_grad
     
     #-- Accessors
     def get_rel_thick(self):
@@ -90,12 +80,6 @@ class AnalyticAirfoil(Airfoil):
     
     def get_rel_thick_grad(self):
         return self.__rel_thick_grad
-    
-    def get_sweep(self):
-        return self.__sweep
-    
-    def get_sweep_grad(self):
-        return self.__sweep_grad
     
     #-- Methods to compute aero coefficients
     def comp_aero_coeffs(self, AoA, Mach):
@@ -235,16 +219,13 @@ class AnalyticAirfoil(Airfoil):
             dCdvp_min= 60.*(4.*dtoc2*toc2**3*self.Cdf+toc2**4*self.dCdf_dchi)
             self.dCdvp_dchi = dCdvp_min + 2.*(dCdvp_min+self.dCdf_dchi)*self.Cl**2+4.*(Cdvp_min + self.Cdf)*self.Cl*self.dCl_dchi
             
-    def get_scaled_copy(self, OC=None, Sref=None, Lref=None, rel_thick=None, sweep=None, grad_active=True):
+    def get_scaled_copy(self, OC=None, Sref=None, Lref=None, rel_thick=None, grad_active=True):
         if Sref is None:
             Sref=self.get_Sref()
         if Lref is None:
             Lref=self.get_Lref()
         if rel_thick is None:
             rel_thick = self.get_rel_thick()
-        if sweep is None:
-            sweep = self.get_sweep()
         if OC is None:
             OC = self.get_OC()
-        return AnalyticAirfoil(OC, self.__AoA0_deg, Sref=Sref, Lref=Lref, rel_thick=rel_thick, sweep=sweep, Ka=self.__Ka, grad_active=self.is_grad_active())
-
+        return AnalyticAirfoil(OC, self.__AoA0_deg, Sref=Sref, Lref=Lref, rel_thick=rel_thick, Ka=self.__Ka, grad_active=self.is_grad_active())

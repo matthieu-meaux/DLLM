@@ -5,7 +5,7 @@
           DesignVariable                     span   3.4100000000000001e+01             (10.0, 50.0)
           DesignVariable                    sweep   3.4000000000000000e+01              (0.0, 40.0)
           DesignVariable            break_percent   3.3000000000000000e+01             (20.0, 40.0)
-          DesignVariable               root_chord   7.0999999999999996e+00               (5.0, 7.0)
+          DesignVariable               root_chord   10.0999999999999996e+00               (5.0, 12.0)
           DesignVariable              break_chord   3.5999999999999996e+00               (3.0, 5.0)
           DesignVariable                tip_chord   1.5000000000000000e+00               (1.0, 2.0)
           DesignVariable              root_height   1.2800000000000000e+00               (1.0, 1.5)

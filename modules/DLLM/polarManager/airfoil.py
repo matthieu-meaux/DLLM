@@ -44,6 +44,12 @@ class Airfoil:
         self.__Sref      = Sref
         self.__Sref_grad = None
         
+        self.__sweep      = 0.
+        self.__sweep_grad = None
+        
+        self.__twist      = 0.
+        self.__twist_grad = None
+        
         self.__grad_active = grad_active
         
         # Airfoil aerodynamic coefficients and gradient
@@ -84,6 +90,18 @@ class Airfoil:
     def set_Sref_grad(self, Sref_grad):
         self.__Sref_grad = Sref_grad
         
+    def set_sweep(self, sweep):
+        self.__sweep = sweep
+        
+    def set_sweep_grad(self, sweep_grad):
+        self.__sweep_grad = sweep_grad
+        
+    def set_twist(self, twist):
+        self.__twist = twist
+        
+    def set_twist_grad(self, twist_grad):
+        self.__twist_grad = twist_grad
+        
     def set_grad_active(self, grad_active):
         self.__grad_active = grad_active
         
@@ -99,6 +117,18 @@ class Airfoil:
     
     def get_Sref_grad(self):
         return self.__Sref_grad
+    
+    def get_sweep(self):
+        return self.__sweep
+    
+    def get_sweep_grad(self):
+        return self.__sweep_grad
+    
+    def get_twist(self):
+        return self.__twist
+    
+    def get_twist_grad(self):
+        return self.__twist_grad
     
     def get_OC(self):
         return self.__OC
@@ -140,5 +170,3 @@ class Airfoil:
         print '  Cdw  = ', self.Cdw, '[-]'
         print '  Cdvp = ', self.Cdvp, '[-]'
         print '  Cdf  = ', self.Cdf, '[-]'
-
-

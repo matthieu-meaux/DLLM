@@ -300,7 +300,7 @@ class DLLM_Geom(object):
             self.set_airfoils(airfoils)
             
     def build_linear_airfoil(self, OC, AoA0=0., Sref=1.,
-                             Lref=1., rel_thick=0., sweep=0., pcop=0.25, Ka=0.95, set_as_ref=True):
+                             Lref=1., rel_thick=0., pcop=0.25, Ka=0.95, set_as_ref=True):
         self.__airfoil_type = 'simple'
         airfoil = AnalyticAirfoil(
             OC,
@@ -308,7 +308,6 @@ class DLLM_Geom(object):
             Sref=Sref,
             Lref=Lref,
             rel_thick=rel_thick,
-            sweep=sweep,
             pcop=pcop,
             Ka=Ka, grad_active=self.__grad_active)
         if set_as_ref:
@@ -474,6 +473,7 @@ class DLLM_Geom(object):
             self.__sweep_grad[:] = 0.5*(self.__sweep_grad_eta[:-1,:]+self.__sweep_grad_eta[1:,:])
 
     def __link_airfoils_to_geom(self):
+        ### ---- A modifier pour twist + modif DLLM Direct
         grad_active = self.get_grad_active()
         self.__linked_airfoils = []
         for i in range(self.__n_sect):
@@ -481,11 +481,13 @@ class DLLM_Geom(object):
             linked_af = self.__airfoils[i].get_scaled_copy(Sref=SLoc, Lref=LLoc)
             linked_af.set_rel_thick(self.__rel_thicks[i])
             linked_af.set_sweep(self.__sweep[i])
+            linked_af.set_twist(self.__twist[i])
             if grad_active:
                 linked_af.set_Sref_grad(SLoc_grad)
                 linked_af.set_Lref_grad(LLoc_grad)
                 linked_af.set_rel_thick_grad(self.__rel_thicks_grad[i])
                 linked_af.set_sweep_grad(self.__sweep_grad[i])
+                linked_af.set_twist_grad(self.__twist_grad[i])
 
             self.__linked_airfoils.append(linked_af)
             
