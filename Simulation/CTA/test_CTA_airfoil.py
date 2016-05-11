@@ -22,7 +22,7 @@ RefCTA_AF.set_y_def_list([0.,1.520, 3.800, 6.080, 9.120, 12.160, 15.200, 18.240,
 RefCTA_AF.set_file_def_list(['section0.dat','section1.dat','section2.dat','section3.dat','section4.dat','section5.dat','section6.dat','section7.dat','section8.dat'])
 
 RefCTA_AF.init_interpolators()
-RefCTA_AF.set_y_pos(0.1)
+RefCTA_AF.set_y_pos(-5.1)
 RefCTA_AF.init_interp_factors()
-# AoA = 0.*np.pi/180.
-# RefCTA_AF.compute(AoA, 0.79)
+AoA = 2.*np.pi/180.
+RefCTA_AF.compute(AoA, 0.79)
