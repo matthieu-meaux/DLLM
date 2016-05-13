@@ -126,8 +126,8 @@ class DLLMDirect:
     def __init_Newton_Raphson(self):
         N = self.get_N()
         iAoA0 = zeros(N)
-        self.comp_R(iAoA0)
-        self.comp_dpR_dpiAoA(iAoA0)
+        #self.comp_R(iAoA0)
+        #self.comp_dpR_dpiAoA(iAoA0)
         self.__NRPb = NewtonRaphsonProblem(iAoA0,self.comp_R,self.comp_dpR_dpiAoA,verbose = self.__verbose)
         self.__NRPb.set_relax_factor(0.99)
         self.__NRPb.set_stop_residual(1.e-9)
@@ -146,8 +146,10 @@ class DLLMDirect:
         self.__NRPb.set_method(method)
 
     #-- Computation related methods
-    def run(self):
+    def run(self, iAoA0=None):
         grad_active = self.get_grad_active()
+        if iAoA0 is not None:
+            self.__NRPb.set_W0(iAoA0)
         self.__NRPb.solve()
         self.set_computed(True)
         self.write_gamma_to_file()
@@ -199,6 +201,7 @@ class DLLMDirect:
     #-- Residual related methods
     def comp_R(self, iAoA):
         self.__iAoA = iAoA
+        print 'iAoA = ',iAoA
         self.__compute_localAoA()
         self.__compute_gamma()
         self.__compute_iAoAnew()
@@ -296,6 +299,11 @@ class DLLMDirect:
         # Why this formula ? twist increases the local airfoil angle of attack normally...
         # self.__localAoA=alpha-iaOa-self.get_wing_geom().get_twist()
         self.__localAoA = AoA + twist + self.__iAoA + Thetay
+        print 'AoA = ',AoA
+        print 'twist = ',twist
+        print 'ThetaY = ',Thetay
+        print 'iAoA = ',self.__iAoA
+        print 'self.__localAoA = ',self.__localAoA
 
         for i in xrange(N):
             if self.__localAoA[i] > np.pi / 2. or self.__localAoA[i] < -np.pi / 2.:

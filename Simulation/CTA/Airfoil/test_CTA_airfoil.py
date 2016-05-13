@@ -19,10 +19,11 @@ print OC
 
 RefCTA_AF = RefCTAAirfoil(OC)
 RefCTA_AF.set_y_def_list([0.,1.520, 3.800, 6.080, 9.120, 12.160, 15.200, 18.240, 19.000])
-RefCTA_AF.set_file_def_list(['section0.dat','section1.dat','section2.dat','section3.dat','section4.dat','section5.dat','section6.dat','section7.dat','section8.dat'])
+RefCTA_AF.set_file_def_list(['../sections_data/section0.dat','../sections_data/section1.dat','../sections_data/section2.dat','../sections_data/section3.dat','../sections_data/section4.dat','../sections_data/section5.dat','../sections_data/section6.dat','../sections_data/section7.dat','../sections_data/section8.dat'])
 
 RefCTA_AF.init_interpolators()
-RefCTA_AF.set_y_pos(-5.1)
-RefCTA_AF.init_interp_factors()
-AoA = 2.*np.pi/180.
+RefCTA_AF.set_y_pos(0.0)
+AoA = -3.*np.pi/180.
 RefCTA_AF.compute(AoA, 0.79)
+
+CopyAF = RefCTA_AF.get_scaled_copy(1., 1.)

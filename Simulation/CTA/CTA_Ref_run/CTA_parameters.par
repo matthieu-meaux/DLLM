@@ -1,0 +1,47 @@
+# -----------------
+# Design Variables section
+# -----------------
+#                   Type                       Id                    value                   bounds
+          DesignVariable                 half_span                      19.0            (10.0, 50.0)
+          
+          DesignVariable          section0.y_fact                       0.00           (0.0, 1.0)
+          DesignVariable          section1.y_fact                       0.08           (0.0, 1.0)
+          DesignVariable          section2.y_fact                       0.20           (0.0, 1.0)
+          DesignVariable          section3.y_fact                       0.32           (0.0, 1.0)
+          DesignVariable          section4.y_fact                       0.48           (0.0, 1.0)
+          DesignVariable          section5.y_fact                       0.64           (0.0, 1.0)
+          DesignVariable          section6.y_fact                       0.80           (0.0, 1.0)
+          DesignVariable          section7.y_fact                       0.96           (0.0, 1.0)
+          DesignVariable          section8.y_fact                       1.00           (0.0, 1.0)        
+          
+          DesignVariable          section0.sweep                        40.77          (0.0, 70.0)
+          DesignVariable          section1.sweep                        51.55          (0.0, 70.0)
+          DesignVariable          section2.sweep                        40.70          (0.0, 70.0)
+          DesignVariable          section3.sweep                        43.90          (0.0, 70.0)
+          DesignVariable          section4.sweep                        35.98          (0.0, 70.0)
+          DesignVariable          section5.sweep                        27.66          (0.0, 70.0)
+          DesignVariable          section6.sweep                        27.54          (0.0, 70.0)
+          DesignVariable          section7.sweep                        44.99          (0.0, 70.0)
+               Parameter          section8.sweep                        section7.sweep 
+               
+          DesignVariable          section0.twist                       -1.26           (-20.0,+20.0)
+          DesignVariable          section1.twist                       -0.92           (-20.0,+20.0)
+          DesignVariable          section2.twist                       -0.41           (-20.0,+20.0)
+          DesignVariable          section3.twist                       -1.53           (-20.0,+20.0)
+          DesignVariable          section4.twist                       -3.93           (-20.0,+20.0)
+          DesignVariable          section5.twist                       -4.69           (-20.0,+20.0)
+          DesignVariable          section6.twist                       -5.31           (-20.0,+20.0)
+          DesignVariable          section7.twist                       -6.80           (-20.0,+20.0)
+          DesignVariable          section8.twist                       -12.54          (-20.0,+20.0)
+          
+          DesignVariable          section0.chord                       23.41537        (0.1,30.0)
+          DesignVariable          section1.chord                       21.29023        (0.1,30.0)
+          DesignVariable          section2.chord                       16.90415        (0.1,30.0)
+          DesignVariable          section3.chord                       10.29536        (0.1,30.0)
+          DesignVariable          section4.chord                        5.76642        (0.1,30.0)
+          DesignVariable          section5.chord                        3.53505        (0.1,30.0)
+          DesignVariable          section6.chord                        2.56470        (0.1,30.0)
+          DesignVariable          section7.chord                        1.60614        (0.1,30.0)
+          DesignVariable          section8.chord                        0.89121        (0.1,30.0)
+
+                      

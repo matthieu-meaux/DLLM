@@ -239,8 +239,8 @@ class DLLMSolver:
         self.__xyz_ref = xyz_ref
         
     #-- Run methods
-    def run_direct(self):
-        self.__DLLMDirect.run()
+    def run_direct(self, iAoA0=None):
+        self.__DLLMDirect.run(iAoA0=iAoA0)
         
     def run_post(self, F_list_names=None):
         ERROR_MSG=self.ERROR_MSG+'run_post: '

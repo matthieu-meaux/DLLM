@@ -50,11 +50,6 @@ class RefCTAAirfoil(Airfoil):
         self.__y_def_list    = None
         self.__file_def_list = None
         self.__interp_list   = None
-        
-        self.__index_p       = None
-        self.__index_m       = None
-        self.__fact_p        = None
-        self.__fact_m        = None
 
     #-- Setters
     def set_y_pos(self, y_pos):
@@ -65,9 +60,9 @@ class RefCTAAirfoil(Airfoil):
         
     def set_file_def_list(self, file_def_list):
         self.__file_def_list = file_def_list
-        
-    def set_dict_info(self, dict_info):
-        self.__dict_info = dict_info
+    
+    def set_interp_list(self, interp_list):
+        self.__interp_list = interp_list
     
     def init_interpolators(self):
 #         print 'self.__y_def_list = ',self.__y_def_list 
@@ -143,71 +138,73 @@ class RefCTAAirfoil(Airfoil):
 #         plt.rc("font", size=14)
 #         plt.savefig('Cmy_polars.png',format='png')
 #         plt.close()
-        
-    def init_interp_factors(self):
-        test_y = abs(self.y_pos)
-        i=0
-        test = 0
-        while test_y > test:
-            i = i+1
-            test = self.__y_def_list[i]
-        self.__index_m   = i-1
-        self.__index_p   = i
-#         print 'y_pos = ',self.y_pos, 'y_m = ',self.__y_def_list[self.__index_m],'y_p = ',self.__y_def_list[self.__index_p ]
-        
-        fact = (self.__y_def_list[self.__index_p ]-test_y)/(self.__y_def_list[self.__index_p]-self.__y_def_list[self.__index_m])
-        self.__fact_m = fact
-        self.__fact_p   = (1.-fact)
 
     #-- Methods to compute aero coefficients
     def comp_aero_coeffs(self, AoA, Mach):
         AoA_deg = AoA*180./np.pi
+
         #-- Mach is ignored for this airfoil
-        out_data_m = self.__interp_list[self.__index_m](AoA_deg)
-        out_data_p = self.__interp_list[self.__index_p](AoA_deg)
-        out_data_m_d = self.__interp_list[self.__index_m](AoA_deg+0.05)
-        out_data_p_d = self.__interp_list[self.__index_p](AoA_deg+0.05)
-#         print 'out_data_m = ',out_data_m
-#         print 'out_data_p = ',out_data_p
-        self.Cl   = self.__fact_m*out_data_m[0] + self.__fact_p*out_data_p[0]
-        Cl_d = self.__fact_m*out_data_m_d[0] + self.__fact_p*out_data_p_d[0]
-        self.Cdw  = self.__fact_m*out_data_m[1] + self.__fact_p*out_data_p[1]
-        self.Cdvp = self.__fact_m*out_data_m[2] + self.__fact_p*out_data_p[2]
-        self.Cdf  = self.__fact_m*out_data_m[3] + self.__fact_p*out_data_p[3]
+        out_data_list = []
+        for i,y in enumerate(self.__y_def_list):
+            out_data = self.__interp_list[i](AoA_deg)
+            out_data_list.append(out_data)
+        out_data_list = np.array(out_data_list)
+        out_data_list = out_data_list.T
+        out_interp = interp1d(self.__y_def_list, out_data_list, kind='slinear')
         
-        self.dCl_dAoA = (Cl_d-self.Cl)/(0.05*np.pi/180.)
         
-        Cmy = self.__fact_m*out_data_m[4] + self.__fact_p*out_data_p[4]
+#         #-- CL plots
+#         plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,ncol=3, mode="expand", borderaxespad=0.,prop={'size':12})
+#         y_range = np.linspace(0.,19.0,100)
+#         out_Cl = out_interp(y_range)[0]
+#         plt.plot(y_range ,out_Cl)
+#         plt.plot(self.__y_def_list, out_data_list[0])
+#         plt.xlabel('y)')
+#         plt.ylabel('CL')
+#         plt.rc("font", size=14)
+#         plt.savefig('CL_spanwise.png',format='png')
+#         plt.close()
+#         
+        out_data_list_d = []
+        for i,y in enumerate(self.__y_def_list):
+            out_data_d = self.__interp_list[i](AoA_deg+0.05)
+            out_data_list_d.append(out_data_d)
+        out_data_list_d = np.array(out_data_list_d)
+        out_data_list_d = out_data_list_d.T
+        
+        out_interp_d = interp1d(self.__y_def_list, out_data_list_d, kind='cubic')
+        
+        out_coeffs   = out_interp(abs(self.y_pos))
+        out_coeffs_d = out_interp_d(abs(self.y_pos))
+        
+        Cmy = out_coeffs[4]   
+        
+        Cl_d = out_coeffs_d[0]
+        self.dCl_dAoA = (out_coeffs_d[0]-out_coeffs[0])/(0.05*np.pi/180.)
+        
+        self.Cl   = out_coeffs[0]
+        self.Cdw  = out_coeffs[1]*1e-4
+        self.Cdvp = out_coeffs[2]*1e-4
+        self.Cdf  = out_coeffs[3]*1e-4
         
         self.pcop  = 0.25
         if self.Cl != 0:
-            delta_d = Cmy/abs(self.Cl)
+            delta_d = Cmy/self.Cl
             
-        self.pcop = self.pcop-delta_d
+        self.pcop = 0.25-delta_d
         
-#         print 'delta_d = ',delta_d
-#         
-#         print 'Cl_d = ',Cl_d
-#         print 'self.Cl = ',self.Cl
-#         print 'self.Cdw = ',self.Cdw
-#         print 'self.Cdvp = ',self.Cdvp
-#         print 'self.Cdf = ',self.Cdf
-#         
-#         print 'self.dCl_dAoA = ',self.dCl_dAoA,2.*np.pi
-#         
-#         print 'Cmy = ',Cmy
-#         print 'self.pcop = ',self.pcop
-            
-    def get_scaled_copy(self, OC=None, Sref=None, Lref=None, rel_thick=None, grad_active=True):
+    def get_scaled_copy(self, OC=None, Sref=None, Lref=None, grad_active=False):
         if Sref is None:
             Sref=self.get_Sref()
         if Lref is None:
             Lref=self.get_Lref()
-        if rel_thick is None:
-            rel_thick = self.get_rel_thick()
         if OC is None:
             OC = self.get_OC()
-        return AnalyticAirfoil(OC, self.__AoA0_deg, Sref=Sref, Lref=Lref, rel_thick=rel_thick, Ka=self.__Ka, grad_active=self.is_grad_active())
+            
+        CopyAF = RefCTAAirfoil(OC, Sref=Sref, Lref=Lref, grad_active=self.is_grad_active())
+        CopyAF.set_y_def_list(self.__y_def_list)
+        CopyAF.set_interp_list(self.__interp_list)
+        return CopyAF
     
     #-- Private methods
     def __read_file(self, filename):
@@ -247,19 +244,13 @@ class RefCTAAirfoil(Airfoil):
         for i in xrange(1,n_lines):
             line = all_lines[i]
             values = string.split(line)
-            AoA_list.append(float(values[index_AoA]))
-            CL_list.append(float(values[index_CL]))
-            CDw_list.append(float(values[index_CDw]))
-            CDvp_list.append(float(values[index_CDvp]))
-            CDf_list.append(float(values[index_CDf]))
-            Cmy_list.append(float(values[index_Cmy]))
-            
-#         print 'AoA_list = ',AoA_list
-#         print 'CL_list = ',CL_list
-#         print 'CDw_list = ',CDw_list
-#         print 'CDvp_list = ',CDvp_list
-#         print 'CDf_list = ',CDf_list
-#         print 'Cmy_list = ',Cmy_list
+            if len(values) >0:
+                AoA_list.append(float(values[index_AoA]))
+                CL_list.append(float(values[index_CL]))
+                CDw_list.append(float(values[index_CDw]))
+                CDvp_list.append(float(values[index_CDvp]))
+                CDf_list.append(float(values[index_CDf]))
+                Cmy_list.append(float(values[index_Cmy]))
         
         return AoA_list, CL_list, CDw_list, CDvp_list, CDf_list, Cmy_list
             
