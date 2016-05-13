@@ -345,11 +345,9 @@ class DLLM_Geom(object):
         Yp_list =   self.__XYZ[1,:]
         Xp_list = - self.__XYZ[0,:]
         
-        lim = 1.1*max(max(Y_list),max(self.__chords_eta))
-        
         # set limits to the graph
-        plt.xlim(-lim, +lim)
-        plt.ylim(-lim, +lim)
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.ylim(1.1*Y_list[0], 1.1*Y_list[-1])
         
         # set graph labels (aero axes)
         plt.xlabel('y')
@@ -384,8 +382,8 @@ class DLLM_Geom(object):
         
         #-- planform plot
         # set limits to the graph
-        plt.xlim(-lim, +lim)
-        plt.ylim(-lim, +lim)
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.ylim(1.1*Y_list[0], 1.1*Y_list[-1])
         
         # set graph labels (aero axes)
         plt.xlabel('y')
@@ -404,9 +402,17 @@ class DLLM_Geom(object):
         plt.savefig(name+"_planform.png",format='png')
         plt.close()
         
+        #-- Toc plot
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.xlabel('y')
+        plt.ylabel('toc')
+        plt.plot(Y_list,self.__rel_thicks_eta)
+        plt.rc("font", size=14)
+        plt.savefig(name+"_toc.png",format='png')
+        plt.close()
         
         #-- Chords plot
-        plt.xlim(-lim, +lim)
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
         plt.xlabel('y')
         plt.ylabel('chords')
         plt.plot(Y_list,self.__chords_eta)
@@ -414,28 +420,19 @@ class DLLM_Geom(object):
         plt.savefig(name+"_chords_distrib.png",format='png')
         plt.close()
         
-        if self.__airfoil_type == 'Simple':
-            #-- Toc plot
-            plt.xlim(-lim, +lim)
-            plt.xlabel('y')
-            plt.ylabel('toc')
-            plt.plot(Y_list,self.__rel_thicks_eta)
-            plt.rc("font", size=14)
-            plt.savefig(name+"_toc.png",format='png')
-            plt.close()
-            
-            #-- Heights plot
-            heights = self.__chords_eta*self.__rel_thicks_eta
-            plt.xlim(-lim, +lim)
-            plt.xlabel('y')
-            plt.ylabel('heights')
-            plt.plot(Y_list,heights)
-            plt.rc("font", size=14)
-            plt.savefig(name+"_heights_distrib.png",format='png')
-            plt.close()
+        #-- Heights plot
+        heights = self.__chords_eta*self.__rel_thicks_eta
+        plt.xlim(1.1*Y_list[0], 1.1*Y_list[-1])
+        plt.xlabel('y')
+        plt.ylabel('heights')
+        plt.plot(Y_list,heights)
+        plt.rc("font", size=14)
+        plt.savefig(name+"_heights_distrib.png",format='png')
+        plt.close()
         
         #-- twist plot
-        plt.xlim(-lim, +lim)
+        heights = self.__chords_eta*self.__rel_thicks_eta
+        plt.xlim(1.1*Yp_list[0], 1.1*Yp_list[-1])
         plt.xlabel('y')
         plt.ylabel('twist (deg)')
         plt.plot(Yp_list,self.__twist*180./np.pi)
@@ -460,9 +457,8 @@ class DLLM_Geom(object):
         
         self.__XYZ[:,:] = 0.5*(self.__eta[:,:-1]+self.__eta[:,1:])
         self.__chords[:] = 0.5*(self.__chords_eta[:-1]+self.__chords_eta[1:])
+        self.__rel_thicks[:] = 0.5*(self.__rel_thicks_eta[:-1]+self.__rel_thicks_eta[1:])
         self.__sweep[:]      = 0.5*(self.__sweep_eta[:-1]+self.__sweep_eta[1:])
-        if self.__airfoil_type == 'Simple':
-            self.__rel_thicks[:] = 0.5*(self.__rel_thicks_eta[:-1]+self.__rel_thicks_eta[1:])
         
         grad_active = self.get_grad_active()
         if grad_active:
@@ -473,9 +469,8 @@ class DLLM_Geom(object):
             self.__sweep_grad = np.zeros((N,ndv))
             self.__XYZ_grad[:,:,:] = 0.5*(self.__eta_grad[:,:-1,:]+self.__eta_grad[:,1:,:])
             self.__chords_grad[:,:] = 0.5*(self.__chords_grad_eta[:-1,:]+self.__chords_grad_eta[1:,:])
+            self.__rel_thicks_grad[:,:] = 0.5*(self.__rel_thicks_grad_eta[:-1]+self.__rel_thicks_grad_eta[1:]) 
             self.__sweep_grad[:] = 0.5*(self.__sweep_grad_eta[:-1,:]+self.__sweep_grad_eta[1:,:])
-            if self.__airfoil_type == 'Simple':
-                self.__rel_thicks_grad[:,:] = 0.5*(self.__rel_thicks_grad_eta[:-1]+self.__rel_thicks_grad_eta[1:]) 
 
     def __link_airfoils_to_geom(self):
         ### ---- A modifier pour twist + modif DLLM Direct
@@ -484,19 +479,15 @@ class DLLM_Geom(object):
         for i in range(self.__n_sect):
             LLoc, LLoc_grad, SLoc, SLoc_grad = self.__compute_local_info(i)
             linked_af = self.__airfoils[i].get_scaled_copy(Sref=SLoc, Lref=LLoc)
+            linked_af.set_rel_thick(self.__rel_thicks[i])
             linked_af.set_sweep(self.__sweep[i])
             linked_af.set_twist(self.__twist[i])
-            if self.__airfoil_type == 'simple':
-                linked_af.set_rel_thick(self.__rel_thicks[i])
-            elif self.__airfoil_type == 'ref_CTA':
-                linked_af.set_y_pos(self.__XYZ[1,i])
             if grad_active:
                 linked_af.set_Sref_grad(SLoc_grad)
                 linked_af.set_Lref_grad(LLoc_grad)
+                linked_af.set_rel_thick_grad(self.__rel_thicks_grad[i])
                 linked_af.set_sweep_grad(self.__sweep_grad[i])
                 linked_af.set_twist_grad(self.__twist_grad[i])
-                if self.__airfoil_type == 'simple':
-                    linked_af.set_rel_thick_grad(self.__rel_thicks_grad[i])
 
             self.__linked_airfoils.append(linked_af)
             

@@ -28,7 +28,7 @@ from DLLM.DLLMGeom.DLLM_param import DLLM_param
 import numpy as np
 
 class Wing_Elliptic(DLLM_param):
-    def __init__(self, tag, n_sect=20, grad_active=True):
+    def __init__(self, tag, geom_type='Broken', n_sect=20, grad_active=True):
         """
         Constructor: set main attributes
         """
